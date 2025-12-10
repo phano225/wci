@@ -44,12 +44,12 @@ export const Navbar = () => {
                 ☰
             </button>
             <Link to="/" className="flex items-center gap-4 group">
-                {/* Logo Image - Responsive sizing */}
+                {/* Logo Image - Fixed URL */}
                 <div className="relative">
                     <img 
-                        src="https://placehold.co/180x180?text=World+Canal\nInfo" 
+                        src="https://placehold.co/150x150/0055a4/ffffff?text=WCI" 
                         alt="World Canal Info Logo" 
-                        className="w-[100px] h-[100px] md:w-[150px] md:h-[150px] object-cover rounded-full border-4 border-white shadow-md group-hover:scale-105 transition-transform bg-white" 
+                        className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] object-cover rounded-full border-4 border-white shadow-md group-hover:scale-105 transition-transform bg-white" 
                     />
                 </div>
                 <div className="hidden sm:block">

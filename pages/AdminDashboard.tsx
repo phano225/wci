@@ -22,10 +22,17 @@ export const AdminDashboard = () => {
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
   // Forms State
-  const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({});
-  const [currentUserData, setCurrentUserData] = useState<Partial<User>>({});
-  const [newUserPassword, setNewUserPassword] = useState(''); // State for managing user password
-  const [currentAd, setCurrentAd] = useState<Partial<Ad>>({});
+  // Initialize with default values to prevent uncontrolled input warnings
+  const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({
+      title: '', excerpt: '', content: '', category: '', imageUrl: '', videoUrl: '', status: ArticleStatus.DRAFT
+  });
+  const [currentUserData, setCurrentUserData] = useState<Partial<User>>({
+      name: '', email: '', role: UserRole.CONTRIBUTOR, avatar: ''
+  });
+  const [newUserPassword, setNewUserPassword] = useState(''); 
+  const [currentAd, setCurrentAd] = useState<Partial<Ad>>({
+      title: '', location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE, content: '', linkUrl: '', active: true
+  });
   const [newCategoryName, setNewCategoryName] = useState('');
 
   // UI State
@@ -149,14 +156,16 @@ export const AdminDashboard = () => {
   // --- User Logic ---
   const handleOpenUserModal = (userData?: User) => {
     setNewUserPassword(''); // Reset password field
-    if (userData) {
+    if (userData && userData.id) {
         setCurrentUserData({...userData});
     } else {
+        // Initialize with safe defaults for new user
         setCurrentUserData({
             name: '',
             email: '',
             role: UserRole.CONTRIBUTOR,
-            avatar: 'https://ui-avatars.com/api/?name=User'
+            avatar: 'https://ui-avatars.com/api/?name=User',
+            id: '' // Empty ID signals creation
         });
     }
     setIsUserModalOpen(true);
@@ -178,7 +187,10 @@ export const AdminDashboard = () => {
   };
 
   const handleSaveUser = () => {
-    if (!currentUserData.name || !currentUserData.email || !currentUserData.role) return;
+    if (!currentUserData.name || !currentUserData.email || !currentUserData.role) {
+        alert("Veuillez remplir les champs obligatoires (Nom, Email, Rôle)");
+        return;
+    }
     
     // For new users, password is required. For edits, it's optional.
     if (!currentUserData.id && !newUserPassword) {
@@ -230,9 +242,10 @@ export const AdminDashboard = () => {
 
   // --- AD MANAGEMENT LOGIC ---
   const handleOpenAdModal = (ad?: Ad) => {
-      if (ad) {
+      if (ad && ad.id) {
           setCurrentAd({...ad});
       } else {
+          // Initialize safe defaults for new Ad
           setCurrentAd({
               title: '',
               location: AdLocation.HEADER_LEADERBOARD,
@@ -258,7 +271,7 @@ export const AdminDashboard = () => {
 
   const handleSaveAd = () => {
       if (!currentAd.title || !currentAd.content || !currentAd.location || !currentAd.type) {
-          alert("Veuillez remplir tous les champs obligatoires");
+          alert("Veuillez remplir tous les champs obligatoires (Titre, Emplacement, Type, Contenu)");
           return;
       }
 
@@ -288,330 +301,350 @@ export const AdminDashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
-      {/* Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-brand-dark text-white flex flex-col md:fixed md:h-full z-10 overflow-y-auto">
-        <div className="p-6 border-b border-gray-700 flex flex-col items-center text-center">
-            <img src="https://placehold.co/180x180?text=World+Canal\nInfo" alt="Logo" className="w-20 h-20 rounded-full mb-3 border-2 border-brand-yellow" />
-            <h1 className="font-serif text-lg font-bold leading-none">World Canal</h1>
-            <span className="text-brand-red font-bold uppercase tracking-wider text-xs">Admin CMS</span>
-        </div>
-        
-        <nav className="flex-1 p-4 space-y-2 text-sm">
-            <button 
-                onClick={() => setActiveTab('articles')}
-                className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'articles' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
-            >
-                📄 Tous les Articles
-            </button>
-            {PERMISSIONS.canManageCategories(user.role) && (
-                <button 
-                    onClick={() => setActiveTab('categories')}
-                    className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'categories' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
-                >
-                    🏷️ Gestion Catégories
-                </button>
-            )}
-            {PERMISSIONS.canManageAds(user.role) && (
-                 <button 
-                    onClick={() => setActiveTab('ads')}
-                    className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'ads' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
-                >
-                    📢 Gestion Publicités
-                </button>
-            )}
-            {PERMISSIONS.canManageUsers(user.role) && (
-                <button 
-                    onClick={() => setActiveTab('users')}
-                    className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'users' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
-                >
-                    👥 Gestion Utilisateurs
-                </button>
-            )}
-            <button 
-                onClick={() => setActiveTab('profile')}
-                className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'profile' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
-            >
-                👤 Mon Profil
-            </button>
-        </nav>
-        <div className="p-4 border-t border-gray-700">
-             <Link to="/" className="block text-center w-full py-2 mb-2 text-gray-400 text-xs hover:text-white">Retour au Site</Link>
-            <button onClick={logout} className="w-full py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-bold shadow-md">Déconnexion</button>
-        </div>
-      </aside>
+    <>
+      <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row relative z-0">
+        {/* Sidebar Navigation */}
+        <aside className="w-full md:w-64 bg-brand-dark text-white flex flex-col md:fixed md:h-full z-10 overflow-y-auto shadow-xl">
+          <div className="p-6 border-b border-gray-700 flex flex-col items-center text-center">
+              {/* Sidebar Logo Fix */}
+              <img src="https://placehold.co/150x150/0055a4/ffffff?text=WCI" alt="Logo" className="w-20 h-20 rounded-full mb-3 border-2 border-brand-yellow" />
+              <h1 className="font-serif text-lg font-bold leading-none">World Canal</h1>
+              <span className="text-brand-red font-bold uppercase tracking-wider text-xs">Admin CMS</span>
+          </div>
+          
+          <nav className="flex-1 p-4 space-y-2 text-sm">
+              <button 
+                  onClick={() => setActiveTab('articles')}
+                  className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'articles' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
+              >
+                  📄 Tous les Articles
+              </button>
+              {PERMISSIONS.canManageCategories(user.role) && (
+                  <button 
+                      onClick={() => setActiveTab('categories')}
+                      className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'categories' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                      🏷️ Gestion Catégories
+                  </button>
+              )}
+              {PERMISSIONS.canManageAds(user.role) && (
+                  <button 
+                      onClick={() => setActiveTab('ads')}
+                      className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'ads' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                      📢 Gestion Publicités
+                  </button>
+              )}
+              {PERMISSIONS.canManageUsers(user.role) && (
+                  <button 
+                      onClick={() => setActiveTab('users')}
+                      className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'users' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                      👥 Gestion Utilisateurs
+                  </button>
+              )}
+              <button 
+                  onClick={() => setActiveTab('profile')}
+                  className={`w-full text-left px-4 py-3 rounded transition-colors ${activeTab === 'profile' ? 'bg-brand-blue text-white font-bold' : 'text-gray-300 hover:bg-gray-800'}`}
+              >
+                  👤 Mon Profil
+              </button>
+          </nav>
+          <div className="p-4 border-t border-gray-700">
+              <Link to="/" className="block text-center w-full py-2 mb-2 text-gray-400 text-xs hover:text-white">Retour au Site</Link>
+              <button onClick={logout} className="w-full py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-bold shadow-md">Déconnexion</button>
+          </div>
+        </aside>
 
-      {/* Main Content */}
-      <main className="md:ml-64 flex-1 p-4 md:p-8 overflow-y-auto">
-        
-        {/* ARTICLES TAB */}
-        {activeTab === 'articles' && (
-            <div>
-                <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <div>
-                        <h2 className="text-3xl font-serif font-bold text-gray-800">Articles</h2>
-                        <p className="text-gray-500 text-sm">Gérez le contenu éditorial du journal.</p>
-                    </div>
-                    <button onClick={handleCreateNew} className="bg-brand-blue text-white px-6 py-3 rounded-full hover:bg-blue-700 shadow-lg font-bold text-sm flex items-center gap-2 transform hover:-translate-y-1 transition-all">
-                        <span>✏️</span> Rédiger un Article
-                    </button>
-                </div>
-                
-                <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
-                    <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold tracking-wider">
-                            <tr>
-                                <th className="p-4">Titre</th>
-                                <th className="p-4">Auteur</th>
-                                <th className="p-4">Catégorie</th>
-                                <th className="p-4">Statut</th>
-                                <th className="p-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 text-sm">
-                            {articles.map(article => (
-                                <tr key={article.id} className="hover:bg-blue-50 transition-colors">
-                                    <td className="p-4 font-bold text-gray-800 max-w-xs truncate">{article.title}</td>
-                                    <td className="p-4 text-gray-600 flex items-center gap-2">
-                                        {article.authorAvatar && <img src={article.authorAvatar} className="w-6 h-6 rounded-full"/>}
-                                        {article.authorName}
-                                    </td>
-                                    <td className="p-4"><span className="bg-gray-100 px-2 py-1 rounded text-xs">{article.category}</span></td>
-                                    <td className="p-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border 
-                                            ${article.status === ArticleStatus.PUBLISHED ? 'bg-green-50 text-green-700 border-green-200' : 
-                                              article.status === ArticleStatus.SUBMITTED ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                                            {article.status === ArticleStatus.SUBMITTED ? 'En attente' : article.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right space-x-2">
-                                        {(user.role === UserRole.ADMIN || article.authorId === user.id) && (
-                                            <button onClick={() => handleEdit(article)} className="text-blue-600 hover:text-blue-800 font-medium">Éditer</button>
-                                        )}
-                                        {PERMISSIONS.canPublish(user.role) && article.status === ArticleStatus.SUBMITTED && (
-                                             <button onClick={() => handleStatusChange(article, ArticleStatus.PUBLISHED)} className="text-green-600 font-bold hover:underline">Valider</button>
-                                        )}
-                                        {PERMISSIONS.canPublish(user.role) && article.status === ArticleStatus.PUBLISHED && (
-                                             <button onClick={() => handleStatusChange(article, ArticleStatus.DRAFT)} className="text-orange-600 hover:underline">Dépublier</button>
-                                        )}
-                                        {PERMISSIONS.canPublish(user.role) && article.status === ArticleStatus.DRAFT && (
-                                             <button onClick={() => handleStatusChange(article, ArticleStatus.PUBLISHED)} className="text-green-600 hover:underline">Publier</button>
-                                        )}
-                                        {PERMISSIONS.canDeleteArticle(user.role) && (
-                                             <button onClick={() => handleDelete(article.id)} className="text-red-600 hover:text-red-800 ml-2">Supprimer</button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {articles.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="p-8 text-center text-gray-400 italic">Aucun article trouvé.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                    </div>
-                </div>
+        {/* Main Content */}
+        <main className="md:ml-64 flex-1 p-4 md:p-8 overflow-y-auto z-0">
+          
+          {/* ARTICLES TAB */}
+          {activeTab === 'articles' && (
+              <div>
+                  <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                      <div>
+                          <h2 className="text-3xl font-serif font-bold text-gray-800">Articles</h2>
+                          <p className="text-gray-500 text-sm">Gérez le contenu éditorial du journal.</p>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={handleCreateNew} 
+                        className="bg-brand-blue text-white px-6 py-3 rounded-full hover:bg-blue-700 shadow-lg font-bold text-sm flex items-center gap-2 transform hover:-translate-y-1 transition-all"
+                      >
+                          <span>✏️</span> Rédiger un Article
+                      </button>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+                      <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold tracking-wider">
+                              <tr>
+                                  <th className="p-4">Titre</th>
+                                  <th className="p-4">Auteur</th>
+                                  <th className="p-4">Catégorie</th>
+                                  <th className="p-4">Statut</th>
+                                  <th className="p-4 text-right">Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 text-sm">
+                              {articles.map(article => (
+                                  <tr key={article.id} className="hover:bg-blue-50 transition-colors">
+                                      <td className="p-4 font-bold text-gray-800 max-w-xs truncate">{article.title}</td>
+                                      <td className="p-4 text-gray-600 flex items-center gap-2">
+                                          {article.authorAvatar && <img src={article.authorAvatar} className="w-6 h-6 rounded-full"/>}
+                                          {article.authorName}
+                                      </td>
+                                      <td className="p-4">
+                                          {/* Use inline-block and specific colors to ensure visibility */}
+                                          <span className="inline-block bg-brand-blue text-white px-2 py-1 rounded text-xs font-bold shadow-sm">{article.category}</span>
+                                      </td>
+                                      <td className="p-4">
+                                          <span className={`px-3 py-1 rounded-full text-xs font-bold border 
+                                              ${article.status === ArticleStatus.PUBLISHED ? 'bg-green-50 text-green-700 border-green-200' : 
+                                                article.status === ArticleStatus.SUBMITTED ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                                              {article.status === ArticleStatus.SUBMITTED ? 'En attente' : article.status}
+                                          </span>
+                                      </td>
+                                      <td className="p-4 text-right space-x-2">
+                                          {(user.role === UserRole.ADMIN || article.authorId === user.id) && (
+                                              <button onClick={() => handleEdit(article)} className="text-blue-600 hover:text-blue-800 font-medium">Éditer</button>
+                                          )}
+                                          {PERMISSIONS.canPublish(user.role) && article.status === ArticleStatus.SUBMITTED && (
+                                              <button onClick={() => handleStatusChange(article, ArticleStatus.PUBLISHED)} className="text-green-600 font-bold hover:underline">Valider</button>
+                                          )}
+                                          {PERMISSIONS.canPublish(user.role) && article.status === ArticleStatus.PUBLISHED && (
+                                              <button onClick={() => handleStatusChange(article, ArticleStatus.DRAFT)} className="text-orange-600 hover:underline">Dépublier</button>
+                                          )}
+                                          {PERMISSIONS.canPublish(user.role) && article.status === ArticleStatus.DRAFT && (
+                                              <button onClick={() => handleStatusChange(article, ArticleStatus.PUBLISHED)} className="text-green-600 hover:underline">Publier</button>
+                                          )}
+                                          {PERMISSIONS.canDeleteArticle(user.role) && (
+                                              <button onClick={() => handleDelete(article.id)} className="text-red-600 hover:text-red-800 ml-2">Supprimer</button>
+                                          )}
+                                      </td>
+                                  </tr>
+                              ))}
+                              {articles.length === 0 && (
+                                  <tr>
+                                      <td colSpan={5} className="p-8 text-center text-gray-400 italic">Aucun article trouvé.</td>
+                                  </tr>
+                              )}
+                          </tbody>
+                      </table>
+                      </div>
+                  </div>
+              </div>
+          )}
+
+          {/* ADS TAB */}
+          {activeTab === 'ads' && PERMISSIONS.canManageAds(user.role) && (
+              <div>
+                  <div className="flex justify-between items-center mb-6">
+                      <div>
+                          <h2 className="text-3xl font-serif font-bold text-gray-800">Gestion Publicités</h2>
+                          <p className="text-gray-500 text-sm">Ajoutez des bannières, vidéos ou codes scripts.</p>
+                      </div>
+                      <button 
+                          type="button"
+                          onClick={() => handleOpenAdModal()} 
+                          className="bg-brand-blue text-white px-6 py-3 rounded-full hover:bg-blue-700 shadow-lg font-bold text-sm"
+                      >
+                          + Nouvelle Publicité
+                      </button>
+                  </div>
+
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+                      <table className="w-full text-left border-collapse">
+                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold tracking-wider">
+                              <tr>
+                                  <th className="p-4">Titre</th>
+                                  <th className="p-4">Emplacement</th>
+                                  <th className="p-4">Type</th>
+                                  <th className="p-4">Aperçu Contenu</th>
+                                  <th className="p-4">Statut</th>
+                                  <th className="p-4 text-right">Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 text-sm">
+                              {adsList.map(ad => (
+                                  <tr key={ad.id} className="hover:bg-gray-50">
+                                      <td className="p-4 font-bold text-gray-800">{ad.title}</td>
+                                      <td className="p-4 text-xs">
+                                          <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">{ad.location}</span>
+                                      </td>
+                                      <td className="p-4 text-gray-600">{ad.type}</td>
+                                      <td className="p-4 text-xs text-gray-400 truncate max-w-[150px]">{ad.content.substring(0, 30)}...</td>
+                                      <td className="p-4">
+                                          {ad.active ? (
+                                              <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded">Actif</span>
+                                          ) : (
+                                              <span className="text-gray-500 font-bold text-xs bg-gray-100 px-2 py-1 rounded">Inactif</span>
+                                          )}
+                                      </td>
+                                      <td className="p-4 text-right space-x-2">
+                                          <button onClick={() => handleOpenAdModal(ad)} className="text-blue-600 hover:text-blue-800 font-medium">Modifier</button>
+                                          <button onClick={() => handleDeleteAd(ad.id)} className="text-red-600 hover:text-red-800 font-medium">Supprimer</button>
+                                      </td>
+                                  </tr>
+                              ))}
+                              {adsList.length === 0 && (
+                                  <tr>
+                                      <td colSpan={6} className="p-8 text-center text-gray-400 italic">Aucune publicité configurée.</td>
+                                  </tr>
+                              )}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          )}
+
+          {/* CATEGORIES TAB (Admin Only) */}
+          {activeTab === 'categories' && PERMISSIONS.canManageCategories(user.role) && (
+              <div>
+                  <h2 className="text-3xl font-serif font-bold text-gray-800 mb-2">Gestion des Catégories</h2>
+                  <p className="text-gray-500 text-sm mb-6">Ajoutez ou supprimez des catégories pour classer les articles.</p>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                      {/* Add Category Form */}
+                      <div className="bg-white p-6 rounded-lg shadow-md h-fit">
+                          <h3 className="font-bold text-lg mb-4">Nouvelle Catégorie</h3>
+                          <div className="flex flex-col gap-3">
+                              <input 
+                                  type="text" 
+                                  placeholder="Nom de la catégorie..." 
+                                  className="border border-gray-300 bg-white text-gray-900 p-3 rounded focus:border-brand-blue outline-none"
+                                  value={newCategoryName}
+                                  onChange={(e) => setNewCategoryName(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                              />
+                              <button onClick={handleAddCategory} className="bg-brand-blue text-white py-2 rounded font-bold hover:bg-blue-700">
+                                  Ajouter
+                              </button>
+                          </div>
+                      </div>
+
+                      {/* List */}
+                      <div className="lg:col-span-2 bg-white rounded-lg shadow-md overflow-hidden">
+                          <table className="w-full text-left">
+                              <thead className="bg-gray-50 border-b">
+                                  <tr>
+                                      <th className="p-4">Nom</th>
+                                      <th className="p-4">Slug</th>
+                                      <th className="p-4 text-right">Actions</th>
+                                  </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                  {categoriesList.map(cat => (
+                                      <tr key={cat.id} className="hover:bg-gray-50">
+                                          <td className="p-4 font-bold">{cat.name}</td>
+                                          <td className="p-4 text-gray-500 text-sm">{cat.slug}</td>
+                                          <td className="p-4 text-right">
+                                              <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-600 hover:text-red-800 text-sm font-bold">Supprimer</button>
+                                          </td>
+                                      </tr>
+                                  ))}
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          )}
+
+          {/* USERS TAB (Admin Only) */}
+          {activeTab === 'users' && PERMISSIONS.canManageUsers(user.role) && (
+              <div>
+                  <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h2>
+                      <button 
+                          type="button"
+                          onClick={() => handleOpenUserModal()} 
+                          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-bold text-sm"
+                      >
+                          + Créer Utilisateur
+                      </button>
+                  </div>
+                  
+                  <div className="bg-white rounded shadow p-0">
+                      <table className="w-full text-left">
+                          <thead className="bg-gray-50 border-b">
+                              <tr>
+                                  <th className="p-4 text-xs font-bold text-gray-500 uppercase">Utilisateur</th>
+                                  <th className="p-4 text-xs font-bold text-gray-500 uppercase">Rôle / Permissions</th>
+                                  <th className="p-4 text-xs font-bold text-gray-500 uppercase">Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                              {usersList.map(u => (
+                                  <tr key={u.id}>
+                                      <td className="p-4 flex items-center gap-3">
+                                          <img src={u.avatar} className="w-8 h-8 rounded-full border border-gray-200" />
+                                          <div>
+                                              <div className="font-bold text-gray-900">{u.name}</div>
+                                              <div className="text-xs text-gray-500">{u.email}</div>
+                                          </div>
+                                      </td>
+                                      <td className="p-4">
+                                          <span className={`inline-block px-2 py-1 rounded text-xs font-bold 
+                                              ${u.role === UserRole.ADMIN ? 'bg-red-100 text-red-700' : 
+                                                u.role === UserRole.EDITOR ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
+                                              {u.role}
+                                          </span>
+                                      </td>
+                                      <td className="p-4 space-x-2">
+                                          <button onClick={() => handleOpenUserModal(u)} className="text-blue-600 text-sm hover:underline font-medium">Modifier</button>
+                                          {u.id !== user.id && ( 
+                                              <button onClick={() => handleDeleteUser(u.id)} className="text-red-600 text-sm hover:underline font-medium">Supprimer</button>
+                                          )}
+                                      </td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          )}
+
+          {/* PROFILE TAB */}
+          {activeTab === 'profile' && (
+              <div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Mon Profil</h2>
+                  <div className="bg-white rounded shadow p-6 max-w-lg">
+                      <div className="flex items-center gap-4 mb-6">
+                          <img src={user.avatar} className="w-16 h-16 rounded-full border-2 border-brand-blue" />
+                          <div>
+                              <h3 className="text-xl font-bold">{user.name}</h3>
+                              <p className="text-gray-500">{user.email}</p>
+                              <span className="inline-block bg-brand-blue text-white text-xs px-2 py-1 rounded mt-1">{user.role}</span>
+                          </div>
+                      </div>
+                      <div className="space-y-4">
+                          <div>
+                              <label className="block text-sm font-bold text-gray-700">Nom complet</label>
+                              <input type="text" value={user.name} disabled className="w-full border p-2 rounded bg-gray-50 text-gray-500" />
+                          </div>
+                          <div>
+                              <label className="block text-sm font-bold text-gray-700">Email</label>
+                              <input type="email" value={user.email} disabled className="w-full border p-2 rounded bg-gray-50 text-gray-500" />
+                          </div>
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                              <p className="text-sm text-yellow-700">
+                                  Pour modifier votre profil, veuillez contacter un Administrateur ou utiliser l'onglet Gestion Utilisateurs si vous êtes Admin.
+                              </p>
+                          </div>
+                      </div>
+                  </div>
             </div>
-        )}
+          )}
+        </main>
+      </div>
 
-        {/* ADS TAB */}
-        {activeTab === 'ads' && PERMISSIONS.canManageAds(user.role) && (
-            <div>
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-3xl font-serif font-bold text-gray-800">Gestion Publicités</h2>
-                        <p className="text-gray-500 text-sm">Ajoutez des bannières, vidéos ou codes scripts.</p>
-                    </div>
-                    <button onClick={() => handleOpenAdModal()} className="bg-brand-blue text-white px-6 py-3 rounded-full hover:bg-blue-700 shadow-lg font-bold text-sm">
-                        + Nouvelle Publicité
-                    </button>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold tracking-wider">
-                            <tr>
-                                <th className="p-4">Titre</th>
-                                <th className="p-4">Emplacement</th>
-                                <th className="p-4">Type</th>
-                                <th className="p-4">Aperçu Contenu</th>
-                                <th className="p-4">Statut</th>
-                                <th className="p-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 text-sm">
-                            {adsList.map(ad => (
-                                <tr key={ad.id} className="hover:bg-gray-50">
-                                    <td className="p-4 font-bold text-gray-800">{ad.title}</td>
-                                    <td className="p-4 text-xs">
-                                        <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">{ad.location}</span>
-                                    </td>
-                                    <td className="p-4 text-gray-600">{ad.type}</td>
-                                    <td className="p-4 text-xs text-gray-400 truncate max-w-[150px]">{ad.content.substring(0, 30)}...</td>
-                                    <td className="p-4">
-                                        {ad.active ? (
-                                            <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded">Actif</span>
-                                        ) : (
-                                            <span className="text-gray-500 font-bold text-xs bg-gray-100 px-2 py-1 rounded">Inactif</span>
-                                        )}
-                                    </td>
-                                    <td className="p-4 text-right space-x-2">
-                                        <button onClick={() => handleOpenAdModal(ad)} className="text-blue-600 hover:text-blue-800 font-medium">Modifier</button>
-                                        <button onClick={() => handleDeleteAd(ad.id)} className="text-red-600 hover:text-red-800 font-medium">Supprimer</button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {adsList.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="p-8 text-center text-gray-400 italic">Aucune publicité configurée.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        )}
-
-        {/* CATEGORIES TAB (Admin Only) */}
-        {activeTab === 'categories' && PERMISSIONS.canManageCategories(user.role) && (
-             <div>
-                <h2 className="text-3xl font-serif font-bold text-gray-800 mb-2">Gestion des Catégories</h2>
-                <p className="text-gray-500 text-sm mb-6">Ajoutez ou supprimez des catégories pour classer les articles.</p>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Add Category Form */}
-                    <div className="bg-white p-6 rounded-lg shadow-md h-fit">
-                        <h3 className="font-bold text-lg mb-4">Nouvelle Catégorie</h3>
-                        <div className="flex flex-col gap-3">
-                            <input 
-                                type="text" 
-                                placeholder="Nom de la catégorie..." 
-                                className="border border-gray-300 bg-white text-gray-900 p-3 rounded focus:border-brand-blue outline-none"
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
-                            />
-                            <button onClick={handleAddCategory} className="bg-brand-blue text-white py-2 rounded font-bold hover:bg-blue-700">
-                                Ajouter
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* List */}
-                    <div className="lg:col-span-2 bg-white rounded-lg shadow-md overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b">
-                                <tr>
-                                    <th className="p-4">Nom</th>
-                                    <th className="p-4">Slug</th>
-                                    <th className="p-4 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {categoriesList.map(cat => (
-                                    <tr key={cat.id} className="hover:bg-gray-50">
-                                        <td className="p-4 font-bold">{cat.name}</td>
-                                        <td className="p-4 text-gray-500 text-sm">{cat.slug}</td>
-                                        <td className="p-4 text-right">
-                                            <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-600 hover:text-red-800 text-sm font-bold">Supprimer</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-             </div>
-        )}
-
-        {/* USERS TAB (Admin Only) */}
-        {activeTab === 'users' && PERMISSIONS.canManageUsers(user.role) && (
-            <div>
-                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h2>
-                    <button onClick={() => handleOpenUserModal()} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-bold text-sm">
-                        + Créer Utilisateur
-                    </button>
-                 </div>
-                 
-                 <div className="bg-white rounded shadow p-0">
-                     <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b">
-                            <tr>
-                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Utilisateur</th>
-                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Rôle / Permissions</th>
-                                <th className="p-4 text-xs font-bold text-gray-500 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {usersList.map(u => (
-                                <tr key={u.id}>
-                                    <td className="p-4 flex items-center gap-3">
-                                        <img src={u.avatar} className="w-8 h-8 rounded-full border border-gray-200" />
-                                        <div>
-                                            <div className="font-bold text-gray-900">{u.name}</div>
-                                            <div className="text-xs text-gray-500">{u.email}</div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`inline-block px-2 py-1 rounded text-xs font-bold 
-                                            ${u.role === UserRole.ADMIN ? 'bg-red-100 text-red-700' : 
-                                              u.role === UserRole.EDITOR ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
-                                            {u.role}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 space-x-2">
-                                        <button onClick={() => handleOpenUserModal(u)} className="text-blue-600 text-sm hover:underline font-medium">Modifier</button>
-                                        {u.id !== user.id && ( 
-                                            <button onClick={() => handleDeleteUser(u.id)} className="text-red-600 text-sm hover:underline font-medium">Supprimer</button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                     </table>
-                 </div>
-            </div>
-        )}
-
-        {/* PROFILE TAB */}
-        {activeTab === 'profile' && (
-             <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Mon Profil</h2>
-                <div className="bg-white rounded shadow p-6 max-w-lg">
-                    <div className="flex items-center gap-4 mb-6">
-                        <img src={user.avatar} className="w-16 h-16 rounded-full border-2 border-brand-blue" />
-                        <div>
-                            <h3 className="text-xl font-bold">{user.name}</h3>
-                            <p className="text-gray-500">{user.email}</p>
-                            <span className="inline-block bg-brand-blue text-white text-xs px-2 py-1 rounded mt-1">{user.role}</span>
-                        </div>
-                    </div>
-                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700">Nom complet</label>
-                            <input type="text" value={user.name} disabled className="w-full border p-2 rounded bg-gray-50 text-gray-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700">Email</label>
-                            <input type="email" value={user.email} disabled className="w-full border p-2 rounded bg-gray-50 text-gray-500" />
-                        </div>
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                            <p className="text-sm text-yellow-700">
-                                Pour modifier votre profil, veuillez contacter un Administrateur ou utiliser l'onglet Gestion Utilisateurs si vous êtes Admin.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-           </div>
-        )}
-      </main>
-
+      {/* MODALS SECTION - USING INLINE Z-INDEX TO FORCE VISIBILITY */}
+      
       {/* Article Modal */}
       {isEditorOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex flex-col overflow-hidden">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-80 flex flex-col overflow-hidden" style={{ zIndex: 9999 }}>
             {/* Modal Header */}
             <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-10">
                 <div className="flex items-center gap-4">
@@ -756,11 +789,12 @@ export const AdminDashboard = () => {
 
                 </div>
             </div>
-        )}
+        </div>
+      )}
 
-        {/* User Management Modal */}
-        {isUserModalOpen && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+      {/* User Management Modal */}
+      {isUserModalOpen && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
             <div className="bg-white rounded-lg shadow-xl w-full max-w-lg border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-lg">
                     <h3 className="text-lg font-bold text-gray-800">{currentUserData.id ? 'Modifier Utilisateur' : 'Créer Utilisateur'}</h3>
@@ -794,7 +828,7 @@ export const AdminDashboard = () => {
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nom Complet</label>
                             <input type="text" className="w-full border border-gray-300 bg-white text-gray-900 p-3 rounded focus:ring-2 focus:ring-brand-blue outline-none" 
                                 placeholder="Ex: Jean Dupont"
-                                value={currentUserData.name} 
+                                value={currentUserData.name || ''} 
                                 onChange={(e) => setCurrentUserData({...currentUserData, name: e.target.value})} 
                             />
                         </div>
@@ -802,7 +836,7 @@ export const AdminDashboard = () => {
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
                             <input type="email" className="w-full border border-gray-300 bg-white text-gray-900 p-3 rounded focus:ring-2 focus:ring-brand-blue outline-none" 
                                 placeholder="Ex: jean@worldcanalinfo.com"
-                                value={currentUserData.email} 
+                                value={currentUserData.email || ''} 
                                 onChange={(e) => setCurrentUserData({...currentUserData, email: e.target.value})} 
                             />
                         </div>
@@ -825,7 +859,7 @@ export const AdminDashboard = () => {
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Rôle et Permissions</label>
                             <select className="w-full border border-gray-300 bg-white text-gray-900 p-3 rounded focus:ring-2 focus:ring-brand-blue outline-none cursor-pointer"
-                                value={currentUserData.role}
+                                value={currentUserData.role || UserRole.CONTRIBUTOR}
                                 onChange={(e) => setCurrentUserData({...currentUserData, role: e.target.value as UserRole})}
                             >
                                 <option value={UserRole.CONTRIBUTOR} className="text-gray-900">Contributeur (Peut écrire, doit soumettre)</option>
@@ -845,11 +879,11 @@ export const AdminDashboard = () => {
                 </div>
             </div>
           </div>
-        )}
+      )}
 
       {/* AD MANAGEMENT MODAL */}
       {isAdModalOpen && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-lg">
                     <h3 className="text-lg font-bold text-gray-800">{currentAd.id ? 'Modifier Publicité' : 'Créer Publicité'}</h3>
@@ -864,13 +898,13 @@ export const AdminDashboard = () => {
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nom de la pub</label>
                                 <input type="text" className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-brand-blue outline-none" 
                                     placeholder="Ex: Bannière Coca-Cola"
-                                    value={currentAd.title} onChange={(e) => setCurrentAd({...currentAd, title: e.target.value})}
+                                    value={currentAd.title || ''} onChange={(e) => setCurrentAd({...currentAd, title: e.target.value})}
                                 />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Emplacement</label>
                                 <select className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-brand-blue outline-none"
-                                    value={currentAd.location} onChange={(e) => setCurrentAd({...currentAd, location: e.target.value as AdLocation})}
+                                    value={currentAd.location || AdLocation.HEADER_LEADERBOARD} onChange={(e) => setCurrentAd({...currentAd, location: e.target.value as AdLocation})}
                                 >
                                     <option value={AdLocation.HEADER_LEADERBOARD}>Header (728x90)</option>
                                     <option value={AdLocation.SIDEBAR_SQUARE}>Sidebar Haut (Carré 300x250)</option>
@@ -906,7 +940,7 @@ export const AdminDashboard = () => {
                                      <textarea 
                                         className="w-full h-32 p-2 border border-gray-300 rounded font-mono text-xs" 
                                         placeholder="<script>...</script> ou <iframe...>"
-                                        value={currentAd.content} onChange={(e) => setCurrentAd({...currentAd, content: e.target.value})}
+                                        value={currentAd.content || ''} onChange={(e) => setCurrentAd({...currentAd, content: e.target.value})}
                                      ></textarea>
                                  </div>
                              ) : (
@@ -917,7 +951,7 @@ export const AdminDashboard = () => {
                                      </div>
                                      
                                      {uploadType === 'url' ? (
-                                         <input type="text" className="w-full border p-2 rounded" placeholder="https://..." value={currentAd.content} onChange={(e) => setCurrentAd({...currentAd, content: e.target.value})} />
+                                         <input type="text" className="w-full border p-2 rounded" placeholder="https://..." value={currentAd.content || ''} onChange={(e) => setCurrentAd({...currentAd, content: e.target.value})} />
                                      ) : (
                                          <input type="file" accept={currentAd.type === AdType.IMAGE ? "image/*" : "video/*"} onChange={handleAdContentUpload} className="w-full border p-2 rounded bg-white" />
                                      )}
@@ -925,7 +959,7 @@ export const AdminDashboard = () => {
                                      {/* Link URL (Only for Image/Video) */}
                                      <div className="mt-3 pt-3 border-t border-gray-200">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Lien de destination (Au clic)</label>
-                                        <input type="text" className="w-full border p-2 rounded" placeholder="https://site-client.com" value={currentAd.linkUrl} onChange={(e) => setCurrentAd({...currentAd, linkUrl: e.target.value})} />
+                                        <input type="text" className="w-full border p-2 rounded" placeholder="https://site-client.com" value={currentAd.linkUrl || ''} onChange={(e) => setCurrentAd({...currentAd, linkUrl: e.target.value})} />
                                      </div>
                                  </div>
                              )}
@@ -946,7 +980,6 @@ export const AdminDashboard = () => {
             </div>
           </div>
       )}
-
-    </div>
+    </>
   );
 };
