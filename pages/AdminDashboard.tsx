@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getArticles, getUsers, saveArticle, deleteArticle, saveUser, deleteUser, getCategories, saveCategory, deleteCategory, getAds, saveAd, deleteAd } from '../services/mockDatabase';
+import { getArticles, getUsers, saveArticle, deleteArticle, saveUser, deleteUser, getCategories, saveCategory, deleteCategory, updateCategory, bulkUpdateArticleCategory, getAds, saveAd, deleteAd } from '../services/mockDatabase';
 import { Article, User, UserRole, ArticleStatus, PERMISSIONS, Category, Ad, AdType, AdLocation } from '../types';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -21,6 +21,13 @@ export const AdminDashboard = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
+  // Category Management State
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategory, setEditingCategory] = useState<{id: string, name: string} | null>(null);
+  const [categoryDeleteData, setCategoryDeleteData] = useState<{category: Category, articleCount: number} | null>(null);
+  const [targetCategoryForMove, setTargetCategoryForMove] = useState<string>('');
+
+
   // Forms State
   // Initialize with default values to prevent uncontrolled input warnings
   const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({
@@ -33,7 +40,6 @@ export const AdminDashboard = () => {
   const [currentAd, setCurrentAd] = useState<Partial<Ad>>({
       title: '', location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE, content: '', linkUrl: '', active: true
   });
-  const [newCategoryName, setNewCategoryName] = useState('');
 
   // UI State
   const [mediaTab, setMediaTab] = useState<'image' | 'video'>('image');
@@ -233,11 +239,47 @@ export const AdminDashboard = () => {
     refreshData();
   };
 
-  const handleDeleteCategory = (id: string) => {
-      if(window.confirm("Supprimer cette catégorie ?")) {
-          deleteCategory(id);
-          refreshData();
+  // Triggered when clicking "Delete" on a category
+  const initiateDeleteCategory = (category: Category) => {
+      // Count articles using this category
+      const count = articles.filter(a => a.category === category.name).length;
+      if (count > 0) {
+          // Open reassignment modal
+          setCategoryDeleteData({ category, articleCount: count });
+          // Set default target to the first available category that is NOT the one being deleted
+          const firstAvailable = categoriesList.find(c => c.id !== category.id);
+          if (firstAvailable) setTargetCategoryForMove(firstAvailable.name);
+      } else {
+          // No articles, simple delete
+          if (window.confirm(`Supprimer la catégorie "${category.name}" ?`)) {
+              deleteCategory(category.id);
+              refreshData();
+          }
       }
+  };
+
+  const confirmCategoryDeleteWithMove = () => {
+      if (!categoryDeleteData || !targetCategoryForMove) return;
+      
+      // Update articles
+      bulkUpdateArticleCategory(categoryDeleteData.category.name, targetCategoryForMove);
+      // Delete category
+      deleteCategory(categoryDeleteData.category.id);
+      
+      // Cleanup
+      setCategoryDeleteData(null);
+      refreshData();
+  };
+
+  const startEditingCategory = (category: Category) => {
+      setEditingCategory({ id: category.id, name: category.name });
+  };
+
+  const saveEditingCategory = () => {
+      if (!editingCategory || !editingCategory.name.trim()) return;
+      updateCategory(editingCategory.id, editingCategory.name.trim());
+      setEditingCategory(null);
+      refreshData();
   };
 
   // --- AD MANAGEMENT LOGIC ---
@@ -504,7 +546,7 @@ export const AdminDashboard = () => {
           {activeTab === 'categories' && PERMISSIONS.canManageCategories(user.role) && (
               <div>
                   <h2 className="text-3xl font-serif font-bold text-gray-800 mb-2">Gestion des Catégories</h2>
-                  <p className="text-gray-500 text-sm mb-6">Ajoutez ou supprimez des catégories pour classer les articles.</p>
+                  <p className="text-gray-500 text-sm mb-6">Ajoutez, modifiez ou supprimez des catégories pour classer les articles.</p>
                   
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                       {/* Add Category Form */}
@@ -538,10 +580,33 @@ export const AdminDashboard = () => {
                               <tbody className="divide-y divide-gray-100">
                                   {categoriesList.map(cat => (
                                       <tr key={cat.id} className="hover:bg-gray-50">
-                                          <td className="p-4 font-bold">{cat.name}</td>
+                                          <td className="p-4 font-bold text-gray-800">
+                                              {editingCategory && editingCategory.id === cat.id ? (
+                                                  <input 
+                                                    type="text" 
+                                                    autoFocus
+                                                    className="border border-brand-blue p-1 rounded text-gray-900" 
+                                                    value={editingCategory.name} 
+                                                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                                    onKeyDown={(e) => e.key === 'Enter' && saveEditingCategory()}
+                                                  />
+                                              ) : (
+                                                  cat.name
+                                              )}
+                                          </td>
                                           <td className="p-4 text-gray-500 text-sm">{cat.slug}</td>
-                                          <td className="p-4 text-right">
-                                              <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-600 hover:text-red-800 text-sm font-bold">Supprimer</button>
+                                          <td className="p-4 text-right space-x-3">
+                                              {editingCategory && editingCategory.id === cat.id ? (
+                                                  <>
+                                                    <button onClick={saveEditingCategory} className="text-green-600 font-bold hover:underline text-sm">Enregistrer</button>
+                                                    <button onClick={() => setEditingCategory(null)} className="text-gray-500 hover:underline text-sm">Annuler</button>
+                                                  </>
+                                              ) : (
+                                                  <>
+                                                    <button onClick={() => startEditingCategory(cat)} className="text-blue-600 hover:text-blue-800 text-sm font-bold">Modifier</button>
+                                                    <button onClick={() => initiateDeleteCategory(cat)} className="text-red-600 hover:text-red-800 text-sm font-bold">Supprimer</button>
+                                                  </>
+                                              )}
                                           </td>
                                       </tr>
                                   ))}
@@ -919,15 +984,15 @@ export const AdminDashboard = () => {
                             <div className="flex gap-4">
                                 <label className="flex items-center gap-2 cursor-pointer border p-3 rounded hover:bg-gray-50">
                                     <input type="radio" name="adType" checked={currentAd.type === AdType.IMAGE} onChange={() => setCurrentAd({...currentAd, type: AdType.IMAGE})} />
-                                    <span>Image</span>
+                                    <span className="text-gray-900 font-bold text-sm">Image</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer border p-3 rounded hover:bg-gray-50">
                                     <input type="radio" name="adType" checked={currentAd.type === AdType.VIDEO} onChange={() => setCurrentAd({...currentAd, type: AdType.VIDEO})} />
-                                    <span>Vidéo</span>
+                                    <span className="text-gray-900 font-bold text-sm">Vidéo</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer border p-3 rounded hover:bg-gray-50">
                                     <input type="radio" name="adType" checked={currentAd.type === AdType.SCRIPT} onChange={() => setCurrentAd({...currentAd, type: AdType.SCRIPT})} />
-                                    <span>Code / Script</span>
+                                    <span className="text-gray-900 font-bold text-sm">Code / Script</span>
                                 </label>
                             </div>
                          </div>
@@ -978,6 +1043,48 @@ export const AdminDashboard = () => {
                     <button onClick={handleSaveAd} className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow-sm">Enregistrer Publicité</button>
                 </div>
             </div>
+          </div>
+      )}
+
+      {/* CATEGORY REASSIGNMENT MODAL */}
+      {categoryDeleteData && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center p-4" style={{ zIndex: 99999 }}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-md border border-gray-200 p-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">Attention !</h3>
+                  <p className="text-gray-600 mb-4">
+                      La catégorie <span className="font-bold text-brand-blue">"{categoryDeleteData.category.name}"</span> contient {categoryDeleteData.articleCount} article(s).
+                      <br/>
+                      Veuillez choisir une nouvelle catégorie pour déplacer ces articles avant de supprimer.
+                  </p>
+                  
+                  <div className="mb-6">
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Déplacer les articles vers :</label>
+                      <select 
+                          className="w-full border border-gray-300 p-3 rounded bg-white text-gray-900 focus:border-brand-blue outline-none"
+                          value={targetCategoryForMove}
+                          onChange={(e) => setTargetCategoryForMove(e.target.value)}
+                      >
+                          {categoriesList.filter(c => c.id !== categoryDeleteData.category.id).map(c => (
+                              <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                      </select>
+                  </div>
+
+                  <div className="flex justify-end gap-3">
+                      <button 
+                          onClick={() => setCategoryDeleteData(null)} 
+                          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded font-medium"
+                      >
+                          Annuler
+                      </button>
+                      <button 
+                          onClick={confirmCategoryDeleteWithMove} 
+                          className="px-4 py-2 bg-red-600 text-white rounded font-bold hover:bg-red-700"
+                      >
+                          Déplacer & Supprimer
+                      </button>
+                  </div>
+              </div>
           </div>
       )}
     </>

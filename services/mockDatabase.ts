@@ -198,6 +198,21 @@ export const saveCategory = (category: Category) => {
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
 };
 
+// NEW: Update Category Name
+export const updateCategory = (id: string, newName: string) => {
+    const categories = getCategories();
+    const index = categories.findIndex(c => c.id === id);
+    if (index >= 0) {
+        const oldName = categories[index].name;
+        categories[index].name = newName;
+        categories[index].slug = newName; // Simple slug update
+        localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+        
+        // Also update articles that had the old category name
+        bulkUpdateArticleCategory(oldName, newName);
+    }
+};
+
 export const deleteCategory = (id: string) => {
     const categories = getCategories().filter(c => c.id !== id);
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
@@ -221,6 +236,18 @@ export const saveArticle = (article: Article) => {
 export const deleteArticle = (id: string) => {
   const articles = getArticles().filter(a => a.id !== id);
   localStorage.setItem(ARTICLES_KEY, JSON.stringify(articles));
+};
+
+// NEW: Bulk update article category (used when deleting a category to move articles elsewhere)
+export const bulkUpdateArticleCategory = (oldCategory: string, newCategory: string) => {
+    const articles = getArticles();
+    const updatedArticles = articles.map(a => {
+        if (a.category === oldCategory) {
+            return { ...a, category: newCategory };
+        }
+        return a;
+    });
+    localStorage.setItem(ARTICLES_KEY, JSON.stringify(updatedArticles));
 };
 
 // Ad Operations

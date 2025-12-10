@@ -43,7 +43,7 @@ export const LoginPage = () => {
                 required
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-brand-blue outline-none bg-white"
+                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-brand-blue outline-none bg-white text-gray-900 placeholder-gray-500"
                 placeholder="Votre email professionnel"
             />
           </div>
@@ -54,7 +54,7 @@ export const LoginPage = () => {
                 required
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-brand-blue outline-none bg-white"
+                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-brand-blue outline-none bg-white text-gray-900 placeholder-gray-500"
                 placeholder="Votre mot de passe"
             />
           </div>
