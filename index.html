@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World Canal Info - L'actualité en continu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-blue': '#0055a4',
+              'brand-red': '#e3001b',
+              'brand-dark': '#222222',
+              'brand-gray': '#f4f4f4',
+              'brand-yellow': '#facc15', // Added for World Canal Info styling
+            },
+            fontFamily: {
+              sans: ['Roboto', 'sans-serif'],
+              serif: ['Playfair Display', 'serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body { font-family: 'Roboto', sans-serif; background-color: #f8f9fa; }
+      h1, h2, h3, .brand-font { font-family: 'Playfair Display', serif; }
+      /* Custom scrollbar for editor */
+      .editor-scroll::-webkit-scrollbar { width: 8px; }
+      .editor-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+      .editor-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+      .editor-scroll::-webkit-scrollbar-thumb:hover { background: #999; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
