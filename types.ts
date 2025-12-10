@@ -39,6 +39,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string; // Added password field (optional for existing types, but used in logic)
   role: UserRole;
   avatar?: string;
 }

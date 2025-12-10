@@ -2,9 +2,9 @@ import { Article, ArticleStatus, Category, User, UserRole, Ad, AdLocation, AdTyp
 
 // Initial Seed Data
 const MOCK_USERS: User[] = [
-  { id: 'u1', name: 'Super Admin', email: 'admin@worldcanalinfo.com', role: UserRole.ADMIN, avatar: 'https://ui-avatars.com/api/?name=Admin&background=random' },
-  { id: 'u2', name: 'Jean Editor', email: 'editor@worldcanalinfo.com', role: UserRole.EDITOR, avatar: 'https://i.pravatar.cc/150?u=jean' },
-  { id: 'u3', name: 'Paul Contributor', email: 'contrib@worldcanalinfo.com', role: UserRole.CONTRIBUTOR, avatar: 'https://i.pravatar.cc/150?u=paul' },
+  { id: 'u1', name: 'Super Admin', email: 'admin@worldcanalinfo.com', password: 'admin', role: UserRole.ADMIN, avatar: 'https://ui-avatars.com/api/?name=Admin&background=random' },
+  { id: 'u2', name: 'Jean Editor', email: 'editor@worldcanalinfo.com', password: 'editor', role: UserRole.EDITOR, avatar: 'https://i.pravatar.cc/150?u=jean' },
+  { id: 'u3', name: 'Paul Contributor', email: 'contrib@worldcanalinfo.com', password: 'contrib', role: UserRole.CONTRIBUTOR, avatar: 'https://i.pravatar.cc/150?u=paul' },
 ];
 
 const MOCK_CATEGORIES: Category[] = [

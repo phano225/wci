@@ -24,6 +24,7 @@ export const AdminDashboard = () => {
   // Forms State
   const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({});
   const [currentUserData, setCurrentUserData] = useState<Partial<User>>({});
+  const [newUserPassword, setNewUserPassword] = useState(''); // State for managing user password
   const [currentAd, setCurrentAd] = useState<Partial<Ad>>({});
   const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -147,6 +148,7 @@ export const AdminDashboard = () => {
 
   // --- User Logic ---
   const handleOpenUserModal = (userData?: User) => {
+    setNewUserPassword(''); // Reset password field
     if (userData) {
         setCurrentUserData({...userData});
     } else {
@@ -177,13 +179,23 @@ export const AdminDashboard = () => {
 
   const handleSaveUser = () => {
     if (!currentUserData.name || !currentUserData.email || !currentUserData.role) return;
+    
+    // For new users, password is required. For edits, it's optional.
+    if (!currentUserData.id && !newUserPassword) {
+        alert("Un mot de passe est requis pour un nouvel utilisateur.");
+        return;
+    }
+
     const newUser: User = {
         id: currentUserData.id || 'u' + Date.now(),
         name: currentUserData.name,
         email: currentUserData.email,
         role: currentUserData.role,
-        avatar: currentUserData.avatar || `https://ui-avatars.com/api/?name=${currentUserData.name}`
+        avatar: currentUserData.avatar || `https://ui-avatars.com/api/?name=${currentUserData.name}`,
+        // Keep existing password if not changed, or set new one
+        password: newUserPassword ? newUserPassword : (currentUserData.password || '123456')
     };
+
     saveUser(newUser);
     setIsUserModalOpen(false);
     refreshData();
@@ -744,11 +756,10 @@ export const AdminDashboard = () => {
 
                 </div>
             </div>
-        </div>
-      )}
+        )}
 
-      {/* User Management Modal */}
-      {isUserModalOpen && (
+        {/* User Management Modal */}
+        {isUserModalOpen && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-lg border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-lg">
@@ -795,6 +806,22 @@ export const AdminDashboard = () => {
                                 onChange={(e) => setCurrentUserData({...currentUserData, email: e.target.value})} 
                             />
                         </div>
+                        
+                        {/* Password Management */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                                {currentUserData.id ? 'Modifier Mot de passe (Laisser vide pour ne pas changer)' : 'Mot de passe'}
+                            </label>
+                            <input 
+                                type="text" 
+                                className="w-full border border-gray-300 bg-white text-gray-900 p-3 rounded focus:ring-2 focus:ring-brand-blue outline-none" 
+                                placeholder="******"
+                                value={newUserPassword} 
+                                onChange={(e) => setNewUserPassword(e.target.value)} 
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Seul l'administrateur peut définir le mot de passe.</p>
+                        </div>
+
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Rôle et Permissions</label>
                             <select className="w-full border border-gray-300 bg-white text-gray-900 p-3 rounded focus:ring-2 focus:ring-brand-blue outline-none cursor-pointer"
@@ -818,7 +845,7 @@ export const AdminDashboard = () => {
                 </div>
             </div>
           </div>
-      )}
+        )}
 
       {/* AD MANAGEMENT MODAL */}
       {isAdModalOpen && (

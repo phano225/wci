@@ -4,7 +4,7 @@ import { getUsers, initDB } from '../services/mockDatabase';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, role: UserRole) => void;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -24,19 +24,16 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = (email: string, role: UserRole) => {
-    // Simple mock login based on predefined email/role match or generic login
+  const login = async (email: string, password: string): Promise<boolean> => {
     const users = getUsers();
-    const foundUser = users.find(u => u.email === email && u.role === role);
+    const foundUser = users.find(u => u.email === email && u.password === password);
     
-    // Fallback for demo purposes if exact match not found in initial seed
-    const targetUser = foundUser || users.find(u => u.role === role);
-
-    if (targetUser) {
-      setUser(targetUser);
-      localStorage.setItem('lavenir_current_user', JSON.stringify(targetUser));
+    if (foundUser) {
+      setUser(foundUser);
+      localStorage.setItem('lavenir_current_user', JSON.stringify(foundUser));
+      return true;
     } else {
-      alert('Utilisateur non trouvé pour cette démo. Utilisez les identifiants suggérés.');
+      return false;
     }
   };
 
