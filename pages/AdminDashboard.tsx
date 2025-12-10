@@ -27,8 +27,14 @@ export const AdminDashboard = () => {
   const [categoryDeleteData, setCategoryDeleteData] = useState<{category: Category, articleCount: number} | null>(null);
   const [targetCategoryForMove, setTargetCategoryForMove] = useState<string>('');
 
-  // Rich Editor Ref
+  // Rich Editor Refs & State
   const editorRef = useRef<HTMLDivElement>(null);
+  const lastSelection = useRef<Range | null>(null);
+  
+  // New State for Inline Toolbar Tools (replacing prompts)
+  const [activeTool, setActiveTool] = useState<'link' | 'image' | 'video' | null>(null);
+  const [toolInputValue, setToolInputValue] = useState('');
+  const [toolInputText, setToolInputText] = useState(''); // New state for Link Text display
 
   // Forms State
   const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({
@@ -54,12 +60,14 @@ export const AdminDashboard = () => {
     refreshData();
   }, [user, navigate]);
 
-  // Sync content for editor when modal opens
+  // Sync content for editor ONLY when modal opens or article ID changes.
   useEffect(() => {
     if (isEditorOpen && editorRef.current) {
-        editorRef.current.innerHTML = currentArticle.content || '';
+        if (editorRef.current.innerHTML !== (currentArticle.content || '')) {
+             editorRef.current.innerHTML = currentArticle.content || '';
+        }
     }
-  }, [isEditorOpen, currentArticle.content]);
+  }, [isEditorOpen, currentArticle.id]); 
 
   const refreshData = () => {
     setArticles(getArticles());
@@ -71,46 +79,119 @@ export const AdminDashboard = () => {
   };
 
   // --- Rich Editor Functions ---
+  
+  // Track selection whenever it changes in the editor
+  const saveSelectionState = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editorRef.current && editorRef.current.contains(sel.anchorNode)) {
+        lastSelection.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  // Helper: Restore the cursor position from the stored ref
+  const restoreSelection = () => {
+    if (editorRef.current) {
+        editorRef.current.focus();
+        const range = lastSelection.current;
+        if (range) {
+            const sel = window.getSelection();
+            if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+    }
+  };
+
   const execCmd = (command: string, value: string | undefined = undefined) => {
+    restoreSelection();
     document.execCommand(command, false, value);
-    // Focus back on editor
     if(editorRef.current) editorRef.current.focus();
+    handleEditorInput();
   };
 
   const handleEditorInput = () => {
+      saveSelectionState();
       if (editorRef.current) {
           setCurrentArticle(prev => ({ ...prev, content: editorRef.current!.innerHTML }));
       }
   };
 
-  const insertLink = () => {
-      const url = prompt("Entrez l'URL du lien:", "https://");
-      if (url) execCmd('createLink', url);
-  };
-
-  const insertImage = () => {
-      const url = prompt("Entrez l'URL de l'image:", "https://");
-      if (url) execCmd('insertImage', url);
-  };
-
-  const insertVideo = () => {
-      const url = prompt("Entrez l'URL de la vidéo (YouTube/MP4) ou Code Embed:", "https://");
-      if (url) {
-          // Simple check for YouTube to create iframe, else basic video tag or just link
-          let html = '';
-          if (url.includes('youtube.com') || url.includes('youtu.be')) {
-              const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-              html = `<iframe width="100%" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><br/>`;
-          } else if (url.includes('<iframe')) {
-              html = url + '<br/>';
-          } else {
-              // Assume raw video file
-              html = `<video controls width="100%" src="${url}"></video><br/>`;
-          }
-          execCmd('insertHTML', html);
+  // Initialize tool usage (opens the input field in toolbar)
+  const initTool = (tool: 'link' | 'image' | 'video') => {
+      // Ensure we have a selection saved or create one at end
+      if (!lastSelection.current) {
+          if(editorRef.current) editorRef.current.focus();
+          saveSelectionState();
       }
+
+      // If text is selected for a link, pre-fill the Text Input
+      const sel = window.getSelection();
+      if (tool === 'link' && sel && !sel.isCollapsed) {
+          setToolInputText(sel.toString());
+      } else {
+          setToolInputText('');
+      }
+
+      setActiveTool(tool);
+      setToolInputValue('');
   };
 
+  const cancelTool = () => {
+      setActiveTool(null);
+      setToolInputValue('');
+      setToolInputText('');
+      restoreSelection();
+  };
+
+  const applyTool = () => {
+      if (!toolInputValue) {
+          cancelTool();
+          return;
+      }
+
+      restoreSelection();
+
+      if (activeTool === 'link') {
+          // Use the custom text if provided, otherwise use the URL itself
+          const textToShow = toolInputText || toolInputValue;
+          
+          // Create HTML with specific styling for the link (Brand Blue + Underline)
+          const linkHtml = `<a href="${toolInputValue}" target="_blank" style="color: #0055a4; text-decoration: underline; font-weight: 500;">${textToShow}</a>`;
+          
+          // Using insertHTML allows us to inject the full anchor tag with style
+          document.execCommand('insertHTML', false, linkHtml);
+
+      } else if (activeTool === 'image') {
+          document.execCommand('insertImage', false, toolInputValue);
+      } else if (activeTool === 'video') {
+           let html = '';
+           const url = toolInputValue.trim();
+           
+           // Robust YouTube Regex to capture ID from various URL formats
+           // Covers: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, etc.
+           const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+           const match = url.match(ytRegExp);
+
+           if (match && match[2].length === 11) {
+              const videoId = match[2];
+              html = `<iframe width="100%" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="margin: 10px 0;"></iframe><br/>`;
+           } else if (url.startsWith('<iframe')) {
+               // User pasted the full embed code
+               html = url + '<br/>';
+           } else {
+               // Generic video URL (mp4, etc)
+               html = `<video controls width="100%" src="${url}" style="margin: 10px 0;"></video><br/>`;
+           }
+           
+           if (html) document.execCommand('insertHTML', false, html);
+      }
+
+      handleEditorInput();
+      setActiveTool(null);
+      setToolInputValue('');
+      setToolInputText('');
+  };
 
   // --- Article Logic ---
   const handleCreateNew = () => {
@@ -126,6 +207,8 @@ export const AdminDashboard = () => {
     setMediaTab('image');
     setUploadType('url');
     setIsEditorOpen(true);
+    lastSelection.current = null;
+    setActiveTool(null);
   };
 
   const handleEdit = (article: Article) => {
@@ -138,6 +221,8 @@ export const AdminDashboard = () => {
         setMediaTab('image');
         setUploadType(article.imageUrl && article.imageUrl.startsWith('data:') ? 'file' : 'url');
         setIsEditorOpen(true);
+        lastSelection.current = null;
+        setActiveTool(null);
     } else {
         alert("Action non autorisée.");
     }
@@ -160,8 +245,6 @@ export const AdminDashboard = () => {
 
   const handleSaveArticle = () => {
     if (!user || !currentArticle.title) return;
-    
-    // Ensure content is synced from ref if not updated yet
     const finalContent = editorRef.current ? editorRef.current.innerHTML : currentArticle.content || '';
 
     let status = currentArticle.status || ArticleStatus.DRAFT;
@@ -683,22 +766,65 @@ export const AdminDashboard = () => {
                         {/* MODERN RICH TEXT EDITOR */}
                         <div className="flex-1 flex flex-col border border-gray-300 rounded overflow-hidden">
                             {/* Toolbar */}
-                            <div className="bg-gray-50 border-b border-gray-300 p-2 flex gap-2 flex-wrap">
-                                <button onClick={() => execCmd('bold')} className="p-2 hover:bg-gray-200 rounded font-bold text-gray-700" title="Gras">B</button>
-                                <button onClick={() => execCmd('italic')} className="p-2 hover:bg-gray-200 rounded italic text-gray-700" title="Italique">I</button>
-                                <button onClick={() => execCmd('underline')} className="p-2 hover:bg-gray-200 rounded underline text-gray-700" title="Souligné">U</button>
-                                <div className="w-px bg-gray-300 mx-1"></div>
-                                <button onClick={insertLink} className="p-2 hover:bg-gray-200 rounded text-gray-700 text-sm" title="Lien">🔗 Lien</button>
-                                <button onClick={insertImage} className="p-2 hover:bg-gray-200 rounded text-gray-700 text-sm" title="Image">🖼️ Image</button>
-                                <button onClick={insertVideo} className="p-2 hover:bg-gray-200 rounded text-gray-700 text-sm" title="Vidéo">🎥 Vidéo</button>
+                            <div className="bg-gray-50 border-b border-gray-300 p-2 select-none">
+                                <div className="flex gap-2 flex-wrap mb-2">
+                                    <button onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('bold')} className="p-2 hover:bg-gray-200 rounded font-bold text-gray-700 bg-white border border-gray-200" title="Gras">B</button>
+                                    <button onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('italic')} className="p-2 hover:bg-gray-200 rounded italic text-gray-700 bg-white border border-gray-200" title="Italique">I</button>
+                                    <button onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('underline')} className="p-2 hover:bg-gray-200 rounded underline text-gray-700 bg-white border border-gray-200" title="Souligné">U</button>
+                                    <div className="w-px bg-gray-300 mx-1"></div>
+                                    <button onMouseDown={(e) => e.preventDefault()} onClick={() => initTool('link')} className={`p-2 rounded text-gray-700 text-sm border ${activeTool === 'link' ? 'bg-brand-blue text-white border-brand-blue' : 'bg-white hover:bg-gray-100 border-gray-200'}`} title="Lien">🔗 Lien</button>
+                                    <button onMouseDown={(e) => e.preventDefault()} onClick={() => initTool('image')} className={`p-2 rounded text-gray-700 text-sm border ${activeTool === 'image' ? 'bg-brand-blue text-white border-brand-blue' : 'bg-white hover:bg-gray-100 border-gray-200'}`} title="Image">🖼️ Image</button>
+                                    <button onMouseDown={(e) => e.preventDefault()} onClick={() => initTool('video')} className={`p-2 rounded text-gray-700 text-sm border ${activeTool === 'video' ? 'bg-brand-blue text-white border-brand-blue' : 'bg-white hover:bg-gray-100 border-gray-200'}`} title="Vidéo">🎥 Vidéo</button>
+                                </div>
+                                
+                                {/* Inline Tool Input Area */}
+                                {activeTool && (
+                                    <div className="flex flex-col gap-2 bg-gray-100 p-2 rounded border border-gray-300 animate-fade-in">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-gray-600 uppercase min-w-[80px]">
+                                                {activeTool === 'link' ? 'URL :' : activeTool === 'image' ? 'URL Image :' : 'URL Vidéo :'}
+                                            </span>
+                                            <input 
+                                                type="text" 
+                                                autoFocus
+                                                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:border-brand-blue outline-none"
+                                                placeholder={activeTool === 'video' ? 'https://youtube.com/watch?v=...' : 'https://...'}
+                                                value={toolInputValue}
+                                                onChange={(e) => setToolInputValue(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && applyTool()}
+                                            />
+                                        </div>
+                                        {/* Link Text Input - Only for Link Tool */}
+                                        {activeTool === 'link' && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-gray-600 uppercase min-w-[80px]">Nom lien :</span>
+                                                <input 
+                                                    type="text" 
+                                                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:border-brand-blue outline-none"
+                                                    placeholder="Texte à afficher (Ex: Cliquez ici)"
+                                                    value={toolInputText}
+                                                    onChange={(e) => setToolInputText(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && applyTool()}
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="flex justify-end gap-2 mt-1">
+                                            <button onClick={cancelTool} className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-400">Annuler</button>
+                                            <button onClick={applyTool} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">Valider</button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             {/* Editable Content Area */}
                             <div 
                                 ref={editorRef}
                                 contentEditable
-                                className="flex-1 p-4 bg-white outline-none overflow-y-auto prose max-w-none text-gray-900"
+                                suppressContentEditableWarning={true}
+                                className="flex-1 p-4 bg-white outline-none overflow-y-auto prose max-w-none text-gray-900 cursor-text"
                                 style={{ minHeight: '300px' }}
                                 onInput={handleEditorInput}
+                                onKeyUp={saveSelectionState}
+                                onMouseUp={saveSelectionState}
                             >
                             </div>
                         </div>
