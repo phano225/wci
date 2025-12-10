@@ -79,7 +79,10 @@ export const HomePage = () => {
                         <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
                         <span className="absolute bottom-0 left-0 bg-brand-blue text-white text-xs font-bold px-2 py-1">{article.category}</span>
                     </div>
-                    <h3 className="text-lg font-serif font-bold leading-tight group-hover:text-brand-blue line-clamp-2">{article.title}</h3>
+                    {/* CHANGED: Text red by default, blue on hover */}
+                    <h3 className="text-lg font-serif font-bold leading-tight text-brand-red group-hover:text-brand-blue line-clamp-2 transition-colors">
+                        {article.title}
+                    </h3>
                     <div className="mt-2 text-xs text-gray-400">
                         {new Date(article.createdAt).toLocaleDateString()}
                     </div>
@@ -103,7 +106,10 @@ export const HomePage = () => {
                         <div className="w-full md:w-2/3 flex flex-col justify-between">
                             <div>
                                 <span className="text-brand-red text-xs font-bold uppercase mb-1 block">{article.category}</span>
-                                <h3 className="text-lg font-bold font-serif group-hover:text-brand-blue">{article.title}</h3>
+                                {/* CHANGED: Text red by default, blue on hover */}
+                                <h3 className="text-lg font-bold font-serif text-brand-red group-hover:text-brand-blue transition-colors">
+                                    {article.title}
+                                </h3>
                                 <p className="text-sm text-gray-500 mt-2 line-clamp-2">{article.excerpt}</p>
                             </div>
                             <div className="text-xs text-gray-400 mt-2">
@@ -144,7 +150,10 @@ export const HomePage = () => {
                             <Link to={`/article/${article.id}`} className="flex gap-2 w-full">
                                 <img src={article.imageUrl} alt={article.title} className="w-16 h-16 object-cover flex-shrink-0 rounded-sm" />
                                 <div>
-                                    <h4 className="text-sm font-bold leading-tight group-hover:text-brand-blue line-clamp-2">{article.title}</h4>
+                                    {/* CHANGED: Text red by default, blue on hover */}
+                                    <h4 className="text-sm font-bold leading-tight text-brand-red group-hover:text-brand-blue line-clamp-2 transition-colors">
+                                        {article.title}
+                                    </h4>
                                     <span className="text-xs text-gray-400 mt-1 block">Il y a 2 heures</span>
                                 </div>
                             </Link>
