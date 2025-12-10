@@ -28,6 +28,44 @@ export const ArticlePage = () => {
     }
   }, [id]);
 
+  // Handle Meta Tags for Social Sharing (WhatsApp, Facebook, X)
+  useEffect(() => {
+    if (article) {
+        // Update Browser Title
+        document.title = `${article.title} - World Canal Info`;
+
+        // Helper function to set or create meta tags
+        const setMeta = (attrName: string, attrValue: string, content: string) => {
+            let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+            if (!element) {
+                element = document.createElement('meta');
+                element.setAttribute(attrName, attrValue);
+                document.head.appendChild(element);
+            }
+            element.setAttribute('content', content);
+        };
+
+        // Open Graph (Facebook, WhatsApp, LinkedIn)
+        setMeta('property', 'og:type', 'article');
+        setMeta('property', 'og:site_name', 'World Canal Info');
+        setMeta('property', 'og:title', article.title);
+        setMeta('property', 'og:description', article.excerpt);
+        setMeta('property', 'og:image', article.imageUrl);
+        setMeta('property', 'og:url', window.location.href);
+
+        // Twitter Card (X)
+        setMeta('name', 'twitter:card', 'summary_large_image');
+        setMeta('name', 'twitter:title', article.title);
+        setMeta('name', 'twitter:description', article.excerpt);
+        setMeta('name', 'twitter:image', article.imageUrl);
+
+        // Cleanup: Reset title when leaving (Optional, but good practice)
+        return () => {
+            document.title = 'World Canal Info - L\'actualité en continu';
+        };
+    }
+  }, [article]);
+
   if (!article) {
     return (
       <PublicLayout>
