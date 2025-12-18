@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, UserRole } from '../types';
+import { User } from '../types';
 import { getUsers, initDB } from '../services/mockDatabase';
 
 interface AuthContextType {
@@ -16,24 +16,34 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    initDB();
-    const storedUser = localStorage.getItem('lavenir_current_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const init = async () => {
+        await initDB(); // Seed database if empty
+        const storedUser = localStorage.getItem('lavenir_current_user');
+        if (storedUser) {
+           setUser(JSON.parse(storedUser));
+        }
+        setIsLoading(false);
+    };
+    init();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const users = getUsers();
-    const foundUser = users.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('lavenir_current_user', JSON.stringify(foundUser));
-      return true;
-    } else {
-      return false;
+    // Note: Pour une vraie sécurité, utilisez auth.signInWithEmailAndPassword de Firebase Auth.
+    // Ici on continue d'utiliser la collection "users" pour correspondre à votre modèle existant.
+    try {
+        const users = await getUsers();
+        const foundUser = users.find(u => u.email === email && u.password === password);
+        
+        if (foundUser) {
+          setUser(foundUser);
+          localStorage.setItem('lavenir_current_user', JSON.stringify(foundUser));
+          return true;
+        } else {
+          return false;
+        }
+    } catch (e) {
+        console.error(e);
+        return false;
     }
   };
 

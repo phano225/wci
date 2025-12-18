@@ -9,16 +9,16 @@ interface AdDisplayProps {
 export const AdDisplay: React.FC<AdDisplayProps> = ({ location }) => {
   const [ad, setAd] = useState<Ad | undefined>();
 
-  // Poll for changes just for the demo effect (in real app, use Context or React Query)
   useEffect(() => {
-    const fetchAd = () => {
-        const foundAd = getActiveAdByLocation(location);
+    const fetchAd = async () => {
+        const foundAd = await getActiveAdByLocation(location);
         setAd(foundAd);
     };
     
     fetchAd();
-    // Refresh every 5 seconds to show changes without refresh in this dev environment
-    const interval = setInterval(fetchAd, 5000);
+    // En production avec Firebase, on utiliserait onSnapshot pour le temps réel.
+    // Ici un simple polling suffit pour l'exemple.
+    const interval = setInterval(fetchAd, 10000);
     return () => clearInterval(interval);
   }, [location]);
 

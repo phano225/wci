@@ -9,32 +9,35 @@ export const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<Article | undefined>();
   const [related, setRelated] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      const found = getArticleById(id);
-      setArticle(found);
-      
-      // Fetch related articles (same category, excluding current)
-      if (found) {
-        const all = getArticles();
-        const rel = all.filter(a => 
-            a.status === ArticleStatus.PUBLISHED && 
-            a.category === found.category && 
-            a.id !== found.id
-        ).slice(0, 3);
-        setRelated(rel);
-      }
-    }
+    const fetchData = async () => {
+        if (id) {
+            setLoading(true);
+            const found = await getArticleById(id);
+            setArticle(found);
+            
+            // Fetch related articles (same category, excluding current)
+            if (found) {
+                const all = await getArticles();
+                const rel = all.filter(a => 
+                    a.status === ArticleStatus.PUBLISHED && 
+                    a.category === found.category && 
+                    a.id !== found.id
+                ).slice(0, 3);
+                setRelated(rel);
+            }
+            setLoading(false);
+        }
+    };
+    fetchData();
   }, [id]);
 
   // Handle Meta Tags for Social Sharing (WhatsApp, Facebook, X)
   useEffect(() => {
     if (article) {
-        // Update Browser Title
         document.title = `${article.title} - World Canal Info`;
-
-        // Helper function to set or create meta tags
         const setMeta = (attrName: string, attrValue: string, content: string) => {
             let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
             if (!element) {
@@ -44,27 +47,26 @@ export const ArticlePage = () => {
             }
             element.setAttribute('content', content);
         };
-
-        // Open Graph (Facebook, WhatsApp, LinkedIn)
         setMeta('property', 'og:type', 'article');
         setMeta('property', 'og:site_name', 'World Canal Info');
         setMeta('property', 'og:title', article.title);
         setMeta('property', 'og:description', article.excerpt);
         setMeta('property', 'og:image', article.imageUrl);
         setMeta('property', 'og:url', window.location.href);
-
-        // Twitter Card (X)
         setMeta('name', 'twitter:card', 'summary_large_image');
         setMeta('name', 'twitter:title', article.title);
         setMeta('name', 'twitter:description', article.excerpt);
         setMeta('name', 'twitter:image', article.imageUrl);
 
-        // Cleanup: Reset title when leaving (Optional, but good practice)
         return () => {
             document.title = 'World Canal Info - L\'actualité en continu';
         };
     }
   }, [article]);
+
+  if (loading) {
+      return <PublicLayout><div className="flex justify-center h-64 items-center">Chargement...</div></PublicLayout>;
+  }
 
   if (!article) {
     return (
@@ -77,7 +79,6 @@ export const ArticlePage = () => {
     );
   }
 
-  // Current URL for sharing
   const shareUrl = window.location.href;
   const shareText = article.title;
 
@@ -107,7 +108,6 @@ export const ArticlePage = () => {
 
             {/* Media Area */}
             <div className="mb-8">
-                {/* Check if video exists, otherwise show image */}
                 {article.videoUrl ? (
                     <div className="w-full aspect-video bg-black rounded overflow-hidden shadow-lg mb-4">
                        {article.videoUrl.startsWith('data:') || article.videoUrl.endsWith('.mp4') ? (
@@ -116,7 +116,6 @@ export const ArticlePage = () => {
                                Votre navigateur ne supporte pas la balise vidéo.
                            </video>
                        ) : (
-                           // Basic Youtube Embed support (naive implementation)
                            <iframe 
                                 className="w-full h-full"
                                 src={article.videoUrl.replace('watch?v=', 'embed/')} 
@@ -189,7 +188,6 @@ export const ArticlePage = () => {
                                  <img src={rel.imageUrl} alt={rel.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform"/>
                              </div>
                              <div>
-                                 {/* CHANGED: Text red by default, blue on hover */}
                                  <h4 className="font-serif font-bold text-sm leading-tight text-brand-red group-hover:text-brand-blue transition-colors">
                                      {rel.title}
                                  </h4>

@@ -12,9 +12,11 @@ export const Navbar = () => {
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    // Load categories dynamically
-    const cats = getCategories().map(c => c.name);
-    setCategories(cats);
+    const loadCats = async () => {
+        const cats = await getCategories();
+        setCategories(cats.map(c => c.name));
+    };
+    loadCats();
   }, []);
 
   return (

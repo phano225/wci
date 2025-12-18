@@ -1,13 +1,45 @@
+import { db, storage } from '../firebase-config';
+import { 
+    collection, 
+    getDocs, 
+    doc, 
+    setDoc, 
+    deleteDoc, 
+    updateDoc, 
+    query 
+} from 'firebase/firestore';
+import { 
+    ref, 
+    uploadString, 
+    getDownloadURL 
+} from 'firebase/storage';
 import { Article, ArticleStatus, Category, User, UserRole, Ad, AdLocation, AdType } from '../types';
 
-// Initial Seed Data
-const MOCK_USERS: User[] = [
+// --- HELPERS FOR HYBRID MODE ---
+const isFirebaseActive = () => !!db; 
+
+// Local Storage Helper
+const getLocal = <T>(key: string, seed: T[]): T[] => {
+    try {
+        const s = localStorage.getItem(key);
+        if (!s) {
+            localStorage.setItem(key, JSON.stringify(seed));
+            return seed;
+        }
+        return JSON.parse(s);
+    } catch (e) {
+        return seed;
+    }
+};
+const setLocal = (key: string, data: any) => localStorage.setItem(key, JSON.stringify(data));
+
+// --- SEED DATA ---
+const SEED_USERS: User[] = [
   { id: 'u1', name: 'Super Admin', email: 'admin@worldcanalinfo.com', password: 'admin', role: UserRole.ADMIN, avatar: 'https://ui-avatars.com/api/?name=Admin&background=random' },
   { id: 'u2', name: 'Jean Editor', email: 'editor@worldcanalinfo.com', password: 'editor', role: UserRole.EDITOR, avatar: 'https://i.pravatar.cc/150?u=jean' },
-  { id: 'u3', name: 'Paul Contributor', email: 'contrib@worldcanalinfo.com', password: 'contrib', role: UserRole.CONTRIBUTOR, avatar: 'https://i.pravatar.cc/150?u=paul' },
 ];
 
-const MOCK_CATEGORIES: Category[] = [
+const SEED_CATEGORIES: Category[] = [
   { id: 'c1', name: 'Politique', slug: 'Politique' },
   { id: 'c2', name: 'Économie', slug: 'Économie' },
   { id: 'c3', name: 'Société', slug: 'Société' },
@@ -17,260 +49,249 @@ const MOCK_CATEGORIES: Category[] = [
   { id: 'c7', name: 'Tech', slug: 'Tech' },
 ];
 
-// Seed some initial placeholder ads
-const MOCK_ADS: Ad[] = [
-    {
-        id: 'ad1',
-        title: 'Bannière Header Défaut',
-        location: AdLocation.HEADER_LEADERBOARD,
-        type: AdType.IMAGE,
-        content: 'https://placehold.co/728x90?text=Publicité+Header+728x90',
-        linkUrl: '#',
-        active: true
-    },
-    {
-        id: 'ad2',
-        title: 'Sidebar Carré Défaut',
-        location: AdLocation.SIDEBAR_SQUARE,
-        type: AdType.IMAGE,
-        content: 'https://placehold.co/300x250?text=Pub+Carrée',
-        linkUrl: '#',
-        active: true
-    }
+const SEED_ADS: Ad[] = [
+    { id: 'ad1', title: 'Bannière Header', location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE, content: 'https://placehold.co/728x90?text=Espace+Pub+Demo', linkUrl: '#', active: true },
+    { id: 'ad2', title: 'Sidebar Carré', location: AdLocation.SIDEBAR_SQUARE, type: AdType.IMAGE, content: 'https://placehold.co/300x250?text=Pub+Carree', linkUrl: '#', active: true }
 ];
 
-const LoremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. \n\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.";
-
-const MOCK_ARTICLES: Article[] = [
+const SEED_ARTICLES: Article[] = [
   {
     id: 'a1',
-    title: "Le gouvernement annonce un nouveau plan d'infrastructure",
-    excerpt: "Le ministre des travaux publics a dévoilé ce matin les grands axes du projet Abidjan 2030.",
-    content: LoremIpsum,
+    title: "Bienvenue sur World Canal Info",
+    excerpt: "Votre site est prêt. Configurez Firebase pour sauvegarder vos données dans le Cloud.",
+    content: "Ceci est un article de démonstration. Vous pouvez le modifier ou en créer de nouveaux depuis l'espace administration.",
     category: "Politique",
     imageUrl: "https://picsum.photos/800/600?random=1",
-    authorId: 'u2',
-    authorName: 'Jean Editor',
-    authorAvatar: 'https://i.pravatar.cc/150?u=jean',
+    authorId: 'u1',
+    authorName: 'Super Admin',
+    authorAvatar: 'https://ui-avatars.com/api/?name=Admin',
     status: ArticleStatus.PUBLISHED,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'a2',
-    title: "CAN 2025 : Les Éléphants en préparation intensive",
-    excerpt: "L'équipe nationale a débuté son stage de préparation à Korhogo avec un effectif complet.",
-    content: LoremIpsum,
-    category: "Sport",
-    imageUrl: "https://picsum.photos/800/600?random=2",
-    authorId: 'u2',
-    authorName: 'Jean Editor',
-    authorAvatar: 'https://i.pravatar.cc/150?u=jean',
-    status: ArticleStatus.PUBLISHED,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'a3',
-    title: "Innovation : Une start-up locale lève 5 millions d'euros",
-    excerpt: "La Tech africaine en plein essor avec cette nouvelle levée de fonds historique.",
-    content: LoremIpsum,
-    category: "Économie",
-    imageUrl: "https://picsum.photos/800/600?random=3",
-    authorId: 'u3',
-    authorName: 'Paul Contributor',
-    authorAvatar: 'https://i.pravatar.cc/150?u=paul',
-    status: ArticleStatus.PUBLISHED,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'a4',
-    title: "Festival des Arts : Une édition record attendue",
-    excerpt: "Plus de 50 000 visiteurs sont attendus pour ce week-end culturel.",
-    content: LoremIpsum,
-    category: "Culture",
-    imageUrl: "https://picsum.photos/800/600?random=4",
-    authorId: 'u2',
-    authorName: 'Jean Editor',
-    authorAvatar: 'https://i.pravatar.cc/150?u=jean',
-    status: ArticleStatus.PUBLISHED,
-    createdAt: new Date(Date.now() - 200000000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'a5',
-    title: "Climat : Les nouvelles mesures entrent en vigueur",
-    excerpt: "Comprendre l'impact des nouvelles lois environnementales sur votre quotidien.",
-    content: LoremIpsum,
-    category: "Société",
-    imageUrl: "https://picsum.photos/800/600?random=5",
-    authorId: 'u3',
-    authorName: 'Paul Contributor',
-    authorAvatar: 'https://i.pravatar.cc/150?u=paul',
-    status: ArticleStatus.PUBLISHED,
-    createdAt: new Date(Date.now() - 250000000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'a6',
-    title: "Diplomatie : Visite officielle du président en Europe",
-    excerpt: "Des accords bilatéraux importants devraient être signés.",
-    content: LoremIpsum,
-    category: "International",
-    imageUrl: "https://picsum.photos/800/600?random=6",
-    authorId: 'u2',
-    authorName: 'Jean Editor',
-    authorAvatar: 'https://i.pravatar.cc/150?u=jean',
-    status: ArticleStatus.PUBLISHED,
-    createdAt: new Date(Date.now() - 300000000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'a7',
-    title: "Nouveau Smartphone : Révolution ou évolution ?",
-    excerpt: "Notre test complet du dernier modèle qui fait parler de lui.",
-    content: LoremIpsum,
-    category: "Tech",
-    imageUrl: "https://picsum.photos/800/600?random=7",
-    authorId: 'u3',
-    authorName: 'Paul Contributor',
-    authorAvatar: 'https://i.pravatar.cc/150?u=paul',
-    status: ArticleStatus.SUBMITTED,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
+  }
 ];
 
-// LocalStorage Keys
-const USERS_KEY = 'wci_users';
-const ARTICLES_KEY = 'wci_articles';
-const CATEGORIES_KEY = 'wci_categories';
-const ADS_KEY = 'wci_ads';
-
-// Initialize DB
-export const initDB = () => {
-  if (!localStorage.getItem(USERS_KEY)) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(MOCK_USERS));
-  }
-  if (!localStorage.getItem(ARTICLES_KEY)) {
-    localStorage.setItem(ARTICLES_KEY, JSON.stringify(MOCK_ARTICLES));
-  }
-  if (!localStorage.getItem(CATEGORIES_KEY)) {
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(MOCK_CATEGORIES));
-  }
-  if (!localStorage.getItem(ADS_KEY)) {
-    localStorage.setItem(ADS_KEY, JSON.stringify(MOCK_ADS));
-  }
-};
-
-// User Operations
-export const getUsers = (): User[] => JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-export const getUserById = (id: string): User | undefined => getUsers().find(u => u.id === id);
-
-export const saveUser = (user: User) => {
-  const users = getUsers();
-  const index = users.findIndex(u => u.id === user.id);
-  if (index >= 0) {
-    users[index] = user;
-  } else {
-    users.push(user);
-  }
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
-
-export const deleteUser = (id: string) => {
-  const users = getUsers().filter(u => u.id !== id);
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
-
-// Category Operations
-export const getCategories = (): Category[] => JSON.parse(localStorage.getItem(CATEGORIES_KEY) || '[]');
-
-export const saveCategory = (category: Category) => {
-    const categories = getCategories();
-    const index = categories.findIndex(c => c.id === category.id);
-    if (index >= 0) {
-        categories[index] = category;
-    } else {
-        categories.push(category);
-    }
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
-};
-
-// NEW: Update Category Name
-export const updateCategory = (id: string, newName: string) => {
-    const categories = getCategories();
-    const index = categories.findIndex(c => c.id === id);
-    if (index >= 0) {
-        const oldName = categories[index].name;
-        categories[index].name = newName;
-        categories[index].slug = newName; // Simple slug update
-        localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
-        
-        // Also update articles that had the old category name
-        bulkUpdateArticleCategory(oldName, newName);
-    }
-};
-
-export const deleteCategory = (id: string) => {
-    const categories = getCategories().filter(c => c.id !== id);
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
-};
-
-// Article Operations
-export const getArticles = (): Article[] => JSON.parse(localStorage.getItem(ARTICLES_KEY) || '[]');
-export const getArticleById = (id: string): Article | undefined => getArticles().find(a => a.id === id);
-
-export const saveArticle = (article: Article) => {
-  const articles = getArticles();
-  const index = articles.findIndex(a => a.id === article.id);
-  if (index >= 0) {
-    articles[index] = article;
-  } else {
-    articles.unshift(article);
-  }
-  localStorage.setItem(ARTICLES_KEY, JSON.stringify(articles));
-};
-
-export const deleteArticle = (id: string) => {
-  const articles = getArticles().filter(a => a.id !== id);
-  localStorage.setItem(ARTICLES_KEY, JSON.stringify(articles));
-};
-
-// NEW: Bulk update article category (used when deleting a category to move articles elsewhere)
-export const bulkUpdateArticleCategory = (oldCategory: string, newCategory: string) => {
-    const articles = getArticles();
-    const updatedArticles = articles.map(a => {
-        if (a.category === oldCategory) {
-            return { ...a, category: newCategory };
+// --- INITIALISATION DU DB ---
+export const initDB = async () => {
+    if (isFirebaseActive()) {
+        try {
+            const cats = await getCategories();
+            if (cats.length === 0) {
+                console.log("Firebase vide détecté, injection des données initiales...");
+                for (const u of SEED_USERS) await setDoc(doc(db, "users", u.id), u);
+                for (const c of SEED_CATEGORIES) await setDoc(doc(db, "categories", c.id), c);
+                for (const a of SEED_ARTICLES) await setDoc(doc(db, "articles", a.id), a);
+                for (const ad of SEED_ADS) await setDoc(doc(db, "ads", ad.id), ad);
+            }
+        } catch (error) {
+            console.error("Erreur init Firebase:", error);
         }
-        return a;
-    });
-    localStorage.setItem(ARTICLES_KEY, JSON.stringify(updatedArticles));
-};
-
-// Ad Operations
-export const getAds = (): Ad[] => JSON.parse(localStorage.getItem(ADS_KEY) || '[]');
-export const getActiveAdByLocation = (location: AdLocation): Ad | undefined => {
-    // Return the most recently updated active ad for this location
-    const ads = getAds().filter(a => a.active && a.location === location);
-    // In a real app, you might rotate them or pick random. Here we pick the last one active.
-    return ads.length > 0 ? ads[ads.length - 1] : undefined;
-};
-
-export const saveAd = (ad: Ad) => {
-    const ads = getAds();
-    const index = ads.findIndex(a => a.id === ad.id);
-    if (index >= 0) {
-        ads[index] = ad;
     } else {
-        ads.push(ad);
+        if (!localStorage.getItem('wci_users')) setLocal('wci_users', SEED_USERS);
+        if (!localStorage.getItem('wci_categories')) setLocal('wci_categories', SEED_CATEGORIES);
+        if (!localStorage.getItem('wci_articles')) setLocal('wci_articles', SEED_ARTICLES);
+        if (!localStorage.getItem('wci_ads')) setLocal('wci_ads', SEED_ADS);
     }
-    localStorage.setItem(ADS_KEY, JSON.stringify(ads));
 };
 
-export const deleteAd = (id: string) => {
-    const ads = getAds().filter(a => a.id !== id);
-    localStorage.setItem(ADS_KEY, JSON.stringify(ads));
+// --- USERS ---
+export const getUsers = async (): Promise<User[]> => {
+    if (isFirebaseActive()) {
+        try {
+            const snap = await getDocs(collection(db, "users"));
+            return snap.docs.map(d => ({ ...d.data(), id: d.id } as User));
+        } catch (e) { console.error(e); }
+    }
+    return getLocal('wci_users', SEED_USERS);
+};
+
+export const saveUser = async (user: User) => {
+    if (isFirebaseActive()) {
+        await setDoc(doc(db, "users", user.id), user);
+    } else {
+        const users = getLocal('wci_users', SEED_USERS);
+        const idx = users.findIndex(u => u.id === user.id);
+        if (idx >= 0) users[idx] = user;
+        else users.push(user);
+        setLocal('wci_users', users);
+    }
+};
+
+export const deleteUser = async (id: string) => {
+    if (isFirebaseActive()) {
+        await deleteDoc(doc(db, "users", id));
+    } else {
+        const users = getLocal('wci_users', SEED_USERS);
+        setLocal('wci_users', users.filter(u => u.id !== id));
+    }
+};
+
+// --- CATEGORIES ---
+export const getCategories = async (): Promise<Category[]> => {
+    if (isFirebaseActive()) {
+        try {
+            const snap = await getDocs(collection(db, "categories"));
+            return snap.docs.map(d => ({ ...d.data(), id: d.id } as Category));
+        } catch (e) { console.error(e); }
+    }
+    return getLocal('wci_categories', SEED_CATEGORIES);
+};
+
+export const saveCategory = async (category: Category) => {
+    if (isFirebaseActive()) {
+        await setDoc(doc(db, "categories", category.id), category);
+    } else {
+        const cats = getLocal('wci_categories', SEED_CATEGORIES);
+        const idx = cats.findIndex(c => c.id === category.id);
+        if (idx >= 0) cats[idx] = category;
+        else cats.push(category);
+        setLocal('wci_categories', cats);
+    }
+};
+
+export const deleteCategory = async (id: string) => {
+    if (isFirebaseActive()) {
+        await deleteDoc(doc(db, "categories", id));
+    } else {
+        const cats = getLocal('wci_categories', SEED_CATEGORIES);
+        setLocal('wci_categories', cats.filter(c => c.id !== id));
+    }
+};
+
+export const updateCategory = async (id: string, newName: string) => {
+    if (isFirebaseActive()) {
+        const catRef = doc(db, "categories", id);
+        const allCats = await getCategories();
+        const oldCat = allCats.find(c => c.id === id);
+        await updateDoc(catRef, { name: newName, slug: newName });
+        if (oldCat) await bulkUpdateArticleCategory(oldCat.name, newName);
+    } else {
+        const cats = getLocal('wci_categories', SEED_CATEGORIES);
+        const cat = cats.find(c => c.id === id);
+        if (cat) {
+            const oldName = cat.name;
+            cat.name = newName;
+            cat.slug = newName;
+            setLocal('wci_categories', cats);
+            await bulkUpdateArticleCategory(oldName, newName);
+        }
+    }
+};
+
+// --- ARTICLES ---
+export const getArticles = async (): Promise<Article[]> => {
+    if (isFirebaseActive()) {
+        try {
+            const snap = await getDocs(collection(db, "articles"));
+            const list = snap.docs.map(d => ({ ...d.data(), id: d.id } as Article));
+            return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        } catch (e) { console.error(e); }
+    }
+    const articles = getLocal('wci_articles', SEED_ARTICLES) as Article[];
+    return articles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+export const getArticleById = async (id: string): Promise<Article | undefined> => {
+    const all = await getArticles();
+    return all.find(a => a.id === id);
+};
+
+export const saveArticle = async (article: Article) => {
+    if (article.imageUrl && article.imageUrl.startsWith('data:')) {
+        article.imageUrl = await uploadImageToStorage(article.imageUrl);
+    }
+
+    if (isFirebaseActive()) {
+        await setDoc(doc(db, "articles", article.id), article);
+    } else {
+        const articles = getLocal('wci_articles', SEED_ARTICLES) as Article[];
+        const idx = articles.findIndex(a => a.id === article.id);
+        if (idx >= 0) articles[idx] = article;
+        else articles.push(article);
+        setLocal('wci_articles', articles);
+    }
+};
+
+export const deleteArticle = async (id: string) => {
+    if (isFirebaseActive()) {
+        await deleteDoc(doc(db, "articles", id));
+    } else {
+        const articles = getLocal('wci_articles', SEED_ARTICLES) as Article[];
+        setLocal('wci_articles', articles.filter(a => a.id !== id));
+    }
+};
+
+export const bulkUpdateArticleCategory = async (oldCategory: string, newCategory: string) => {
+    if (isFirebaseActive()) {
+        const articles = await getArticles();
+        const toUpdate = articles.filter(a => a.category === oldCategory);
+        const updatePromises = toUpdate.map(a => 
+            updateDoc(doc(db, "articles", a.id), { category: newCategory })
+        );
+        await Promise.all(updatePromises);
+    } else {
+        const articles = getLocal('wci_articles', SEED_ARTICLES) as Article[];
+        articles.forEach(a => {
+            if (a.category === oldCategory) a.category = newCategory;
+        });
+        setLocal('wci_articles', articles);
+    }
+};
+
+// --- ADS ---
+export const getAds = async (): Promise<Ad[]> => {
+    if (isFirebaseActive()) {
+        try {
+            const snap = await getDocs(collection(db, "ads"));
+            return snap.docs.map(d => ({ ...d.data(), id: d.id } as Ad));
+        } catch (e) { console.error(e); }
+    }
+    return getLocal('wci_ads', SEED_ADS);
+};
+
+export const getActiveAdByLocation = async (location: AdLocation): Promise<Ad | undefined> => {
+    const all = await getAds();
+    const active = all.filter(a => a.active && a.location === location);
+    return active.length > 0 ? active[active.length - 1] : undefined;
+};
+
+export const saveAd = async (ad: Ad) => {
+    if (ad.content && ad.content.startsWith('data:') && ad.type !== AdType.SCRIPT) {
+        ad.content = await uploadImageToStorage(ad.content);
+    }
+
+    if (isFirebaseActive()) {
+        await setDoc(doc(db, "ads", ad.id), ad);
+    } else {
+        const ads = getLocal('wci_ads', SEED_ADS);
+        const idx = ads.findIndex(a => a.id === ad.id);
+        if (idx >= 0) ads[idx] = ad;
+        else ads.push(ad);
+        setLocal('wci_ads', ads);
+    }
+};
+
+export const deleteAd = async (id: string) => {
+    if (isFirebaseActive()) {
+        await deleteDoc(doc(db, "ads", id));
+    } else {
+        const ads = getLocal('wci_ads', SEED_ADS);
+        setLocal('wci_ads', ads.filter(a => a.id !== id));
+    }
+};
+
+// --- HELPER STORAGE ---
+export const uploadImageToStorage = async (base64String: string): Promise<string> => {
+    if (isFirebaseActive() && storage) {
+        try {
+            const fileName = `uploads/${Date.now()}_img`;
+            const storageRef = ref(storage, fileName);
+            await uploadString(storageRef, base64String, 'data_url');
+            return await getDownloadURL(storageRef);
+        } catch (error) {
+            console.error("Erreur upload image", error);
+            return base64String;
+        }
+    }
+    return base64String;
 };
