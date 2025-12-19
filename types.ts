@@ -1,3 +1,4 @@
+
 // Enums for Role-Based Access Control
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -39,7 +40,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password?: string; // Added password field (optional for existing types, but used in logic)
+  password?: string;
   role: UserRole;
   avatar?: string;
 }
@@ -59,12 +60,13 @@ export interface Article {
   content: string;
   category: string;
   imageUrl: string;
-  videoUrl?: string; // New field for video
+  videoUrl?: string;
   authorId: string;
   authorName: string;
-  authorAvatar?: string; // New field for author avatar display
+  authorAvatar?: string;
   status: ArticleStatus;
-  createdAt: string; // ISO Date string
+  views: number; // Compteur de vues pour le SEO et stats
+  createdAt: string; 
   updatedAt: string;
 }
 
@@ -78,7 +80,7 @@ export type AuthState = {
 export const PERMISSIONS = {
   canDeleteArticle: (role: UserRole) => role === UserRole.ADMIN,
   canPublish: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
-  canEditProfile: (role: UserRole) => role === UserRole.ADMIN, // Only Admin can edit any profile. Editor/Contributor constrained.
+  canEditProfile: (role: UserRole) => role === UserRole.ADMIN,
   canSubmit: (role: UserRole) => role === UserRole.CONTRIBUTOR,
   canManageUsers: (role: UserRole) => role === UserRole.ADMIN,
   canManageCategories: (role: UserRole) => role === UserRole.ADMIN,
