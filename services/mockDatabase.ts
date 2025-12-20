@@ -46,8 +46,16 @@ export const getArticleById = async (id: string): Promise<Article | undefined> =
 };
 
 export const saveArticle = async (article: Article) => {
-  const { error } = await supabase.from('articles').upsert(article);
-  if (error) throw error;
+  try {
+    const { error } = await supabase.from('articles').upsert(article);
+    if (error) {
+      console.error('Erreur Supabase saveArticle:', error);
+      throw new Error(`Erreur de sauvegarde: ${error.message}`);
+    }
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde de l\'article:', error);
+    throw error;
+  }
 };
 
 export const deleteArticle = async (id: string) => {

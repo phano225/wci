@@ -88,27 +88,33 @@ export const AdminDashboard = () => {
   const handleSaveArticle = async (statusOverride?: ArticleStatus) => {
     if (!currentArticle.title || !user) { alert("Le titre est requis."); return; }
     setIsProcessing(true);
-    const content = editorRef.current?.innerHTML || '';
-    const articleToSave: Article = {
-        id: currentArticle.id || Date.now().toString(),
-        title: currentArticle.title,
-        excerpt: currentArticle.excerpt || '',
-        content: content,
-        category: currentArticle.category || (categories[0]?.name || 'Général'),
-        imageUrl: currentArticle.imageUrl || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800',
-        videoUrl: currentArticle.videoUrl || '',
-        authorId: currentArticle.authorId || user.id,
-        authorName: currentArticle.authorName || user.name,
-        authorAvatar: currentArticle.authorAvatar || user.avatar,
-        status: statusOverride || currentArticle.status || ArticleStatus.DRAFT,
-        views: currentArticle.views || 0,
-        createdAt: currentArticle.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-    await saveArticle(articleToSave);
-    setIsEditorOpen(false);
-    await loadData();
-    setIsProcessing(false);
+    try {
+      const content = editorRef.current?.innerHTML || '';
+      const articleToSave: Article = {
+          id: currentArticle.id || Date.now().toString(),
+          title: currentArticle.title,
+          excerpt: currentArticle.excerpt || '',
+          content: content,
+          category: currentArticle.category || (categories[0]?.name || 'Général'),
+          imageUrl: currentArticle.imageUrl || 'https://images.unsplash.com/photo-800',
+          videoUrl: currentArticle.videoUrl || '',
+          authorId: currentArticle.authorId || user.id,
+          authorName: currentArticle.authorName || user.name,
+          authorAvatar: currentArticle.authorAvatar || user.avatar,
+          status: statusOverride || currentArticle.status || ArticleStatus.DRAFT,
+          views: currentArticle.views || 0,
+          createdAt: currentArticle.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+      };
+      await saveArticle(articleToSave);
+      setIsEditorOpen(false);
+      await loadData();
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      alert('Erreur lors de la sauvegarde de l\'article. Vérifiez votre connexion et réessayez.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSaveCategory = async () => {
