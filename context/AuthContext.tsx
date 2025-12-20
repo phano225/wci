@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
-import { getUsers, initDB } from '../services/mockDatabase';
+import { getUsers, initDB, saveUser } from '../services/mockDatabase';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (userData: User) => void;
   isLoading: boolean;
 }
 
@@ -50,8 +51,14 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     localStorage.removeItem('wci_current_session');
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('wci_current_session', JSON.stringify(userData));
+    saveUser(userData); // Sync with local DB
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

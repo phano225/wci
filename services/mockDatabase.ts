@@ -26,7 +26,8 @@ const setLocal = (key: string, data: any) => {
 // --- SEED DATA ---
 const SEED_USERS: User[] = [
   { id: 'u1', name: 'Administrateur', email: 'admin@worldcanalinfo.com', password: 'admin', role: UserRole.ADMIN, avatar: 'https://ui-avatars.com/api/?name=Admin&background=0055a4&color=fff' },
-  { id: 'u2', name: 'Jean Rédacteur', email: 'editor@worldcanalinfo.com', password: 'editor', role: UserRole.EDITOR, avatar: 'https://ui-avatars.com/api/?name=Jean+Editor&background=e3001b&color=fff' },
+  { id: 'u2', name: 'Jean Rédacteur', email: 'editor@worldcanalinfo.com', password: 'editor', role: UserRole.EDITOR, avatar: 'https://ui-avatars.com/api/?name=Jean+Editor&background=10b981&color=fff' },
+  { id: 'u3', name: 'Paul Contributeur', email: 'contrib@worldcanalinfo.com', password: 'contrib', role: UserRole.CONTRIBUTOR, avatar: 'https://ui-avatars.com/api/?name=Paul+Contrib&background=8b5cf6&color=fff' },
 ];
 
 const SEED_CATEGORIES: Category[] = [
@@ -40,9 +41,9 @@ const SEED_CATEGORIES: Category[] = [
 const SEED_ARTICLES: Article[] = [
   {
     id: 'a1',
-    title: "World Canal Info : Lancement de la nouvelle plateforme",
-    excerpt: "Découvrez votre nouveau portail d'information en continu, conçu pour une lecture rapide et efficace.",
-    content: "Nous sommes fiers de vous présenter World Canal Info. Ce site utilise les dernières technologies web pour vous offrir une expérience utilisateur optimale. Vous pouvez gérer vos articles, vos catégories et vos espaces publicitaires directement depuis l'administration locale.",
+    title: "World Canal Info : Lancement de la plateforme",
+    excerpt: "Découvrez votre nouveau portail d'information en continu.",
+    content: "Contenu de l'article de bienvenue...",
     category: "Politique",
     imageUrl: "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&q=80&w=800",
     authorId: 'u1',
@@ -64,10 +65,25 @@ export const initDB = async () => {
     getLocal(DB_KEYS.ADS, []);
 };
 
+// --- USERS ---
 export const getUsers = async (): Promise<User[]> => {
     return getLocal(DB_KEYS.USERS, SEED_USERS);
 };
 
+export const saveUser = async (user: User) => {
+    const users = getLocal<User>(DB_KEYS.USERS, SEED_USERS);
+    const idx = users.findIndex(u => u.id === user.id);
+    if (idx >= 0) users[idx] = { ...users[idx], ...user };
+    else users.push(user);
+    setLocal(DB_KEYS.USERS, users);
+};
+
+export const deleteUser = async (id: string) => {
+    const users = getLocal<User>(DB_KEYS.USERS, SEED_USERS);
+    setLocal(DB_KEYS.USERS, users.filter(u => u.id !== id));
+};
+
+// --- CATEGORIES ---
 export const getCategories = async (): Promise<Category[]> => {
     return getLocal(DB_KEYS.CATEGORIES, SEED_CATEGORIES);
 };
@@ -85,6 +101,7 @@ export const deleteCategory = async (id: string) => {
     setLocal(DB_KEYS.CATEGORIES, cats.filter(c => c.id !== id));
 };
 
+// --- ARTICLES ---
 export const getArticles = async (): Promise<Article[]> => {
     const articles = getLocal<Article>(DB_KEYS.ARTICLES, SEED_ARTICLES);
     return articles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -117,6 +134,7 @@ export const incrementArticleViews = async (id: string) => {
     }
 };
 
+// --- ADS ---
 export const getAds = async (): Promise<Ad[]> => {
     return getLocal(DB_KEYS.ADS, []);
 };

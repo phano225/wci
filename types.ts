@@ -8,21 +8,21 @@ export enum UserRole {
 
 export enum ArticleStatus {
   DRAFT = 'DRAFT',
-  SUBMITTED = 'SUBMITTED', // Soumis à l'admin
+  SUBMITTED = 'SUBMITTED',
   PUBLISHED = 'PUBLISHED'
 }
 
 // Ad Types
 export enum AdLocation {
-  HEADER_LEADERBOARD = 'HEADER_LEADERBOARD', // 728x90 (Desktop Header)
-  SIDEBAR_SQUARE = 'SIDEBAR_SQUARE', // 300x250 (Sidebar Top)
-  SIDEBAR_SKYSCRAPER = 'SIDEBAR_SKYSCRAPER', // 300x600 (Sidebar Bottom)
+  HEADER_LEADERBOARD = 'HEADER_LEADERBOARD',
+  SIDEBAR_SQUARE = 'SIDEBAR_SQUARE',
+  SIDEBAR_SKYSCRAPER = 'SIDEBAR_SKYSCRAPER',
 }
 
 export enum AdType {
   IMAGE = 'IMAGE',
   VIDEO = 'VIDEO',
-  SCRIPT = 'SCRIPT' // HTML/JS custom code (Google Adsense, iframes, etc.)
+  SCRIPT = 'SCRIPT'
 }
 
 export interface Ad {
@@ -30,8 +30,8 @@ export interface Ad {
   title: string;
   location: AdLocation;
   type: AdType;
-  content: string; // URL (img/video) OR Raw HTML (script)
-  linkUrl?: string; // Where the click leads (for images/videos)
+  content: string;
+  linkUrl?: string;
   active: boolean;
 }
 
@@ -65,24 +65,15 @@ export interface Article {
   authorName: string;
   authorAvatar?: string;
   status: ArticleStatus;
-  views: number; // Compteur de vues pour le SEO et stats
+  views: number;
   createdAt: string; 
   updatedAt: string;
 }
 
-// Helper types
-export type AuthState = {
-  user: User | null;
-  isAuthenticated: boolean;
-};
-
-// Permissions Matrix Helper
+// Permissions Matrix
 export const PERMISSIONS = {
-  canDeleteArticle: (role: UserRole) => role === UserRole.ADMIN,
-  canPublish: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
-  canEditProfile: (role: UserRole) => role === UserRole.ADMIN,
-  canSubmit: (role: UserRole) => role === UserRole.CONTRIBUTOR,
+  canDeleteArticle: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
   canManageUsers: (role: UserRole) => role === UserRole.ADMIN,
-  canManageCategories: (role: UserRole) => role === UserRole.ADMIN,
+  canManageCategories: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
   canManageAds: (role: UserRole) => role === UserRole.ADMIN,
 };
