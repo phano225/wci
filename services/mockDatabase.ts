@@ -1,4 +1,3 @@
-
 import { Article, ArticleStatus, Category, User, UserRole, Ad, AdLocation, AdType } from '../types';
 
 const DB_KEYS = {
@@ -8,103 +7,102 @@ const DB_KEYS = {
     ADS: 'wci_ads'
 };
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-const getLocal = <T>(key: string, seed: T[]): T[] => {
-    const s = localStorage.getItem(key);
-    if (!s) {
-        localStorage.setItem(key, JSON.stringify(seed));
-        return seed;
+const apiRequest = async (key: string, data?: any) => {
+    // Dans un environnement local (XAMPP), on pointe vers le script api.php à la racine
+    const API_URL = 'api.php';
+    
+    try {
+        if (data) {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, data })
+            });
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            return await res.json();
+        } else {
+            const res = await fetch(`${API_URL}?action=${key}`);
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            return await res.json();
+        }
+    } catch (e) {
+        console.warn("Backend PHP inaccessible ou erreur. Fallback LocalStorage.", e);
+        if (data) {
+            localStorage.setItem(key, JSON.stringify(data));
+            return { status: 'success' };
+        } else {
+            const s = localStorage.getItem(key);
+            return s ? JSON.parse(s) : [];
+        }
     }
-    return JSON.parse(s);
 };
-
-const setLocal = (key: string, data: any) => {
-    localStorage.setItem(key, JSON.stringify(data));
-};
-
-// --- SEED DATA ---
-const SEED_USERS: User[] = [
-  { id: 'u1', name: 'Administrateur', email: 'admin@worldcanalinfo.com', password: 'admin', role: UserRole.ADMIN, avatar: 'https://ui-avatars.com/api/?name=Admin&background=0055a4&color=fff' },
-  { id: 'u2', name: 'Jean Rédacteur', email: 'editor@worldcanalinfo.com', password: 'editor', role: UserRole.EDITOR, avatar: 'https://ui-avatars.com/api/?name=Jean+Editor&background=10b981&color=fff' },
-  { id: 'u3', name: 'Paul Contributeur', email: 'contrib@worldcanalinfo.com', password: 'contrib', role: UserRole.CONTRIBUTOR, avatar: 'https://ui-avatars.com/api/?name=Paul+Contrib&background=8b5cf6&color=fff' },
-];
-
-const SEED_CATEGORIES: Category[] = [
-  { id: 'c1', name: 'Politique', slug: 'politique' },
-  { id: 'c2', name: 'Économie', slug: 'economie' },
-  { id: 'c3', name: 'Société', slug: 'societe' },
-  { id: 'c4', name: 'Sport', slug: 'sport' },
-  { id: 'c5', name: 'Tech', slug: 'tech' },
-];
-
-const SEED_ARTICLES: Article[] = [
-  {
-    id: 'a1',
-    title: "World Canal Info : Lancement de la plateforme",
-    excerpt: "Découvrez votre nouveau portail d'information en continu.",
-    content: "Contenu de l'article de bienvenue...",
-    category: "Politique",
-    imageUrl: "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&q=80&w=800",
-    authorId: 'u1',
-    authorName: 'Administrateur',
-    authorAvatar: 'https://ui-avatars.com/api/?name=Admin',
-    status: ArticleStatus.PUBLISHED,
-    views: 1240,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-];
-
-// --- DATABASE METHODS ---
 
 export const initDB = async () => {
-    getLocal(DB_KEYS.USERS, SEED_USERS);
-    getLocal(DB_KEYS.CATEGORIES, SEED_CATEGORIES);
-    getLocal(DB_KEYS.ARTICLES, SEED_ARTICLES);
-    getLocal(DB_KEYS.ADS, []);
+    // On tente de récupérer les utilisateurs depuis l'API PHP
+    try {
+        const users = await getUsers();
+        // Si l'API est vide ou inaccessible, api.php s'auto-initialise normalement.
+        // Si on est en mode LocalStorage fallback :
+        if (users.length === 0) {
+             const defaultUsers: User[] = [
+                { id: 'u-admin', name: 'Administrateur', email: 'admin@worldcanalinfo.com', password: 'admin', role: UserRole.ADMIN, avatar: 'https://ui-avatars.com/api/?name=Admin' },
+                { id: 'u-editor', name: 'Éditeur', email: 'editor@worldcanalinfo.com', password: 'editor', role: UserRole.EDITOR, avatar: 'https://ui-avatars.com/api/?name=Editor' },
+                { id: 'u-contrib', name: 'Contributeur', email: 'contrib@worldcanalinfo.com', password: 'contrib', role: UserRole.CONTRIBUTOR, avatar: 'https://ui-avatars.com/api/?name=Contrib' }
+            ];
+            const cats = [
+                { id: '1', name: 'Politique', slug: 'politique' },
+                { id: '2', name: 'Économie', slug: 'economie' },
+                { id: '3', name: 'Société', slug: 'societe' },
+                { id: '4', name: 'Sport', slug: 'sport' }
+            ];
+            await apiRequest(DB_KEYS.USERS, defaultUsers);
+            await apiRequest(DB_KEYS.CATEGORIES, cats);
+        }
+    } catch (e) {
+        console.error("DB Init Error:", e);
+    }
 };
 
-// --- USERS ---
 export const getUsers = async (): Promise<User[]> => {
-    return getLocal(DB_KEYS.USERS, SEED_USERS);
+    const res = await apiRequest(DB_KEYS.USERS);
+    return Array.isArray(res) ? res : [];
 };
 
 export const saveUser = async (user: User) => {
-    const users = getLocal<User>(DB_KEYS.USERS, SEED_USERS);
+    const users = await getUsers();
     const idx = users.findIndex(u => u.id === user.id);
-    if (idx >= 0) users[idx] = { ...users[idx], ...user };
+    if (idx >= 0) users[idx] = user;
     else users.push(user);
-    setLocal(DB_KEYS.USERS, users);
+    await apiRequest(DB_KEYS.USERS, users);
 };
 
 export const deleteUser = async (id: string) => {
-    const users = getLocal<User>(DB_KEYS.USERS, SEED_USERS);
-    setLocal(DB_KEYS.USERS, users.filter(u => u.id !== id));
+    const users = await getUsers();
+    await apiRequest(DB_KEYS.USERS, users.filter(u => u.id !== id));
 };
 
-// --- CATEGORIES ---
 export const getCategories = async (): Promise<Category[]> => {
-    return getLocal(DB_KEYS.CATEGORIES, SEED_CATEGORIES);
+    const res = await apiRequest(DB_KEYS.CATEGORIES);
+    return Array.isArray(res) ? res : [];
 };
 
 export const saveCategory = async (category: Category) => {
-    const cats = getLocal<Category>(DB_KEYS.CATEGORIES, SEED_CATEGORIES);
+    const cats = await getCategories();
     const idx = cats.findIndex(c => c.id === category.id);
     if (idx >= 0) cats[idx] = category;
     else cats.push(category);
-    setLocal(DB_KEYS.CATEGORIES, cats);
+    await apiRequest(DB_KEYS.CATEGORIES, cats);
 };
 
 export const deleteCategory = async (id: string) => {
-    const cats = getLocal<Category>(DB_KEYS.CATEGORIES, SEED_CATEGORIES);
-    setLocal(DB_KEYS.CATEGORIES, cats.filter(c => c.id !== id));
+    const cats = await getCategories();
+    await apiRequest(DB_KEYS.CATEGORIES, cats.filter(c => c.id !== id));
 };
 
-// --- ARTICLES ---
 export const getArticles = async (): Promise<Article[]> => {
-    const articles = getLocal<Article>(DB_KEYS.ARTICLES, SEED_ARTICLES);
-    return articles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const articles = await apiRequest(DB_KEYS.ARTICLES);
+    if (!Array.isArray(articles)) return [];
+    return articles.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
 export const getArticleById = async (id: string): Promise<Article | undefined> => {
@@ -113,30 +111,30 @@ export const getArticleById = async (id: string): Promise<Article | undefined> =
 };
 
 export const saveArticle = async (article: Article) => {
-    const articles = getLocal<Article>(DB_KEYS.ARTICLES, SEED_ARTICLES);
+    const articles = await getArticles();
     const idx = articles.findIndex(a => a.id === article.id);
     if (idx >= 0) articles[idx] = article;
     else articles.push(article);
-    setLocal(DB_KEYS.ARTICLES, articles);
+    await apiRequest(DB_KEYS.ARTICLES, articles);
 };
 
 export const deleteArticle = async (id: string) => {
-    const articles = getLocal<Article>(DB_KEYS.ARTICLES, SEED_ARTICLES);
-    setLocal(DB_KEYS.ARTICLES, articles.filter(a => a.id !== id));
+    const articles = await getArticles();
+    await apiRequest(DB_KEYS.ARTICLES, articles.filter(a => a.id !== id));
 };
 
 export const incrementArticleViews = async (id: string) => {
-    const articles = getLocal<Article>(DB_KEYS.ARTICLES, SEED_ARTICLES);
+    const articles = await getArticles();
     const idx = articles.findIndex(a => a.id === id);
     if (idx >= 0) {
         articles[idx].views = (articles[idx].views || 0) + 1;
-        setLocal(DB_KEYS.ARTICLES, articles);
+        await apiRequest(DB_KEYS.ARTICLES, articles);
     }
 };
 
-// --- ADS ---
 export const getAds = async (): Promise<Ad[]> => {
-    return getLocal(DB_KEYS.ADS, []);
+    const res = await apiRequest(DB_KEYS.ADS);
+    return Array.isArray(res) ? res : [];
 };
 
 export const getActiveAdByLocation = async (location: AdLocation): Promise<Ad | undefined> => {
@@ -145,14 +143,14 @@ export const getActiveAdByLocation = async (location: AdLocation): Promise<Ad | 
 };
 
 export const saveAd = async (ad: Ad) => {
-    const ads = getLocal<Ad>(DB_KEYS.ADS, []);
+    const ads = await getAds();
     const idx = ads.findIndex(a => a.id === ad.id);
     if (idx >= 0) ads[idx] = ad;
     else ads.push(ad);
-    setLocal(DB_KEYS.ADS, ads);
+    await apiRequest(DB_KEYS.ADS, ads);
 };
 
 export const deleteAd = async (id: string) => {
-    const ads = getLocal<Ad>(DB_KEYS.ADS, []);
-    setLocal(DB_KEYS.ADS, ads.filter(a => a.id !== id));
+    const ads = await getAds();
+    await apiRequest(DB_KEYS.ADS, ads.filter(a => a.id !== id));
 };

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { getUsers, initDB, saveUser } from '../services/mockDatabase';
@@ -18,21 +17,37 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const init = async () => {
-        await initDB();
-        const storedUser = localStorage.getItem('wci_current_session');
-        if (storedUser) {
-           setUser(JSON.parse(storedUser));
+    const initialize = async () => {
+        try {
+            // Étape 1: Initialiser la base de données (PHP ou Local)
+            await initDB();
+            
+            // Étape 2: Vérifier si une session existe
+            const storedUser = localStorage.getItem('wci_current_session');
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                // On vérifie si l'utilisateur existe toujours en base
+                const users = await getUsers();
+                const validUser = users.find(u => u.id === parsedUser.id);
+                if (validUser) {
+                    setUser(validUser);
+                } else {
+                    localStorage.removeItem('wci_current_session');
+                }
+            }
+        } catch (e) {
+            console.error("Auth initialization error:", e);
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
-    init();
+    initialize();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
         const users = await getUsers();
-        const foundUser = users.find(u => u.email === email && u.password === password);
+        const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
         
         if (foundUser) {
           setUser(foundUser);
@@ -41,7 +56,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         }
         return false;
     } catch (e) {
-        console.error(e);
+        console.error("Login Error:", e);
         return false;
     }
   };
@@ -51,10 +66,10 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     localStorage.removeItem('wci_current_session');
   };
 
-  const updateUser = (userData: User) => {
+  const updateUser = async (userData: User) => {
     setUser(userData);
     localStorage.setItem('wci_current_session', JSON.stringify(userData));
-    saveUser(userData); // Sync with local DB
+    await saveUser(userData);
   };
 
   return (
