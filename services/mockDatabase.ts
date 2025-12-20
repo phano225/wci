@@ -34,9 +34,19 @@ export const deleteCategory = async (id: string) => {
 };
 
 export const getArticles = async (): Promise<Article[]> => {
-  const { data, error } = await supabase.from('articles').select('*').order('createdAt', { ascending: false });
-  if (error) throw error;
-  return data || [];
+  try {
+    console.log('Tentative de récupération des articles...');
+    const { data, error } = await supabase.from('articles').select('*').order('createdAt', { ascending: false });
+    if (error) {
+      console.error('Erreur Supabase getArticles:', error);
+      throw new Error(`Erreur de récupération: ${error.message}`);
+    }
+    console.log('Articles récupérés:', data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des articles:', error);
+    throw error;
+  }
 };
 
 export const getArticleById = async (id: string): Promise<Article | undefined> => {
@@ -47,11 +57,13 @@ export const getArticleById = async (id: string): Promise<Article | undefined> =
 
 export const saveArticle = async (article: Article) => {
   try {
+    console.log('Tentative de sauvegarde d\'article:', article);
     const { error } = await supabase.from('articles').upsert(article);
     if (error) {
       console.error('Erreur Supabase saveArticle:', error);
       throw new Error(`Erreur de sauvegarde: ${error.message}`);
     }
+    console.log('Article sauvegardé avec succès');
   } catch (error) {
     console.error('Erreur lors de la sauvegarde de l\'article:', error);
     throw error;

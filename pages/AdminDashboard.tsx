@@ -51,14 +51,19 @@ export const AdminDashboard = () => {
   const loadData = async () => {
     setIsProcessing(true);
     try {
+        console.log('Chargement des données...');
         const [arts, cats, adsList, userList] = await Promise.all([
             getArticles(), getCategories(), getAds(), getUsers()
         ]);
+        console.log('Données chargées:', { articles: arts.length, categories: cats.length, ads: adsList.length, users: userList.length });
         setArticles(user?.role === UserRole.CONTRIBUTOR ? arts.filter(a => a.authorId === user.id) : arts);
         setCategories(cats);
         setAds(adsList);
         setStaff(userList);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error('Erreur lors du chargement des données:', e);
+        alert('Erreur de chargement des données. Vérifiez votre connexion.');
+    }
     setIsProcessing(false);
   };
 
