@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { testSupabaseConnection } from '../test-supabase';
 
 export const LoginPage = () => {
   const { login } = useAuth();
@@ -14,12 +15,21 @@ export const LoginPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    const success = await login(email, password);
-    if (success) {
+    console.log('Tentative de connexion avec:', email);
+
+    try {
+      const success = await login(email, password);
+      console.log('Résultat de login:', success);
+      if (success) {
+        console.log('Redirection vers /admin');
         navigate('/admin');
-    } else {
+      } else {
+        console.log('Échec de connexion');
         setError('Email ou mot de passe incorrect.');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la connexion:', error);
+      setError('Erreur de connexion. Vérifiez votre connexion internet.');
     }
   };
 
@@ -81,6 +91,14 @@ export const LoginPage = () => {
           </div>
           <button type="submit" className="w-full bg-brand-blue text-white font-bold py-3 rounded hover:bg-blue-700 transition-colors shadow-md active:scale-[0.98]">
             Se Connecter
+          </button>
+
+          <button
+            type="button"
+            onClick={testSupabaseConnection}
+            className="w-full bg-gray-500 text-white font-bold py-2 rounded hover:bg-gray-600 transition-colors shadow-md active:scale-[0.98] text-sm mt-2"
+          >
+            🔧 Tester Connexion Supabase
           </button>
           
           <div className="text-center mt-6 p-4 bg-gray-50 rounded text-xs text-gray-500 border border-gray-200">
