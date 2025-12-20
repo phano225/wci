@@ -21,7 +21,7 @@ import { useNavigate, Link } from 'react-router-dom';
 export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'articles' | 'categories' | 'ads' | 'users'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users'>('articles');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -34,6 +34,7 @@ export const AdminDashboard = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
   
   const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({});
   const [currentCategory, setCurrentCategory] = useState<Partial<Category>>({});
@@ -95,6 +96,17 @@ export const AdminDashboard = () => {
     setIsProcessing(true);
     try {
       const content = editorRef.current?.innerHTML || '';
+
+      // Déterminer le statut selon les permissions
+      let finalStatus = statusOverride;
+      if (!finalStatus) {
+        if (PERMISSIONS.canPublishArticle(user.role)) {
+          finalStatus = ArticleStatus.DRAFT; // Admin/Editor peuvent choisir
+        } else if (PERMISSIONS.canSubmitForReview(user.role)) {
+          finalStatus = ArticleStatus.SUBMITTED; // Contributor doit soumettre
+        }
+      }
+
       const articleToSave: Article = {
           id: currentArticle.id || Date.now().toString(),
           title: currentArticle.title,
@@ -106,14 +118,29 @@ export const AdminDashboard = () => {
           authorId: currentArticle.authorId || user.id,
           authorName: currentArticle.authorName || user.name,
           authorAvatar: currentArticle.authorAvatar || user.avatar,
-          status: statusOverride || currentArticle.status || ArticleStatus.DRAFT,
+          status: finalStatus || ArticleStatus.DRAFT,
           views: currentArticle.views || 0,
           createdAt: currentArticle.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          // Workflow properties
+          ...(finalStatus === ArticleStatus.SUBMITTED && {
+            submittedBy: user.id,
+            submittedAt: new Date().toISOString(),
+            submissionStatus: SubmissionStatus.PENDING
+          })
       };
+
       await saveArticle(articleToSave);
       setIsEditorOpen(false);
       await loadData();
+
+      // Message de confirmation selon le rôle
+      if (finalStatus === ArticleStatus.SUBMITTED) {
+        alert('Article soumis pour révision. Un administrateur ou éditeur le examinera bientôt.');
+      } else {
+        alert('Article sauvegardé avec succès.');
+      }
+
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
       alert('Erreur lors de la sauvegarde de l\'article. Vérifiez votre connexion et réessayez.');
@@ -135,21 +162,39 @@ export const AdminDashboard = () => {
     setIsProcessing(false);
   };
 
-  const handleSaveAd = async () => {
-    if (!currentAd.title || !currentAd.content) return;
+  const handleDeleteCategory = async () => {
+    if (!currentCategory.id) return;
+
     setIsProcessing(true);
-    await saveAd({
-        id: currentAd.id || Date.now().toString(),
-        title: currentAd.title,
-        location: currentAd.location as AdLocation,
-        type: currentAd.type as AdType,
-        content: currentAd.content,
-        linkUrl: currentAd.linkUrl,
-        active: currentAd.active !== undefined ? currentAd.active : true
-    });
-    setIsAdModalOpen(false);
-    await loadData();
-    setIsProcessing(false);
+    try {
+      // Trouver les articles dans cette catégorie
+      const articlesInCategory = articles.filter(art => art.category === currentCategory.name);
+
+      // Réaffecter les articles si une nouvelle catégorie est sélectionnée
+      if (articlesInCategory.length > 0 && currentCategory.name && currentCategory.name !== '__new__') {
+        for (const article of articlesInCategory) {
+          const updatedArticle: Article = {
+            ...article,
+            category: currentCategory.name,
+            updatedAt: new Date().toISOString()
+          };
+          await saveArticle(updatedArticle);
+        }
+      }
+
+      // Supprimer la catégorie
+      await deleteCategory(currentCategory.id);
+      setIsDeleteCategoryModalOpen(false);
+      await loadData();
+
+      alert(`Rubrique supprimée${articlesInCategory.length > 0 ? ` et ${articlesInCategory.length} article(s) réaffecté(s)` : ''}`);
+
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      alert('Erreur lors de la suppression de la rubrique.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSaveUser = async () => {
@@ -183,13 +228,40 @@ export const AdminDashboard = () => {
     setIsProcessing(false);
   };
 
-  const handleAISummary = async () => {
-    const text = editorRef.current?.innerText || '';
-    if (text.length < 20) return;
+  const handleReviewSubmission = async (articleId: string, decision: SubmissionStatus) => {
+    if (!user) return;
+
+    const comments = decision === SubmissionStatus.REJECTED ?
+      prompt('Commentaires pour le contributeur (optionnel):') : '';
+
     setIsProcessing(true);
-    const sum = await generateSEOMeta(currentArticle.title || '', text);
-    setCurrentArticle(prev => ({ ...prev, excerpt: sum }));
-    setIsProcessing(false);
+    try {
+      const article = articles.find(a => a.id === articleId);
+      if (!article) return;
+
+      const updatedArticle: Article = {
+        ...article,
+        status: decision === SubmissionStatus.APPROVED ? ArticleStatus.PUBLISHED : ArticleStatus.REJECTED,
+        reviewedBy: user.id,
+        reviewedAt: new Date().toISOString(),
+        reviewComments: comments || undefined,
+        submissionStatus: decision,
+        updatedAt: new Date().toISOString()
+      };
+
+      await saveArticle(updatedArticle);
+      await loadData();
+
+      alert(decision === SubmissionStatus.APPROVED ?
+        'Article approuvé et publié !' :
+        'Article rejeté. Le contributeur recevra vos commentaires.');
+
+    } catch (error) {
+      console.error('Erreur lors de la révision:', error);
+      alert('Erreur lors de la révision de la soumission.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -208,6 +280,7 @@ export const AdminDashboard = () => {
 
         <nav className="flex-1 p-6 space-y-2">
             <button onClick={() => setActiveTab('articles')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'articles' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>📄 Articles</button>
+            {PERMISSIONS.canReviewSubmissions(user?.role!) && <button onClick={() => setActiveTab('submissions')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'submissions' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>📝 Soumissions</button>}
             {PERMISSIONS.canManageCategories(user?.role!) && <button onClick={() => setActiveTab('categories')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'categories' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>🏷️ Rubriques</button>}
             {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => setActiveTab('ads')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'ads' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>📢 Publicités</button>}
             {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('users')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'users' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>👥 Équipe</button>}
@@ -228,14 +301,18 @@ export const AdminDashboard = () => {
       <main className="ml-72 flex-1 p-12 overflow-y-auto">
         <header className="flex justify-between items-end mb-16">
             <h1 className="text-5xl font-serif font-black text-brand-dark uppercase tracking-tighter">
-                {activeTab === 'articles' ? 'Articles' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : 'Rédaction'}
+                {activeTab === 'articles' ? 'Articles' : activeTab === 'submissions' ? 'Soumissions' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : 'Rédaction'}
             </h1>
             <button onClick={() => { 
                 if(activeTab === 'articles') { setCurrentArticle({}); setIsEditorOpen(true); } 
-                else if(activeTab === 'categories') { setCurrentCategory({}); setIsCategoryModalOpen(true); }
-                else if(activeTab === 'ads') { setCurrentAd({active: true, location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE}); setIsAdModalOpen(true); }
-                else if(activeTab === 'users') { setCurrentEditUser({}); setIsUserModalOpen(true); }
-            }} className="bg-brand-blue text-white px-10 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-all text-xs tracking-widest uppercase">+ AJOUTER</button>
+                else if(activeTab === 'categories' && PERMISSIONS.canManageCategories(user?.role!)) { setCurrentCategory({}); setIsCategoryModalOpen(true); }
+                else if(activeTab === 'ads' && PERMISSIONS.canManageAds(user?.role!)) { setCurrentAd({active: true, location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE}); setIsAdModalOpen(true); }
+                else if(activeTab === 'users' && PERMISSIONS.canManageUsers(user?.role!)) { setCurrentEditUser({}); setIsUserModalOpen(true); }
+            }} className={`bg-brand-blue text-white px-10 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-all text-xs tracking-widest uppercase ${(
+                (activeTab === 'categories' && !PERMISSIONS.canManageCategories(user?.role!)) ||
+                (activeTab === 'ads' && !PERMISSIONS.canManageAds(user?.role!)) ||
+                (activeTab === 'users' && !PERMISSIONS.canManageUsers(user?.role!))
+            ) ? 'opacity-50 cursor-not-allowed' : ''}`}>+ AJOUTER</button>
         </header>
 
         {/* --- ARTICLES --- */}
@@ -259,6 +336,37 @@ export const AdminDashboard = () => {
             </div>
         )}
 
+        {/* --- SOUMISSIONS --- */}
+        {activeTab === 'submissions' && (
+            <div className="space-y-4">
+                {articles.filter(art => art.status === ArticleStatus.SUBMITTED).map(art => (
+                    <div key={art.id} className="bg-yellow-50 p-6 rounded-[35px] border border-yellow-200 flex items-center justify-between group hover:shadow-xl transition-all">
+                        <div className="flex items-center gap-8">
+                            <div className="w-12 h-12 bg-yellow-200 rounded-full flex items-center justify-center">
+                                <span className="text-yellow-600 text-xl">📝</span>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-2xl text-gray-900 group-hover:text-brand-blue transition-colors">{art.title}</h3>
+                                <p className="text-[10px] font-black uppercase text-gray-400 mt-2 tracking-widest">
+                                    {art.category} • Soumis par {art.authorName} • {art.submittedAt ? new Date(art.submittedAt).toLocaleDateString() : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-4">
+                            <button onClick={() => { setCurrentArticle(art); setIsEditorOpen(true); }} className="px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Examiner</button>
+                            <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.APPROVED)} className="px-8 py-4 bg-green-50 text-green-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">Approuver</button>
+                            <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.REJECTED)} className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Rejeter</button>
+                        </div>
+                    </div>
+                ))}
+                {articles.filter(art => art.status === ArticleStatus.SUBMITTED).length === 0 && (
+                    <div className="bg-white p-12 rounded-[35px] text-center">
+                        <p className="text-gray-500 text-lg">Aucune soumission en attente</p>
+                    </div>
+                )}
+            </div>
+        )}
+
         {/* --- RUBRIQUES --- */}
         {activeTab === 'categories' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -270,7 +378,7 @@ export const AdminDashboard = () => {
                         </div>
                         <div className="mt-8 flex gap-4">
                             <button onClick={() => { setCurrentCategory(cat); setIsCategoryModalOpen(true); }} className="flex-1 py-4 bg-gray-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Modifier</button>
-                            <button onClick={() => { if(confirm('Supprimer cette rubrique ?')) deleteCategory(cat.id).then(loadData); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
+                            <button onClick={() => { setCurrentCategory(cat); setIsDeleteCategoryModalOpen(true); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
                         </div>
                     </div>
                 ))}
@@ -339,27 +447,51 @@ export const AdminDashboard = () => {
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-100 rounded-2xl font-black text-xs uppercase">Brouillon</button>
-                    <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-brand-blue text-white rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all">PUBLIER</button>
+                    {PERMISSIONS.canPublishArticle(user?.role!) ? (
+                        <>
+                            <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-100 rounded-2xl font-black text-xs uppercase">Brouillon</button>
+                            <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-brand-blue text-white rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all">PUBLIER</button>
+                        </>
+                    ) : PERMISSIONS.canSubmitForReview(user?.role!) ? (
+                        <button onClick={() => handleSaveArticle(ArticleStatus.SUBMITTED)} className="px-12 py-4 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all">SOUMETTRE</button>
+                    ) : null}
                 </div>
             </header>
 
             <div className="flex-1 flex overflow-hidden bg-gray-100">
                 <div className="flex-1 overflow-y-auto py-12 px-8">
                     <div className="max-w-[850px] mx-auto space-y-8">
-                        {/* Toolbar */}
+                        {/* Toolbar Améliorée */}
                         <div className="sticky top-0 z-20 bg-white p-5 rounded-[30px] shadow-2xl border border-gray-100 flex flex-wrap gap-2 items-center justify-center">
-                            <button onClick={() => execCommand('bold')} className="w-12 h-12 rounded-xl hover:bg-gray-100 font-bold transition-all">B</button>
-                            <button onClick={() => execCommand('italic')} className="w-12 h-12 rounded-xl hover:bg-gray-100 italic transition-all">I</button>
-                            <button onClick={() => execCommand('underline')} className="w-12 h-12 rounded-xl hover:bg-gray-100 underline transition-all">U</button>
+                            {/* Formatage de base */}
+                            <button onClick={() => execCommand('bold')} className="w-12 h-12 rounded-xl hover:bg-gray-100 font-bold transition-all" title="Gras">B</button>
+                            <button onClick={() => execCommand('italic')} className="w-12 h-12 rounded-xl hover:bg-gray-100 italic transition-all" title="Italique">I</button>
+                            <button onClick={() => execCommand('underline')} className="w-12 h-12 rounded-xl hover:bg-gray-100 underline transition-all" title="Souligné">U</button>
                             <div className="w-px h-8 bg-gray-100 mx-2"></div>
-                            <button onClick={() => execCommand('formatBlock', 'h2')} className="px-4 h-12 rounded-xl hover:bg-gray-100 font-black text-xs uppercase tracking-widest">Titre</button>
-                            <button onClick={() => execCommand('formatBlock', 'p')} className="px-4 h-12 rounded-xl hover:bg-gray-100 font-black text-xs uppercase tracking-widest">Corps</button>
+
+                            {/* Titres */}
+                            <button onClick={() => execCommand('formatBlock', 'h1')} className="px-4 h-12 rounded-xl hover:bg-gray-100 font-black text-xs uppercase tracking-widest" title="Titre 1">H1</button>
+                            <button onClick={() => execCommand('formatBlock', 'h2')} className="px-4 h-12 rounded-xl hover:bg-gray-100 font-black text-xs uppercase tracking-widest" title="Titre 2">H2</button>
+                            <button onClick={() => execCommand('formatBlock', 'h3')} className="px-4 h-12 rounded-xl hover:bg-gray-100 font-black text-xs uppercase tracking-widest" title="Titre 3">H3</button>
+                            <button onClick={() => execCommand('formatBlock', 'p')} className="px-4 h-12 rounded-xl hover:bg-gray-100 font-black text-xs uppercase tracking-widest" title="Paragraphe">P</button>
                             <div className="w-px h-8 bg-gray-100 mx-2"></div>
+
+                            {/* Listes */}
+                            <button onClick={() => execCommand('insertUnorderedList')} className="w-12 h-12 rounded-xl hover:bg-gray-100 flex items-center justify-center text-xl" title="Liste à puces">•</button>
+                            <button onClick={() => execCommand('insertOrderedList')} className="w-12 h-12 rounded-xl hover:bg-gray-100 flex items-center justify-center text-xl" title="Liste numérotée">1.</button>
+                            <div className="w-px h-8 bg-gray-100 mx-2"></div>
+
+                            {/* Liens et médias */}
                             <button onClick={() => execCommand('createLink')} className="w-12 h-12 rounded-xl hover:bg-gray-100 flex items-center justify-center text-xl" title="Ajouter un lien">🔗</button>
                             <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 rounded-xl hover:bg-gray-100 flex items-center justify-center text-xl" title="Image Locale">🖼️</button>
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleLocalImage} />
+
+                            {/* Citation */}
+                            <button onClick={() => execCommand('formatBlock', 'blockquote')} className="w-12 h-12 rounded-xl hover:bg-gray-100 flex items-center justify-center text-xl" title="Citation">❝</button>
+
                             <div className="w-px h-8 bg-gray-100 mx-2"></div>
+
+                            {/* IA */}
                             <button onClick={handleAIFill} className="bg-brand-yellow text-brand-dark px-8 h-12 rounded-xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all flex items-center gap-3">
                                 ✨ RÉDIGER PAR IA
                             </button>
@@ -377,9 +509,14 @@ export const AdminDashboard = () => {
                             <div 
                                 ref={editorRef}
                                 contentEditable 
-                                className="outline-none prose prose-2xl prose-serif max-w-none text-gray-900 leading-relaxed min-h-[800px]"
+                                className="outline-none prose prose-2xl prose-serif max-w-none text-gray-900 leading-relaxed min-h-[800px] focus:ring-2 focus:ring-brand-blue/20 rounded-lg p-4 transition-all"
                                 dangerouslySetInnerHTML={{ __html: currentArticle.content || '' }}
                                 onBlur={() => setCurrentArticle(prev => ({ ...prev, content: editorRef.current?.innerHTML }))}
+                                style={{
+                                    fontFamily: 'Georgia, serif',
+                                    lineHeight: '1.8',
+                                    fontSize: '18px'
+                                }}
                             />
                         </div>
                     </div>
@@ -460,6 +597,73 @@ export const AdminDashboard = () => {
           </div>
       )}
 
+      {/* --- MODAL SUPPRESSION RUBRIQUE --- */}
+      {isDeleteCategoryModalOpen && (
+        <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-2xl rounded-[55px] p-16 shadow-2xl relative">
+            <button onClick={() => setIsDeleteCategoryModalOpen(false)} className="absolute top-10 right-10 text-gray-300 text-2xl">✕</button>
+            <h2 className="text-4xl font-serif font-black mb-10 text-brand-dark uppercase tracking-tighter">Supprimer la rubrique</h2>
+
+            {(() => {
+              const articlesInCategory = articles.filter(art => art.category === currentCategory.name);
+              return (
+                <div className="space-y-8">
+                  <div className="bg-red-50 p-6 rounded-2xl border border-red-200">
+                    <p className="text-red-800 font-bold mb-2">⚠️ Attention !</p>
+                    <p className="text-red-700">
+                      Cette rubrique contient <strong>{articlesInCategory.length} article{articlesInCategory.length > 1 ? 's' : ''}</strong>.
+                      {articlesInCategory.length > 0 && " Ils seront orphelins si vous supprimez cette rubrique."}
+                    </p>
+                  </div>
+
+                  {articlesInCategory.length > 0 && (
+                    <div className="space-y-4">
+                      <label className="block text-[11px] font-black uppercase text-brand-blue tracking-widest">
+                        Réaffecter les articles vers :
+                      </label>
+                      <select
+                        className="w-full p-6 bg-gray-50 rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all"
+                        onChange={(e) => setCurrentCategory({...currentCategory, name: e.target.value})}
+                      >
+                        <option value="">Sélectionner une rubrique...</option>
+                        {categories.filter(c => c.id !== currentCategory.id).map(c => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                        <option value="__new__">Créer une nouvelle rubrique</option>
+                      </select>
+
+                      {currentCategory.name === '__new__' && (
+                        <input
+                          type="text"
+                          placeholder="Nom de la nouvelle rubrique..."
+                          className="w-full p-6 bg-gray-50 rounded-[25px] font-bold outline-none"
+                          onChange={(e) => setCurrentCategory({...currentCategory, name: e.target.value})}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setIsDeleteCategoryModalOpen(false)}
+                      className="flex-1 py-7 bg-gray-100 text-gray-600 rounded-[40px] font-black uppercase"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleDeleteCategory}
+                      className="flex-1 py-7 bg-brand-red text-white rounded-[40px] font-black uppercase shadow-2xl"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* --- MODAL UTILISATEUR / PROFIL --- */}
       {isUserModalOpen && (
           <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-6">
@@ -469,16 +673,44 @@ export const AdminDashboard = () => {
                   <div className="space-y-8">
                       <input type="text" className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" placeholder="Nom Complet..." value={currentEditUser.name || ''} onChange={e => setCurrentEditUser({...currentEditUser, name: e.target.value})} />
                       <input type="email" className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" placeholder="Email professionnel..." value={currentEditUser.email || ''} onChange={e => setCurrentEditUser({...currentEditUser, email: e.target.value})} />
-                      <div className="relative">
-                        <input type={showPassword ? 'text' : 'password'} className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none pr-20" placeholder="Mot de passe..." value={currentEditUser.password || ''} onChange={e => setCurrentEditUser({...currentEditUser, password: e.target.value})} />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-300">👁️</button>
-                      </div>
-                      <select className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none appearance-none" value={currentEditUser.role || UserRole.CONTRIBUTOR} onChange={e => setCurrentEditUser({...currentEditUser, role: e.target.value as UserRole})}>
-                          <option value={UserRole.ADMIN}>ADMINISTRATEUR</option>
-                          <option value={UserRole.EDITOR}>ÉDITEUR</option>
-                          <option value={UserRole.CONTRIBUTOR}>CONTRIBUTEUR</option>
-                      </select>
-                      <button onClick={handleSaveUser} className="w-full py-7 bg-brand-blue text-white rounded-[40px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-all">Enregistrer</button>
+
+                      {/* Mot de passe seulement pour admin ou si c'est un nouveau compte */}
+                      {(PERMISSIONS.canManageUsers(user?.role!) || !currentEditUser.id) && (
+                        <div className="relative">
+                          <input type={showPassword ? 'text' : 'password'} className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none pr-20" placeholder="Mot de passe..." value={currentEditUser.password || ''} onChange={e => setCurrentEditUser({...currentEditUser, password: e.target.value})} />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-300">👁️</button>
+                        </div>
+                      )}
+
+                      {/* Sélection du rôle seulement pour admin */}
+                      {PERMISSIONS.canManageUsers(user?.role!) && (
+                        <select className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none appearance-none" value={currentEditUser.role || UserRole.CONTRIBUTOR} onChange={e => setCurrentEditUser({...currentEditUser, role: e.target.value as UserRole})}>
+                            <option value={UserRole.ADMIN}>ADMINISTRATEUR</option>
+                            <option value={UserRole.EDITOR}>ÉDITEUR</option>
+                            <option value={UserRole.CONTRIBUTOR}>CONTRIBUTEUR</option>
+                        </select>
+                      )}
+
+                      {/* Bouton supprimer seulement pour admin et pas pour soi-même */}
+                      {PERMISSIONS.canManageUsers(user?.role!) && currentEditUser.id !== user?.id && (
+                        <button
+                          onClick={() => {
+                            if (confirm('Supprimer cet utilisateur ?')) {
+                              deleteUser(currentEditUser.id!).then(() => {
+                                setIsUserModalOpen(false);
+                                loadData();
+                              });
+                            }
+                          }}
+                          className="w-full py-4 bg-red-50 text-red-600 rounded-[40px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                        >
+                          Supprimer l'utilisateur
+                        </button>
+                      )}
+
+                      <button onClick={handleSaveUser} className="w-full py-7 bg-brand-blue text-white rounded-[40px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-all">
+                        {currentEditUser.id ? 'Mettre à jour' : 'Créer le compte'}
+                      </button>
                   </div>
               </div>
           </div>

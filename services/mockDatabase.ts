@@ -2,9 +2,19 @@ import { Article, ArticleStatus, Category, User, UserRole, Ad, AdLocation, AdTyp
 import { supabase } from '../supabase-config';
 
 export const getUsers = async (): Promise<User[]> => {
-  const { data, error } = await supabase.from('users').select('*');
-  if (error) throw error;
-  return data || [];
+  try {
+    console.log('Tentative de récupération des utilisateurs...');
+    const { data, error } = await supabase.from('users').select('*');
+    if (error) {
+      console.error('Erreur Supabase getUsers:', error);
+      throw new Error(`Erreur de récupération utilisateurs: ${error.message}`);
+    }
+    console.log('Utilisateurs récupérés:', data?.length || 0, data);
+    return data || [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des utilisateurs:', error);
+    throw error;
+  }
 };
 
 export const saveUser = async (user: User) => {

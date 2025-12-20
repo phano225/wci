@@ -9,7 +9,14 @@ export enum UserRole {
 export enum ArticleStatus {
   DRAFT = 'DRAFT',
   SUBMITTED = 'SUBMITTED',
-  PUBLISHED = 'PUBLISHED'
+  PUBLISHED = 'PUBLISHED',
+  REJECTED = 'REJECTED'
+}
+
+export enum SubmissionStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
 }
 
 // Ad Types
@@ -66,14 +73,37 @@ export interface Article {
   authorAvatar?: string;
   status: ArticleStatus;
   views: number;
-  createdAt: string; 
+  createdAt: string;
   updatedAt: string;
+  // Workflow properties
+  submittedBy?: string; // ID of the user who submitted for review
+  submittedAt?: string; // When it was submitted
+  reviewedBy?: string; // ID of the reviewer
+  reviewedAt?: string; // When it was reviewed
+  reviewComments?: string; // Comments from reviewer
+  submissionStatus?: SubmissionStatus;
 }
 
 // Permissions Matrix
 export const PERMISSIONS = {
+  // Articles
+  canCreateArticle: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR, UserRole.CONTRIBUTOR].includes(role),
+  canEditOwnArticle: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR, UserRole.CONTRIBUTOR].includes(role),
   canDeleteArticle: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
+  canPublishArticle: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
+  canSubmitForReview: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR, UserRole.CONTRIBUTOR].includes(role),
+  canReviewSubmissions: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
+
+  // Users
   canManageUsers: (role: UserRole) => role === UserRole.ADMIN,
+  canCreateEditor: (role: UserRole) => role === UserRole.ADMIN,
+  canCreateContributor: (role: UserRole) => role === UserRole.ADMIN,
+  canEditOwnProfile: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR, UserRole.CONTRIBUTOR].includes(role),
+  canDeleteOwnAccount: (role: UserRole) => role === UserRole.ADMIN,
+
+  // Categories
   canManageCategories: (role: UserRole) => [UserRole.ADMIN, UserRole.EDITOR].includes(role),
+
+  // Ads
   canManageAds: (role: UserRole) => role === UserRole.ADMIN,
 };
