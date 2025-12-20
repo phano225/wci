@@ -1,10 +1,10 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { ArticlePage } from './pages/ArticlePage';
+import { HomePage } from '../pages/HomePage';
+import { LoginPage } from '../pages/LoginPage';
+import { AdminDashboard } from '../pages/AdminDashboard';
+import { ArticlePage } from '../pages/ArticlePage';
 
 function App() {
   return (
