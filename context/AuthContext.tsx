@@ -43,6 +43,24 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   const logout = async () => {
     await supabase.auth.signOut();
+=======
+        const users = await getUsers();
+        const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+        
+        if (foundUser) {
+          setUser(foundUser);
+          localStorage.setItem('wci_current_session', JSON.stringify(foundUser));
+          return true;
+        }
+        return false;
+    } catch (e) {
+        console.error("Login Error:", e);
+        return false;
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   const updateUser = async (userData: User) => {
