@@ -46,7 +46,7 @@ export const AdminDashboard = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const modules = {
+  const modules = React.useMemo(() => ({
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike', 'blockquote'],
@@ -54,7 +54,7 @@ export const AdminDashboard = () => {
       ['link', 'image', 'video'],
       ['clean']
     ],
-  };
+  }), []);
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
