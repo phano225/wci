@@ -62,15 +62,16 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         console.log('Tentative de connexion en mode DÉMO/FALLBACK...');
         
         const demoUsers = [
-            { email: 'admin@worldcanalinfo.com', password: 'admin', role: 'admin', name: 'Administrateur' },
-            { email: 'editor@worldcanalinfo.com', password: 'editor', role: 'editor', name: 'Éditeur' },
-            { email: 'contrib@worldcanalinfo.com', password: 'contrib', role: 'contributor', name: 'Contributeur' }
+            { email: 'admin@worldcanalinfo.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
+            { email: 'admin@worldcanalinfo.com', password: 'admin123', role: 'ADMIN', name: 'Administrateur' }, // Support both for transition
+            { email: 'editor@worldcanalinfo.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
+            { email: 'contrib@worldcanalinfo.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
         ];
 
         console.log('Utilisateurs démo disponibles:', demoUsers);
         console.log('Comparaison avec:', email, password);
 
-        const demoUser = demoUsers.find(u => u.email === email && u.password === password);
+        const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
         
         if (demoUser) {
             console.log('Connexion DÉMO réussie pour:', demoUser.name);
