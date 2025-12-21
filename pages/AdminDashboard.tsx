@@ -46,6 +46,16 @@ export const AdminDashboard = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+      ['link', 'image', 'video'],
+      ['clean']
+    ],
+  };
+
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
     loadData();
