@@ -5,6 +5,7 @@ import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { AdminDashboard } from '../pages/AdminDashboard';
 import { ArticlePage } from '../pages/ArticlePage';
+import { ContactPage } from '../pages/ContactPage';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/article/:id" element={<ArticlePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>

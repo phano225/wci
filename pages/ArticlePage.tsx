@@ -89,15 +89,15 @@ export const ArticlePage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <div className="lg:col-span-8">
-            <div className="mb-4 flex justify-between items-center">
-                <span className="bg-brand-red text-white text-xs font-bold uppercase px-2 py-1">{article.category}</span>
-                <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.43 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div className="mb-6 flex justify-between items-center border-b border-gray-100 pb-4">
+                <span className="bg-brand-red text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider shadow-sm">{article.category}</span>
+                <div className="flex items-center gap-2 text-gray-400 bg-gray-50 px-3 py-1 rounded-full" title="Nombre de lecteurs">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-brand-blue">
+                      <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                      <path fillRule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clipRule="evenodd" />
                     </svg>
-                    {article.views || 0} vues
-                </span>
+                    <span className="text-xs font-bold font-mono">{article.views || 0}</span>
+                </div>
             </div>
             <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-900 leading-tight mb-6">
                 {article.title}

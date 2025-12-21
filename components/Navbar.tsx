@@ -26,7 +26,7 @@ export const Navbar = () => {
         <span className="hidden md:inline">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
         <div className="flex space-x-4">
           <a href="#" className="hover:text-brand-gray">Newsletter</a>
-          <a href="#" className="hover:text-brand-gray">Contact</a>
+          <Link to="/contact" className="hover:text-brand-gray">Contact</Link>
           {!user ? (
              <Link to="/login" className="font-bold text-brand-yellow hover:text-yellow-300">Connexion Espace Pro</Link>
           ) : (
