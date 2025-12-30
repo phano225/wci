@@ -292,14 +292,20 @@ export const AdminDashboard = () => {
   const handleSaveCategory = async () => {
     if (!currentCategory.name) return;
     setIsProcessing(true);
-    await saveCategory({
-        id: currentCategory.id || Date.now().toString(),
-        name: currentCategory.name,
-        slug: currentCategory.name.toLowerCase().replace(/\s+/g, '-')
-    });
-    setIsCategoryModalOpen(false);
-    await loadData();
-    setIsProcessing(false);
+    try {
+        await saveCategory({
+            id: currentCategory.id || Date.now().toString(),
+            name: currentCategory.name,
+            slug: currentCategory.name.toLowerCase().replace(/\s+/g, '-')
+        });
+        setIsCategoryModalOpen(false);
+        await loadData();
+    } catch (error) {
+        console.error('Erreur sauvegarde catégorie:', error);
+        alert('Erreur lors de la sauvegarde de la rubrique.');
+    } finally {
+        setIsProcessing(false);
+    }
   };
 
   const handleDeleteCategory = async () => {
