@@ -117,7 +117,9 @@ export const AdminDashboard = () => {
         setSocialLinks(socialList);
     } catch (e) {
         console.error('Erreur lors du chargement des données:', e);
-        e'.Véifiez vt connxion.'
+        const errorMessage = (e as any)?.message || (e as any)?.error_description || JSON.stringify(e);
+        alert(`Erreur de chargement des données: ${errorMessage}`);
+    }
     setIsProcessing(false);
   };
 
@@ -1231,6 +1233,4 @@ export const AdminDashboard = () => {
       )}
     </div>
   );
-};);
-};);
 };
