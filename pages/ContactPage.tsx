@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PublicLayout } from '../components/PublicLayout';
+import { saveMessage } from '../services/mockDatabase';
 
 export const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -14,11 +15,14 @@ export const ContactPage = () => {
     e.preventDefault();
     setStatus('submitting');
     
-    // Simulation d'envoi (pour l'instant, pas de backend pour le mail)
-    setTimeout(() => {
+    try {
+      await saveMessage(formData);
       setStatus('success');
       setFormData({ name: '', email: '', subject: '', message: '' });
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      setStatus('error');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

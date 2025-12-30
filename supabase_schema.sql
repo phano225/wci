@@ -9,18 +9,10 @@ CREATE TABLE IF NOT EXISTS categories (
 );
 
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Public categories are viewable by everyone" 
-ON categories FOR SELECT USING (true);
-
-CREATE POLICY "Admins and Editors can insert categories" 
-ON categories FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
-CREATE POLICY "Admins and Editors can update categories" 
-ON categories FOR UPDATE USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Admins and Editors can delete categories" 
-ON categories FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Public categories are viewable by everyone" ON categories FOR SELECT USING (true);
+CREATE POLICY "Admins and Editors can insert categories" ON categories FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Admins and Editors can update categories" ON categories FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admins and Editors can delete categories" ON categories FOR DELETE USING (auth.role() = 'authenticated');
 
 -- 2. Table des articles
 CREATE TABLE IF NOT EXISTS articles (
@@ -38,8 +30,6 @@ CREATE TABLE IF NOT EXISTS articles (
   views INTEGER DEFAULT 0,
   createdat TIMESTAMPTZ DEFAULT NOW(),
   updatedat TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- Workflow de validation
   submitted_by TEXT,
   submitted_at TIMESTAMPTZ,
   submission_status TEXT,
@@ -49,28 +39,10 @@ CREATE TABLE IF NOT EXISTS articles (
 );
 
 ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
-
--- Tout le monde peut voir les articles publiés
-CREATE POLICY "Public articles are viewable by everyone" 
-ON articles FOR SELECT USING (status = 'PUBLISHED' OR auth.role() = 'authenticated');
-
--- Les utilisateurs authentifiés peuvent créer des articles
-CREATE POLICY "Users can create articles" 
-ON articles FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-
--- Les auteurs peuvent modifier leurs propres articles, les admins/éditeurs peuvent tout modifier
-CREATE POLICY "Users can update own articles" 
-ON articles FOR UPDATE USING (
-  auth.uid()::text = authorid OR 
-  auth.email() IN ('admin@worldcanalinfo.com', 'editor@worldcanalinfo.com')
-);
-
--- Les auteurs peuvent supprimer leurs propres articles
-CREATE POLICY "Users can delete own articles" 
-ON articles FOR DELETE USING (
-  auth.uid()::text = authorid OR 
-  auth.email() IN ('admin@worldcanalinfo.com', 'editor@worldcanalinfo.com')
-);
+CREATE POLICY "Public articles are viewable by everyone" ON articles FOR SELECT USING (status = 'PUBLISHED' OR auth.role() = 'authenticated');
+CREATE POLICY "Users can create articles" ON articles FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Users can update own articles" ON articles FOR UPDATE USING (auth.uid()::text = authorid OR auth.email() IN ('admin@worldcanalinfo.com', 'editor@worldcanalinfo.com'));
+CREATE POLICY "Users can delete own articles" ON articles FOR DELETE USING (auth.uid()::text = authorid OR auth.email() IN ('admin@worldcanalinfo.com', 'editor@worldcanalinfo.com'));
 
 -- 3. Table des publicités
 CREATE TABLE IF NOT EXISTS ads (
@@ -85,14 +57,28 @@ CREATE TABLE IF NOT EXISTS ads (
 );
 
 ALTER TABLE ads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public ads are viewable by everyone" ON ads FOR SELECT USING (true);
+CREATE POLICY "Admins can manage ads" ON ads FOR ALL USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Public ads are viewable by everyone" 
-ON ads FOR SELECT USING (true);
+-- 4. Table des messages de contact
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'UNREAD', -- UNREAD, READ, ARCHIVED
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-CREATE POLICY "Admins can manage ads" 
-ON ads FOR ALL USING (auth.role() = 'authenticated');
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+-- Tout le monde peut envoyer un message (INSERT public)
+CREATE POLICY "Anyone can send a message" ON contact_messages FOR INSERT WITH CHECK (true);
+-- Seuls les admins/éditeurs peuvent voir les messages
+CREATE POLICY "Admins can view messages" ON contact_messages FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Admins can update messages" ON contact_messages FOR UPDATE USING (auth.role() = 'authenticated');
 
--- 4. Fonction pour incrémenter les vues (RPC)
+-- 5. Fonction pour incrémenter les vues
 CREATE OR REPLACE FUNCTION increment_views(article_id TEXT)
 RETURNS void
 LANGUAGE plpgsql

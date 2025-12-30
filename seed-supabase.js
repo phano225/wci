@@ -12,9 +12,9 @@ const seedData = async () => {
   // 1. USERS
   console.log('Seeding Users...');
   const users = [
-    { id: 'admin-001', name: 'Administrateur', email: 'admin@worldcanalinfo.com', password: 'admin', role: 'ADMIN', avatar: 'https://ui-avatars.com/api/?name=Admin&background=3B82F6&color=fff' },
-    { id: 'editor-001', name: 'Éditeur', email: 'editor@worldcanalinfo.com', password: 'editor', role: 'EDITOR', avatar: 'https://ui-avatars.com/api/?name=Editor&background=10B981&color=fff' },
-    { id: 'contrib-001', name: 'Contributeur', email: 'contrib@worldcanalinfo.com', password: 'contrib', role: 'CONTRIBUTOR', avatar: 'https://ui-avatars.com/api/?name=Contrib&background=F59E0B&color=fff' }
+    { id: 'admin-001', name: 'Administrateur', email: 'admin@example.com', password: 'admin', role: 'ADMIN', avatar: 'https://ui-avatars.com/api/?name=Admin&background=3B82F6&color=fff' },
+    { id: 'editor-001', name: 'Éditeur', email: 'editor@example.com', password: 'editor', role: 'EDITOR', avatar: 'https://ui-avatars.com/api/?name=Editor&background=10B981&color=fff' },
+    { id: 'contrib-001', name: 'Contributeur', email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', avatar: 'https://ui-avatars.com/api/?name=Contrib&background=F59E0B&color=fff' }
   ];
   
   const { error: usersError } = await supabase.from('users').upsert(users, { onConflict: 'id' });
@@ -39,9 +39,9 @@ const seedData = async () => {
   const articles = [
     {
       id: 'article-001',
-      title: 'Bienvenue sur World Canal Info',
-      excerpt: 'Découvrez notre nouveau site d\'information dédié au canal de Panama et à l\'actualité internationale.',
-      content: '<p>World Canal Info est votre source d\'information de référence sur le canal de Panama et les événements mondiaux qui impactent le commerce maritime international.</p><p>Notre équipe de journalistes professionnels vous tient informé 24/7 des dernières actualités.</p>',
+      title: 'Bienvenue',
+      excerpt: 'Découvrez notre nouveau site d\'information dédié à l\'actualité internationale.',
+      content: '<p>Votre source d\'information de référence sur les événements mondiaux qui impactent le commerce maritime international.</p><p>Notre équipe de journalistes professionnels vous tient informé 24/7 des dernières actualités.</p>',
       category: 'Actualités',
       imageurl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
       authorid: 'admin-001',

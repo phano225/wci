@@ -46,9 +46,12 @@ export const AdDisplay: React.FC<AdDisplayProps> = ({ location }) => {
 
   // Render Image
   if (ad.type === AdType.IMAGE) {
+      const imageSrc = ad.imageUrl || ad.content;
+      const link = ad.linkUrl || ad.targetUrl;
+      
       const Content = (
         <img 
-            src={ad.content} 
+            src={imageSrc} 
             alt={ad.title} 
             className="w-full h-full object-cover" 
             style={{ 
@@ -57,8 +60,8 @@ export const AdDisplay: React.FC<AdDisplayProps> = ({ location }) => {
         />
       );
 
-      if (ad.linkUrl) {
-          return <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer" className="block mx-auto">{Content}</a>;
+      if (link) {
+          return <a href={link} target="_blank" rel="noopener noreferrer" className="block mx-auto">{Content}</a>;
       }
       return <div className="mx-auto block">{Content}</div>;
   }

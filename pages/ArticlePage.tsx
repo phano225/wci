@@ -39,7 +39,7 @@ export const ArticlePage = () => {
 
   useEffect(() => {
     if (article) {
-        document.title = `${article.title} - World Canal Info`;
+        document.title = `${article.title}`;
         const setMeta = (attrName: string, attrValue: string, content: string) => {
             let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
             if (!element) {
@@ -50,7 +50,7 @@ export const ArticlePage = () => {
             element.setAttribute('content', content);
         };
         setMeta('property', 'og:type', 'article');
-        setMeta('property', 'og:site_name', 'World Canal Info');
+        setMeta('property', 'og:site_name', 'Actualités');
         setMeta('property', 'og:title', article.title);
         setMeta('property', 'og:description', article.excerpt);
         setMeta('property', 'og:image', article.imageUrl);
@@ -61,7 +61,7 @@ export const ArticlePage = () => {
         setMeta('name', 'twitter:image', article.imageUrl);
 
         return () => {
-            document.title = 'World Canal Info - L\'actualité en continu';
+            document.title = 'L\'actualité en continu';
         };
     }
   }, [article]);

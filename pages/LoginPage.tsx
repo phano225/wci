@@ -37,7 +37,9 @@ export const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="bg-white p-8 rounded shadow-lg w-full max-w-md border-t-4 border-brand-blue">
         <div className="text-center mb-6">
-            <h1 className="text-2xl font-serif font-bold text-brand-dark">World Canal Info</h1>
+            <div className="flex justify-center mb-4">
+                <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
+            </div>
             <p className="text-sm text-gray-500 uppercase tracking-widest mt-1">Espace Administration</p>
         </div>
         
@@ -56,7 +58,7 @@ export const LoginPage = () => {
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-brand-blue outline-none bg-white text-gray-900 placeholder-gray-500"
-                placeholder="admin@worldcanalinfo.com"
+                placeholder="admin@example.com"
             />
           </div>
           <div>
@@ -104,9 +106,9 @@ export const LoginPage = () => {
           <div className="text-center mt-6 p-4 bg-gray-50 rounded text-xs text-gray-500 border border-gray-200">
             <p className="font-bold mb-1">Identifiants Démo :</p>
             <ul className="text-left space-y-1 mx-auto max-w-xs">
-                <li><strong className="text-brand-dark">Admin:</strong> admin@worldcanalinfo.com / admin</li>
-                <li><strong className="text-brand-dark">Éditeur:</strong> editor@worldcanalinfo.com / editor</li>
-                <li><strong className="text-brand-dark">Contrib:</strong> contrib@worldcanalinfo.com / contrib</li>
+                <li><strong className="text-brand-dark">Admin:</strong> admin@example.com / admin</li>
+                <li><strong className="text-brand-dark">Éditeur:</strong> editor@example.com / editor</li>
+                <li><strong className="text-brand-dark">Contrib:</strong> contrib@example.com / contrib</li>
             </ul>
           </div>
 

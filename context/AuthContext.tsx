@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { supabase } from '../supabase-config';
-import { getUsers, saveUser } from '../services/mockDatabase';
+import { getUsers, saveUser, IS_OFFLINE_MODE } from '../services/mockDatabase';
 
 interface AuthContextType {
   user: User | null;
@@ -49,6 +49,31 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    // --- MODE HORS LIGNE ---
+    if (IS_OFFLINE_MODE) {
+        console.log('MODE HORS LIGNE: Connexion locale simulée.');
+        const demoUsers = [
+            { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
+            { email: 'admin@example.com', password: 'admin123', role: 'ADMIN', name: 'Administrateur' },
+            { email: 'editor@example.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
+            { email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
+        ];
+        const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+        if (demoUser) {
+            setUser({
+                id: 'demo-' + demoUser.role,
+                email: demoUser.email,
+                name: demoUser.name,
+                role: demoUser.role as any,
+                createdAt: new Date().toISOString(),
+                lastLogin: new Date().toISOString(),
+                active: true
+            });
+            return true;
+        }
+        return false;
+    }
+
     console.log('--- LOGIN START (Supabase Real) ---');
     try {
       console.log('Tentative de connexion pour:', email);
@@ -62,10 +87,10 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         console.log('Tentative de connexion en mode DÉMO/FALLBACK...');
         
         const demoUsers = [
-            { email: 'admin@worldcanalinfo.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
-            { email: 'admin@worldcanalinfo.com', password: 'admin123', role: 'ADMIN', name: 'Administrateur' }, // Support both for transition
-            { email: 'editor@worldcanalinfo.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
-            { email: 'contrib@worldcanalinfo.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
+            { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
+            { email: 'admin@example.com', password: 'admin123', role: 'ADMIN', name: 'Administrateur' }, // Support both for transition
+            { email: 'editor@example.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
+            { email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
         ];
 
         console.log('Utilisateurs démo disponibles:', demoUsers);
@@ -98,9 +123,9 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       console.error("Erreur lors de la connexion:", e);
       // Fallback en cas d'erreur inattendue aussi
         const demoUsers = [
-            { email: 'admin@worldcanalinfo.com', password: 'admin', role: 'admin', name: 'Administrateur' },
-            { email: 'editor@worldcanalinfo.com', password: 'editor', role: 'editor', name: 'Éditeur' },
-            { email: 'contrib@worldcanalinfo.com', password: 'contrib', role: 'contributor', name: 'Contributeur' }
+            { email: 'admin@example.com', password: 'admin', role: 'admin', name: 'Administrateur' },
+            { email: 'editor@example.com', password: 'editor', role: 'editor', name: 'Éditeur' },
+            { email: 'contrib@example.com', password: 'contrib', role: 'contributor', name: 'Contributeur' }
         ];
 
         const demoUser = demoUsers.find(u => u.email === email && u.password === password);
@@ -124,6 +149,10 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   };
 
   const logout = async () => {
+    if (IS_OFFLINE_MODE) {
+        setUser(null);
+        return;
+    }
     await supabase.auth.signOut();
   };
 

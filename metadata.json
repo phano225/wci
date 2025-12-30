@@ -1,5 +1,5 @@
 {
-  "name": "World Canal Info CMS",
-  "description": "Journal en ligne World Canal Info avec gestion de catégories et rôles utilisateurs.",
+  "name": "WCI CMS",
+  "description": "Journal en ligne avec gestion de catégories et rôles utilisateurs.",
   "requestFramePermissions": []
 }

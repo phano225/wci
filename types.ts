@@ -37,10 +37,27 @@ export interface Ad {
   title: string;
   location: AdLocation;
   type: AdType;
-  content: string;
+  content?: string;
+  imageUrl?: string;
   linkUrl?: string;
-  active: boolean;
+  targetUrl?: string;
+  active?: boolean;
+  isActive?: boolean;
+  views?: number;
+  clicks?: number;
+  createdAt?: string;
 }
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  date: string;
+  status: 'READ' | 'UNREAD' | 'ARCHIVED';
+}
+
 
 // User Model
 export interface User {

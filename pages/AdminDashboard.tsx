@@ -12,18 +12,20 @@ import {
     deleteAd,
     getUsers,
     saveUser,
-    deleteUser
+    deleteUser,
+    getMessages,
+    updateMessageStatus
 } from '../services/mockDatabase';
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus } from '../types';
 import { useNavigate, Link } from 'react-router-dom';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+// import ReactQuill from 'react-quill';
+// import 'react-quill/dist/quill.snow.css';
 
 export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages'>('articles');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -31,6 +33,7 @@ export const AdminDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [ads, setAds] = useState<Ad[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
   
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -46,6 +49,22 @@ export const AdminDashboard = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const handleMarkAsRead = async (id: string) => {
+    setIsProcessing(true);
+    await updateMessageStatus(id, 'READ');
+    await loadData();
+    setIsProcessing(false);
+  };
+
+  const handleArchiveMessage = async (id: string) => {
+      if (!confirm('Archiver ce message ?')) return;
+      setIsProcessing(true);
+      await updateMessageStatus(id, 'ARCHIVED');
+      await loadData();
+      setIsProcessing(false);
+  };
+
+  // --- EDITOR MODULES ---
   const modules = React.useMemo(() => ({
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -65,8 +84,8 @@ export const AdminDashboard = () => {
     setIsProcessing(true);
     try {
         console.log('Chargement des données...');
-        const [arts, cats, adsList, userList] = await Promise.all([
-            getArticles(), getCategories(), getAds(), getUsers()
+        const [arts, cats, adsList, userList, msgList] = await Promise.all([
+            getArticles(), getCategories(), getAds(), getUsers(), getMessages()
         ]);
         
         // Filter articles based on role
@@ -80,6 +99,7 @@ export const AdminDashboard = () => {
         setCategories(cats);
         setAds(adsList);
         setStaff(userList);
+        setMessages(msgList);
     } catch (e) {
         console.error('Erreur lors du chargement des données:', e);
         alert('Erreur de chargement des données. Vérifiez votre connexion.');
@@ -354,6 +374,13 @@ export const AdminDashboard = () => {
             {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => setActiveTab('ads')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'ads' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>📢 Publicités</button>}
             
             {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('users')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'users' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>👥 Équipe</button>}
+            
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('messages')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'messages' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
+                📩 Messages
+                {messages.filter(m => m.status === 'UNREAD').length > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] px-2 rounded-full">{messages.filter(m => m.status === 'UNREAD').length}</span>
+                )}
+            </button>}
         </nav>
         
         <div className="p-6 border-t border-white/5">
@@ -371,7 +398,7 @@ export const AdminDashboard = () => {
       <main className="ml-72 flex-1 p-12 overflow-y-auto">
         <header className="flex justify-between items-end mb-16">
             <h1 className="text-5xl font-serif font-black text-brand-dark uppercase tracking-tighter">
-                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : 'Équipe'}
+                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : 'Équipe'}
             </h1>
             <button onClick={() => { 
                 if(activeTab === 'articles') { setCurrentArticle({}); setIsEditorOpen(true); } 
@@ -382,7 +409,8 @@ export const AdminDashboard = () => {
                 (activeTab === 'categories' && !PERMISSIONS.canManageCategories(user?.role!)) ||
                 (activeTab === 'ads' && !PERMISSIONS.canManageAds(user?.role!)) ||
                 (activeTab === 'users' && !PERMISSIONS.canManageUsers(user?.role!)) ||
-                (activeTab === 'submissions') // Cannot add submissions manually from this view
+                (activeTab === 'submissions') ||
+                (activeTab === 'messages') // Cannot add messages manually
             ) ? 'hidden' : ''}`}>+ AJOUTER</button>
         </header>
 
@@ -524,6 +552,36 @@ export const AdminDashboard = () => {
                 </table>
             </div>
         )}
+
+        {/* --- MESSAGES (Admin Only) --- */}
+        {activeTab === 'messages' && (
+            <div className="space-y-4">
+                {messages.length === 0 && <div className="text-center p-10 text-gray-400">Aucun message reçu.</div>}
+                {messages.map(msg => (
+                    <div key={msg.id} className={`bg-white p-6 rounded-[35px] border ${msg.status === 'UNREAD' ? 'border-l-8 border-l-brand-blue' : 'border-gray-100'} flex items-start justify-between group hover:shadow-xl transition-all`}>
+                        <div className="flex-1 pr-8">
+                            <div className="flex items-center gap-4 mb-2">
+                                <h3 className={`font-bold text-xl ${msg.status === 'UNREAD' ? 'text-brand-dark' : 'text-gray-500'}`}>{msg.subject}</h3>
+                                {msg.status === 'UNREAD' && <span className="bg-brand-blue text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded">Nouveau</span>}
+                                <span className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-4 text-sm text-gray-600 font-bold">
+                                <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">👤</span>
+                                {msg.name} <span className="text-gray-300 font-normal">&lt;{msg.email}&gt;</span>
+                            </div>
+                            <p className="text-gray-600 bg-gray-50 p-4 rounded-2xl text-sm leading-relaxed">{msg.message}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            {msg.status === 'UNREAD' && (
+                                <button onClick={() => handleMarkAsRead(msg.id)} className="px-6 py-3 bg-blue-50 text-brand-blue rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all whitespace-nowrap">Marquer lu</button>
+                            )}
+                            <button onClick={() => window.open(`mailto:${msg.email}?subject=Re: ${msg.subject}`)} className="px-6 py-3 bg-gray-50 text-gray-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all whitespace-nowrap">Répondre</button>
+                            <button onClick={() => handleArchiveMessage(msg.id)} className="px-6 py-3 bg-red-50 text-brand-red rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-red hover:text-white transition-all whitespace-nowrap">Archiver</button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
       </main>
 
       {/* --- STUDIO RÉDACTION WYSIWYG MODERNE --- */}
@@ -569,6 +627,14 @@ export const AdminDashboard = () => {
                             />
                             
                             <div className="flex-1">
+                                {/* Editor replaced by simple textarea for offline stability */}
+                                <textarea
+                                    className="w-full h-[600px] mb-12 p-6 bg-gray-50 rounded-[25px] font-serif text-lg leading-relaxed outline-none resize-none border-2 border-transparent focus:border-brand-blue/10 transition-all"
+                                    placeholder="Écrivez votre article ici..."
+                                    value={currentArticle.content || ''}
+                                    onChange={(e) => setCurrentArticle(prev => ({ ...prev, content: e.target.value }))}
+                                />
+                                {/* 
                                 <ReactQuill 
                                     theme="snow"
                                     value={currentArticle.content || ''}
@@ -576,7 +642,8 @@ export const AdminDashboard = () => {
                                     modules={modules}
                                     className="h-[600px] mb-12"
                                     placeholder="Écrivez votre article ici..."
-                                />
+                                /> 
+                                */}
                             </div>
                         </div>
                     </div>
