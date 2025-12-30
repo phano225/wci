@@ -117,8 +117,7 @@ export const AdminDashboard = () => {
         setSocialLinks(socialList);
     } catch (e) {
         console.error('Erreur lors du chargement des données:', e);
-        alert('Erreur de chargement des données. Vérifiez votre connexion.');
-    }
+        e'.Véifiez vt connxion.'
     setIsProcessing(false);
   };
 
@@ -145,7 +144,8 @@ export const AdminDashboard = () => {
         setCurrentSocialLink({});
     } catch (error) {
         console.error('Erreur sauvegarde lien social:', error);
-        alert('Erreur lors de la sauvegarde du lien social.');
+        const errorMessage = (error as any)?.message || JSON.stringify(error);
+        alert(`Erreur lors de la sauvegarde du lien social: ${errorMessage}`);
     } finally {
         setIsProcessing(false);
     }
@@ -188,7 +188,8 @@ export const AdminDashboard = () => {
         setCurrentVideo({});
     } catch (error) {
         console.error('Erreur sauvegarde vidéo:', error);
-        alert('Erreur lors de la sauvegarde de la vidéo.');
+        const errorMessage = (error as any)?.message || JSON.stringify(error);
+        alert(`Erreur lors de la sauvegarde de la vidéo: ${errorMessage}`);
     } finally {
         setIsProcessing(false);
     }
@@ -283,7 +284,8 @@ export const AdminDashboard = () => {
 
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      alert('Erreur lors de la sauvegarde.');
+      const errorMessage = (error as any)?.message || JSON.stringify(error);
+      alert(`Erreur lors de la sauvegarde: ${errorMessage}`);
     } finally {
       setIsProcessing(false);
     }
@@ -1229,4 +1231,6 @@ export const AdminDashboard = () => {
       )}
     </div>
   );
+};);
+};);
 };
