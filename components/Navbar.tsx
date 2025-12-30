@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserRole, AdLocation } from '../types';
-import { getCategories } from '../services/mockDatabase';
+import { UserRole, AdLocation, Article, ArticleStatus, SocialLink } from '../types';
+import { getCategories, getArticles, getSocialLinks } from '../services/mockDatabase';
 import { AdDisplay } from './AdDisplay';
 
 export const Navbar = () => {
@@ -10,13 +10,28 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
+  const [flashArticles, setFlashArticles] = useState<Article[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
 
   useEffect(() => {
-    const loadCats = async () => {
-        const cats = await getCategories();
+    const loadData = async () => {
+        const [cats, articles, socials] = await Promise.all([
+            getCategories(),
+            getArticles(),
+            getSocialLinks()
+        ]);
         setCategories(cats.map(c => c.name));
+        setSocialLinks(socials);
+
+        // Filter published articles and sort by newest first
+        const published = articles
+            .filter(a => a.status === ArticleStatus.PUBLISHED)
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 5); // Take top 5 for flash info
+            
+        setFlashArticles(published);
     };
-    loadCats();
+    loadData();
   }, []);
 
   return (
@@ -34,9 +49,18 @@ export const Navbar = () => {
             {/* Right: Socials + Account */}
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-3 border-r border-gray-700 pr-4 mr-2">
-                    <a href="#" className="hover:text-brand-red transition-colors"><i className="fab fa-facebook-f"></i> FB</a>
-                    <a href="#" className="hover:text-brand-red transition-colors"><i className="fab fa-twitter"></i> TW</a>
-                    <a href="#" className="hover:text-brand-red transition-colors"><i className="fab fa-youtube"></i> YT</a>
+                    {socialLinks.map(link => (
+                        <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={`w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110 ${link.bgColor} ${link.textColor}`}>
+                            <i className={`${link.iconClass} text-[10px]`}></i>
+                        </a>
+                    ))}
+                    {socialLinks.length === 0 && (
+                        <>
+                            <a href="#!" className="hover:text-brand-red transition-colors"><i className="fab fa-facebook-f"></i> FB</a>
+                            <a href="#!" className="hover:text-brand-red transition-colors"><i className="fab fa-twitter"></i> TW</a>
+                            <a href="#!" className="hover:text-brand-red transition-colors"><i className="fab fa-youtube"></i> YT</a>
+                        </>
+                    )}
                  </div>
                  <Link to="/contact" className="hover:text-brand-red transition-colors hidden sm:block">Nous contacter</Link>
                  {!user ? (
@@ -115,21 +139,27 @@ export const Navbar = () => {
       </nav>
 
       {/* Ticker / Flash Info */}
-      <div className="bg-gray-100 border-b border-gray-300 py-2">
-        <div className="container mx-auto px-4 flex items-center">
-            <div className="bg-[#E50914] text-white text-[10px] font-bold uppercase px-3 py-1 mr-0 relative after:content-[''] after:absolute after:right-[-10px] after:top-0 after:border-l-[10px] after:border-l-[#E50914] after:border-t-[10px] after:border-t-transparent after:border-b-[10px] after:border-b-transparent z-10">
-                Flash Info
-            </div>
-            <div className="flex-1 overflow-hidden relative h-5 ml-6">
-                <div className="animate-marquee whitespace-nowrap text-xs font-bold text-gray-800 uppercase tracking-wide">
-                    <span className="mx-8">🔴 Le président annonce une nouvelle réforme des retraites</span>
-                    <span className="mx-8">🔴 Canicule : 15 départements en vigilance rouge</span>
-                    <span className="mx-8">🔴 Football : La France qualifiée pour la finale</span>
-                    <span className="mx-8">🔴 Économie : Le CAC 40 atteint un nouveau record historique</span>
+      {flashArticles.length > 0 && (
+        <div className="bg-gray-100 border-b border-gray-300 py-2">
+            <div className="container mx-auto px-4 flex items-center">
+                <div className="bg-[#E50914] text-white text-[10px] font-bold uppercase px-3 py-1 mr-0 relative after:content-[''] after:absolute after:right-[-10px] after:top-0 after:border-l-[10px] after:border-l-[#E50914] after:border-t-[10px] after:border-t-transparent after:border-b-[10px] after:border-b-transparent z-10 whitespace-nowrap">
+                    Flash Info
+                </div>
+                <div className="flex-1 overflow-hidden relative h-5 ml-6">
+                    <div className="animate-marquee whitespace-nowrap text-xs font-bold text-gray-800 uppercase tracking-wide">
+                        {flashArticles.map((article) => (
+                            <span key={article.id} className="mx-8">
+                                <span className="text-red-600 mr-2">●</span>
+                                <Link to={`/article/${article.id}`} className="hover:text-[#E50914] transition-colors">
+                                    {article.title}
+                                </Link>
+                            </span>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
-      </div>
+      )}
     </header>
   );
 };

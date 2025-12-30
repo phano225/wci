@@ -14,18 +14,24 @@ import {
     saveUser,
     deleteUser,
     getMessages,
-    updateMessageStatus
+    updateMessageStatus,
+    getVideos,
+    saveVideo,
+    deleteVideo,
+    getSocialLinks,
+    saveSocialLink,
+    deleteSocialLink
 } from '../services/mockDatabase';
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
-import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus } from '../types';
+import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
 import { useNavigate, Link } from 'react-router-dom';
-// import ReactQuill from 'react-quill';
-// import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social'>('articles');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -34,11 +40,15 @@ export const AdminDashboard = () => {
   const [ads, setAds] = useState<Ad[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
   
   const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({});
@@ -46,8 +56,11 @@ export const AdminDashboard = () => {
   const [targetCategoryForReassign, setTargetCategoryForReassign] = useState<string>('');
   const [currentAd, setCurrentAd] = useState<Partial<Ad>>({});
   const [currentEditUser, setCurrentEditUser] = useState<Partial<User>>({});
+  const [currentVideo, setCurrentVideo] = useState<Partial<Video>>({});
+  const [currentSocialLink, setCurrentSocialLink] = useState<Partial<SocialLink>>({});
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const featuredImageRef = useRef<HTMLInputElement>(null);
 
   const handleMarkAsRead = async (id: string) => {
     setIsProcessing(true);
@@ -84,8 +97,8 @@ export const AdminDashboard = () => {
     setIsProcessing(true);
     try {
         console.log('Chargement des données...');
-        const [arts, cats, adsList, userList, msgList] = await Promise.all([
-            getArticles(), getCategories(), getAds(), getUsers(), getMessages()
+        const [arts, cats, adsList, userList, msgList, videoList, socialList] = await Promise.all([
+            getArticles(), getCategories(), getAds(), getUsers(), getMessages(), getVideos(), getSocialLinks()
         ]);
         
         // Filter articles based on role
@@ -100,11 +113,99 @@ export const AdminDashboard = () => {
         setAds(adsList);
         setStaff(userList);
         setMessages(msgList);
+        setVideos(videoList);
+        setSocialLinks(socialList);
     } catch (e) {
         console.error('Erreur lors du chargement des données:', e);
         alert('Erreur de chargement des données. Vérifiez votre connexion.');
     }
     setIsProcessing(false);
+  };
+
+  const handleSaveSocialLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentSocialLink.platform || !currentSocialLink.url || !currentSocialLink.iconClass) {
+        alert('Veuillez remplir tous les champs obligatoires.');
+        return;
+    }
+
+    setIsProcessing(true);
+    try {
+        const linkToSave: SocialLink = {
+            id: currentSocialLink.id || crypto.randomUUID(),
+            platform: currentSocialLink.platform,
+            url: currentSocialLink.url,
+            iconClass: currentSocialLink.iconClass,
+            bgColor: currentSocialLink.bgColor || 'bg-gray-600',
+            textColor: currentSocialLink.textColor || 'text-white'
+        };
+        await saveSocialLink(linkToSave);
+        await loadData();
+        setIsSocialModalOpen(false);
+        setCurrentSocialLink({});
+    } catch (error) {
+        console.error('Erreur sauvegarde lien social:', error);
+        alert('Erreur lors de la sauvegarde du lien social.');
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteSocialLink = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce lien ?')) return;
+    setIsProcessing(true);
+    try {
+        await deleteSocialLink(id);
+        await loadData();
+    } catch (error) {
+        console.error('Erreur suppression lien social:', error);
+        alert('Erreur lors de la suppression du lien social.');
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
+  const handleSaveVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentVideo.title || !currentVideo.youtubeId || !currentVideo.category) {
+        alert('Veuillez remplir tous les champs obligatoires.');
+        return;
+    }
+
+    setIsProcessing(true);
+    try {
+        const videoToSave: Video = {
+            id: currentVideo.id || crypto.randomUUID(),
+            title: currentVideo.title,
+            youtubeId: currentVideo.youtubeId,
+            category: currentVideo.category,
+            duration: currentVideo.duration || '',
+            createdAt: currentVideo.createdAt || new Date().toISOString()
+        };
+        await saveVideo(videoToSave);
+        await loadData();
+        setIsVideoModalOpen(false);
+        setCurrentVideo({});
+    } catch (error) {
+        console.error('Erreur sauvegarde vidéo:', error);
+        alert('Erreur lors de la sauvegarde de la vidéo.');
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteVideo = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette vidéo ?')) return;
+    setIsProcessing(true);
+    try {
+        await deleteVideo(id);
+        await loadData();
+    } catch (error) {
+        console.error('Erreur suppression vidéo:', error);
+        alert('Erreur lors de la suppression de la vidéo.');
+    } finally {
+        setIsProcessing(false);
+    }
   };
 
   const handleLocalImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,6 +220,20 @@ export const AdminDashboard = () => {
         };
         reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
+
+  const handleFeaturedImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const base64 = ev.target?.result as string;
+            setCurrentArticle(prev => ({ ...prev, imageUrl: base64 }));
+        };
+        reader.readAsDataURL(file);
+    }
+    e.target.value = '';
   };
 
   const handleSaveArticle = async (targetStatus: ArticleStatus) => {
@@ -298,9 +413,20 @@ export const AdminDashboard = () => {
   };
   
   const handleAISummary = async () => {
-      // Placeholder for AI summary generation
-      if (!currentArticle.content) return;
-      alert("Fonctionnalité de résumé automatique à venir.");
+      if (!currentArticle.title && !currentArticle.content) { 
+          alert("Titre ou contenu requis pour le résumé."); 
+          return; 
+      }
+      setIsProcessing(true);
+      try {
+        const summary = await generateSEOMeta(currentArticle.title, currentArticle.content || '');
+        setCurrentArticle(prev => ({ ...prev, excerpt: summary }));
+      } catch (e) {
+          console.error(e);
+          alert("Erreur lors de la génération du résumé.");
+      } finally {
+          setIsProcessing(false);
+      }
   };
 
   const handleReviewSubmission = async (articleId: string, decision: SubmissionStatus) => {
@@ -373,6 +499,11 @@ export const AdminDashboard = () => {
             
             {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => setActiveTab('ads')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'ads' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>📢 Publicités</button>}
             
+            {/* Vidéos - Accessible by everyone who can edit articles or specifically configured */}
+            <button onClick={() => setActiveTab('videos')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'videos' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
+                🎥 Vidéos
+            </button>
+
             {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('users')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'users' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>👥 Équipe</button>}
             
             {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('messages')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'messages' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
@@ -380,6 +511,10 @@ export const AdminDashboard = () => {
                 {messages.filter(m => m.status === 'UNREAD').length > 0 && (
                     <span className="bg-red-500 text-white text-[10px] px-2 rounded-full">{messages.filter(m => m.status === 'UNREAD').length}</span>
                 )}
+            </button>}
+
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('social')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'social' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
+                🌐 Réseaux Sociaux
             </button>}
         </nav>
         
@@ -398,13 +533,15 @@ export const AdminDashboard = () => {
       <main className="ml-72 flex-1 p-12 overflow-y-auto">
         <header className="flex justify-between items-end mb-16">
             <h1 className="text-5xl font-serif font-black text-brand-dark uppercase tracking-tighter">
-                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : 'Équipe'}
+                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : activeTab === 'videos' ? 'Vidéos' : activeTab === 'social' ? 'Réseaux Sociaux' : 'Équipe'}
             </h1>
             <button onClick={() => { 
                 if(activeTab === 'articles') { setCurrentArticle({}); setIsEditorOpen(true); } 
                 else if(activeTab === 'categories' && PERMISSIONS.canManageCategories(user?.role!)) { setCurrentCategory({}); setIsCategoryModalOpen(true); }
                 else if(activeTab === 'ads' && PERMISSIONS.canManageAds(user?.role!)) { setCurrentAd({active: true, location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE}); setIsAdModalOpen(true); }
                 else if(activeTab === 'users' && PERMISSIONS.canManageUsers(user?.role!)) { setCurrentEditUser({}); setIsUserModalOpen(true); }
+                else if(activeTab === 'videos') { setCurrentVideo({}); setIsVideoModalOpen(true); }
+                else if(activeTab === 'social') { setCurrentSocialLink({}); setIsSocialModalOpen(true); }
             }} className={`bg-brand-blue text-white px-10 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-all text-xs tracking-widest uppercase ${(
                 (activeTab === 'categories' && !PERMISSIONS.canManageCategories(user?.role!)) ||
                 (activeTab === 'ads' && !PERMISSIONS.canManageAds(user?.role!)) ||
@@ -563,7 +700,7 @@ export const AdminDashboard = () => {
                             <div className="flex items-center gap-4 mb-2">
                                 <h3 className={`font-bold text-xl ${msg.status === 'UNREAD' ? 'text-brand-dark' : 'text-gray-500'}`}>{msg.subject}</h3>
                                 {msg.status === 'UNREAD' && <span className="bg-brand-blue text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded">Nouveau</span>}
-                                <span className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString()}</span>
+                                <span className="text-xs text-gray-400">{new Date(msg.date).toLocaleString()}</span>
                             </div>
                             <div className="flex items-center gap-2 mb-4 text-sm text-gray-600 font-bold">
                                 <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">👤</span>
@@ -582,7 +719,126 @@ export const AdminDashboard = () => {
                 ))}
             </div>
         )}
+
+        {/* --- VIDÉOS --- */}
+        {activeTab === 'videos' && (
+            <div className="bg-white rounded-[50px] shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50/50 border-b">
+                        <tr><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">Vidéo</th><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">Catégorie</th><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">ID YouTube</th><th className="px-12 py-8 text-right">Actions</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {videos.map(v => (
+                            <tr key={v.id} className="hover:bg-blue-50/20 transition-all">
+                                <td className="px-12 py-8">
+                                    <div className="flex items-center gap-6">
+                                        <img src={`https://img.youtube.com/vi/${v.youtubeId}/default.jpg`} className="w-24 h-16 object-cover rounded-xl shadow-md" alt="" />
+                                        <p className="font-bold text-lg text-gray-900">{v.title}</p>
+                                    </div>
+                                </td>
+                                <td className="px-12 py-8"><span className="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{v.category}</span></td>
+                                <td className="px-12 py-8 font-mono text-xs text-gray-500">{v.youtubeId}</td>
+                                <td className="px-12 py-8 text-right">
+                                    <div className="flex justify-end gap-4">
+                                        <button onClick={() => { setCurrentVideo(v); setIsVideoModalOpen(true); }} className="text-brand-blue font-black text-[11px] uppercase tracking-widest">Éditer</button>
+                                        <button onClick={() => handleDeleteVideo(v.id)} className="text-brand-red font-black text-[11px] uppercase tracking-widest">Supprimer</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {videos.length === 0 && <div className="text-center p-10 text-gray-400">Aucune vidéo trouvée.</div>}
+            </div>
+        )}
+
+        {/* --- RÉSEAUX SOCIAUX --- */}
+        {activeTab === 'social' && (
+            <div className="bg-white rounded-[50px] shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50/50 border-b">
+                        <tr><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">Plateforme</th><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">URL</th><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">Aperçu</th><th className="px-12 py-8 text-right">Actions</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {socialLinks.map(link => (
+                            <tr key={link.id} className="hover:bg-blue-50/20 transition-all">
+                                <td className="px-12 py-8">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${link.bgColor} ${link.textColor}`}>
+                                            <i className={link.iconClass}></i>
+                                        </div>
+                                        <span className="font-bold text-gray-900">{link.platform}</span>
+                                    </div>
+                                </td>
+                                <td className="px-12 py-8 text-sm text-gray-600 truncate max-w-xs">{link.url}</td>
+                                <td className="px-12 py-8">
+                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${link.bgColor} ${link.textColor}`}>
+                                        <i className={link.iconClass}></i>
+                                     </div>
+                                </td>
+                                <td className="px-12 py-8 text-right">
+                                    <div className="flex justify-end gap-4">
+                                        <button onClick={() => { setCurrentSocialLink(link); setIsSocialModalOpen(true); }} className="text-brand-blue font-black text-[11px] uppercase tracking-widest">Éditer</button>
+                                        <button onClick={() => handleDeleteSocialLink(link.id)} className="text-brand-red font-black text-[11px] uppercase tracking-widest">Supprimer</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {socialLinks.length === 0 && <div className="text-center p-10 text-gray-400">Aucun réseau social configuré.</div>}
+            </div>
+        )}
       </main>
+
+      {/* --- MODAL VIDÉO --- */}
+      {isVideoModalOpen && (
+        <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-6">
+            <div className="bg-white w-full max-w-lg rounded-[40px] p-10 shadow-2xl relative">
+                <button onClick={() => setIsVideoModalOpen(false)} className="absolute top-6 right-6 text-gray-300 text-2xl hover:text-gray-500 transition-colors">✕</button>
+                <h2 className="text-3xl font-serif font-black mb-8 text-brand-dark uppercase tracking-tighter">
+                    {currentVideo.id ? 'Modifier la Vidéo' : 'Ajouter une Vidéo'}
+                </h2>
+                <form onSubmit={handleSaveVideo} className="space-y-6">
+                    <input 
+                        type="text" 
+                        className="w-full p-5 bg-gray-50 rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        placeholder="Titre de la vidéo..." 
+                        value={currentVideo.title || ''} 
+                        onChange={e => setCurrentVideo({...currentVideo, title: e.target.value})} 
+                        required
+                    />
+                    <input 
+                        type="text" 
+                        className="w-full p-5 bg-gray-50 rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        placeholder="ID YouTube (ex: dQw4w9WgXcQ)" 
+                        value={currentVideo.youtubeId || ''} 
+                        onChange={e => setCurrentVideo({...currentVideo, youtubeId: e.target.value})} 
+                        required
+                    />
+                    <select 
+                        className="w-full p-5 bg-gray-50 rounded-[25px] font-bold outline-none appearance-none border-2 border-transparent focus:border-brand-blue/10 transition-all"
+                        value={currentVideo.category || ''} 
+                        onChange={e => setCurrentVideo({...currentVideo, category: e.target.value})}
+                        required
+                    >
+                        <option value="">Sélectionner une catégorie...</option>
+                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    </select>
+                    <input 
+                        type="text" 
+                        className="w-full p-5 bg-gray-50 rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        placeholder="Durée (ex: 05:30) - Optionnel" 
+                        value={currentVideo.duration || ''} 
+                        onChange={e => setCurrentVideo({...currentVideo, duration: e.target.value})} 
+                    />
+                    <button type="submit" className="w-full py-5 bg-brand-blue text-white rounded-[30px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-all">
+                        {currentVideo.id ? 'Mettre à jour' : 'Enregistrer la vidéo'}
+                    </button>
+                </form>
+            </div>
+        </div>
+      )}
 
       {/* --- STUDIO RÉDACTION WYSIWYG MODERNE --- */}
       {isEditorOpen && (
@@ -615,36 +871,57 @@ export const AdminDashboard = () => {
 
             <div className="flex-1 flex overflow-hidden bg-gray-100">
                 <div className="flex-1 overflow-y-auto py-12 px-8">
-                    <div className="max-w-[850px] mx-auto space-y-8">
-                        {/* React Quill Editor */}
-                        <div className="bg-white rounded-[50px] shadow-2xl border border-gray-50 p-16 md:p-24 min-h-[1100px] relative flex flex-col">
+                    <div className="max-w-[850px] mx-auto">
+                        {/* Title Section */}
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
                             <input 
                                 type="text" 
-                                placeholder="Titre de l'article..." 
-                                className="w-full text-5xl font-serif font-black bg-transparent outline-none border-none text-brand-dark mb-10 leading-tight placeholder:text-gray-200"
+                                placeholder="Saisissez votre titre ici" 
+                                className="w-full text-3xl font-serif font-bold bg-transparent outline-none border-none text-brand-dark placeholder:text-gray-300"
                                 value={currentArticle.title || ''}
                                 onChange={e => setCurrentArticle({...currentArticle, title: e.target.value})}
                             />
-                            
-                            <div className="flex-1">
-                                {/* Editor replaced by simple textarea for offline stability */}
-                                <textarea
-                                    className="w-full h-[600px] mb-12 p-6 bg-gray-50 rounded-[25px] font-serif text-lg leading-relaxed outline-none resize-none border-2 border-transparent focus:border-brand-blue/10 transition-all"
-                                    placeholder="Écrivez votre article ici..."
-                                    value={currentArticle.content || ''}
-                                    onChange={(e) => setCurrentArticle(prev => ({ ...prev, content: e.target.value }))}
-                                />
-                                {/* 
-                                <ReactQuill 
-                                    theme="snow"
-                                    value={currentArticle.content || ''}
-                                    onChange={(content) => setCurrentArticle(prev => ({ ...prev, content }))}
-                                    modules={modules}
-                                    className="h-[600px] mb-12"
-                                    placeholder="Écrivez votre article ici..."
-                                /> 
-                                */}
-                            </div>
+                        </div>
+
+                        {/* Media & AI Actions */}
+                        <div className="flex items-center gap-4 mb-4">
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept="image/*" 
+                                onChange={handleLocalImage} 
+                            />
+                            <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="bg-gray-50 text-gray-700 px-4 py-2 rounded border border-gray-300 text-xs font-bold uppercase hover:bg-white hover:border-gray-400 transition-all flex items-center gap-2"
+                            >
+                                <span>📷</span> Ajouter un média
+                            </button>
+                            <button 
+                                onClick={handleAIFill}
+                                className="bg-white text-brand-dark px-4 py-2 rounded border border-gray-300 text-xs font-bold uppercase hover:bg-brand-yellow/10 hover:border-brand-yellow transition-all flex items-center gap-2"
+                                title="Générer un brouillon avec l'IA"
+                            >
+                                <span>✨</span> Générer avec l'IA
+                            </button>
+                        </div>
+
+                        {/* Editor Section */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[700px] flex flex-col relative overflow-hidden">
+                            <style>{`
+                                .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid #e5e7eb !important; background: #f8f9fa; padding: 12px !important; }
+                                .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', serif; font-size: 16px; }
+                                .ql-editor { min-height: 600px; padding: 32px !important; color: #1a202c; }
+                            `}</style>
+                            <ReactQuill 
+                                theme="snow"
+                                value={currentArticle.content || ''}
+                                onChange={(content) => setCurrentArticle(prev => ({ ...prev, content }))}
+                                modules={modules}
+                                className="flex-1 flex flex-col"
+                                placeholder="Commencez à écrire..."
+                            /> 
                         </div>
                     </div>
                 </div>
@@ -659,13 +936,29 @@ export const AdminDashboard = () => {
                     </div>
                     <div className="space-y-4">
                         <label className="block text-[11px] font-black uppercase text-brand-blue tracking-widest">Image de Une (URL)</label>
-                        <input type="text" className="w-full p-6 bg-gray-50 rounded-[25px] text-xs font-mono outline-none" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} />
+                        <input 
+                            type="file" 
+                            ref={featuredImageRef} 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={handleFeaturedImage} 
+                        />
+                        <div className="flex gap-2">
+                            <input type="text" className="flex-1 p-6 bg-gray-50 rounded-[25px] text-xs font-mono outline-none" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} placeholder="https://..." />
+                            <button 
+                                onClick={() => featuredImageRef.current?.click()}
+                                className="w-16 bg-gray-100 hover:bg-brand-blue hover:text-white rounded-[25px] flex items-center justify-center transition-all"
+                                title="Uploader une image locale"
+                            >
+                                📷
+                            </button>
+                        </div>
                         {currentArticle.imageUrl && <img src={currentArticle.imageUrl} className="w-full h-48 object-cover rounded-[35px] shadow-xl" alt="Aperçu" />}
                     </div>
                     <div className="bg-blue-50/40 p-10 rounded-[45px] space-y-6">
                         <div className="flex justify-between items-center">
                             <label className="text-[11px] font-black uppercase text-brand-blue tracking-widest">Chapeau (IA)</label>
-                            <button onClick={handleAIFill} className="text-[9px] font-black bg-brand-dark text-white px-6 py-2 rounded-full hover:bg-brand-red transition-all">GÉNÉRER CONTENU</button>
+                            <button onClick={handleAISummary} className="text-[9px] font-black bg-brand-dark text-white px-6 py-2 rounded-full hover:bg-brand-red transition-all">GÉNÉRER RÉSUMÉ</button>
                         </div>
                         <textarea className="w-full p-6 bg-white rounded-[35px] text-base italic font-serif border-none outline-none h-40 resize-none shadow-sm" value={currentArticle.excerpt || ''} onChange={e => setCurrentArticle({...currentArticle, excerpt: e.target.value})} placeholder="Court résumé de l'article..." />
                     </div>
@@ -857,6 +1150,67 @@ export const AdminDashboard = () => {
                   </div>
               </div>
           </div>
+      )}
+
+      {/* --- MODAL RÉSEAUX SOCIAUX --- */}
+      {isSocialModalOpen && (
+        <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-6">
+            <div className="bg-white w-full max-w-lg rounded-[65px] p-16 shadow-2xl relative">
+                <button onClick={() => setIsSocialModalOpen(false)} className="absolute top-12 right-12 text-gray-300 text-2xl">✕</button>
+                <h2 className="text-4xl font-serif font-black mb-12 text-brand-dark uppercase tracking-tighter">Ajouter un Réseau</h2>
+                <form onSubmit={handleSaveSocialLink} className="space-y-8">
+                    <input 
+                        type="text" 
+                        className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        placeholder="Plateforme (ex: Facebook)..." 
+                        value={currentSocialLink.platform || ''} 
+                        onChange={e => setCurrentSocialLink({...currentSocialLink, platform: e.target.value})} 
+                        required
+                    />
+                    <input 
+                        type="url" 
+                        className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        placeholder="URL du profil..." 
+                        value={currentSocialLink.url || ''} 
+                        onChange={e => setCurrentSocialLink({...currentSocialLink, url: e.target.value})} 
+                        required
+                    />
+                    <input 
+                        type="text" 
+                        className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        placeholder="Classe Icône (ex: fab fa-facebook-f)..." 
+                        value={currentSocialLink.iconClass || ''} 
+                        onChange={e => setCurrentSocialLink({...currentSocialLink, iconClass: e.target.value})} 
+                        required
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <input 
+                            type="text" 
+                            className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                            placeholder="Bg Color (ex: bg-blue-600)..." 
+                            value={currentSocialLink.bgColor || ''} 
+                            onChange={e => setCurrentSocialLink({...currentSocialLink, bgColor: e.target.value})} 
+                        />
+                        <input 
+                            type="text" 
+                            className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                            placeholder="Text Color (ex: text-white)..." 
+                            value={currentSocialLink.textColor || ''} 
+                            onChange={e => setCurrentSocialLink({...currentSocialLink, textColor: e.target.value})} 
+                        />
+                    </div>
+                    <div className="flex items-center gap-4 justify-center p-4 bg-gray-50 rounded-2xl">
+                        <span className="text-xs font-bold text-gray-400 uppercase">Aperçu :</span>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentSocialLink.bgColor || 'bg-gray-400'} ${currentSocialLink.textColor || 'text-white'}`}>
+                            <i className={currentSocialLink.iconClass || 'fas fa-question'}></i>
+                        </div>
+                    </div>
+                    <button type="submit" className="w-full py-7 bg-brand-blue text-white rounded-[40px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-all">
+                        Enregistrer
+                    </button>
+                </form>
+            </div>
+        </div>
       )}
 
       {isProcessing && (

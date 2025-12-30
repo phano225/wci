@@ -1,21 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { PublicLayout } from '../components/PublicLayout';
-import { getArticles } from '../services/mockDatabase';
-import { Article, ArticleStatus, AdLocation } from '../types';
+import { getArticles, getVideos } from '../services/mockDatabase';
+import { Article, ArticleStatus, AdLocation, Video } from '../types';
 import { Link } from 'react-router-dom';
 import { AdDisplay } from '../components/AdDisplay';
 
 export const HomePage = () => {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
         setLoading(true);
-        const all = await getArticles();
-        const published = all.filter(a => a.status === ArticleStatus.PUBLISHED);
+        const [allArticles, allVideos] = await Promise.all([
+            getArticles(),
+            getVideos()
+        ]);
+        
+        const published = allArticles.filter(a => a.status === ArticleStatus.PUBLISHED);
         published.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
         setArticles(published);
+        setVideos(allVideos);
         setLoading(false);
     };
     fetchData();
@@ -185,35 +193,9 @@ export const HomePage = () => {
                  </div>
             </div>
 
-            {/* TITROLOGIE WIDGET */}
-            <div className="bg-gray-50 border border-gray-200 p-4">
-                <div className="flex items-center mb-4 border-b border-gray-200 pb-2">
-                     <span className="bg-brand-red w-2 h-2 mr-2"></span>
-                     <h3 className="font-bold uppercase text-sm text-gray-800">Titrologie</h3>
-                </div>
-                <div className="mb-2">
-                    <p className="text-xs text-gray-500 mb-2 font-bold uppercase">Quotidien L'AVENIR du {new Date().toLocaleDateString()}</p>
-                    <div className="aspect-[3/4] bg-gray-200 w-full relative group cursor-pointer overflow-hidden shadow-md">
-                        {/* Placeholder for Newspaper Cover */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-100">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                             </svg>
-                             <span className="font-serif font-bold text-2xl text-gray-800">L'AVENIR</span>
-                             <span className="text-[10px] uppercase tracking-widest mt-1">Le Journal</span>
-                        </div>
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
-                            <span className="bg-brand-red text-white text-xs font-bold px-3 py-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
-                                Aperçu
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <button className="w-full bg-brand-red text-white font-bold uppercase text-xs py-3 hover:bg-red-700 transition-colors shadow-sm flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>
-                    Acheter le journal
-                </button>
+            {/* SKYSCRAPER AD */}
+            <div className="flex justify-center">
+                 <AdDisplay location={AdLocation.SIDEBAR_SKYSCRAPER} />
             </div>
 
             {/* AD RECTANGLE */}
@@ -233,26 +215,36 @@ export const HomePage = () => {
                      <h3 className="text-white font-bold uppercase text-sm tracking-wider">Vidéos à la une</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                    {[
-                        '1529101091760-61df6be5d18b', 
-                        '1498676077434-d5474e2a3854', 
-                        '1576091160399-112ba8d25d1d', 
-                        '1460317442991-0ec209397118'
-                    ].map((photoId, i) => (
-                        <div key={i} className="group cursor-pointer">
+                    {videos.map((video) => (
+                        <div key={video.id} className="group cursor-pointer" onClick={() => setPlayingVideoId(video.id)}>
                             <div className="relative h-40 bg-gray-900 mb-3 overflow-hidden border border-gray-800">
-                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                    <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white border-2 border-white group-hover:scale-110 transition-transform shadow-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
-                                    </div>
-                                </div>
-                                <img src={`https://images.unsplash.com/photo-${photoId}?auto=format&fit=crop&q=80&w=400`} alt="Video thumb" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-                                <span className="absolute bottom-2 right-2 bg-black text-white text-[10px] font-bold px-1.5 py-0.5 rounded">02:30</span>
+                                {playingVideoId === video.id ? (
+                                    <iframe 
+                                        width="100%" 
+                                        height="100%" 
+                                        src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1`} 
+                                        title={video.title} 
+                                        frameBorder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowFullScreen
+                                        className="absolute inset-0 w-full h-full"
+                                    ></iframe>
+                                ) : (
+                                    <>
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white border-2 border-white group-hover:scale-110 transition-transform shadow-lg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
+                                            </div>
+                                        </div>
+                                        <img src={`https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`} alt={video.title} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
+                                        {video.duration && <span className="absolute bottom-2 right-2 bg-black text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{video.duration}</span>}
+                                    </>
+                                )}
                             </div>
                             <div className="flex gap-2">
-                                <span className="text-red-500 text-[10px] font-bold uppercase mt-1">Politique</span>
+                                <span className="text-red-500 text-[10px] font-bold uppercase mt-1">{video.category}</span>
                                 <p className="text-gray-300 text-sm font-bold leading-snug group-hover:text-white line-clamp-2">
-                                    Déclaration exclusive : Les nouvelles mesures du gouvernement pour 2024
+                                    {video.title}
                                 </p>
                             </div>
                         </div>

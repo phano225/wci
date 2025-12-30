@@ -60,6 +60,24 @@ export interface ContactMessage {
 
 
 // User Model
+export interface Video {
+  id: string;
+  title: string;
+  youtubeId: string;
+  category: string;
+  duration?: string;
+  createdAt: string;
+}
+
+export interface SocialLink {
+  id: string;
+  platform: string;
+  url: string;
+  iconClass: string;
+  bgColor?: string; // e.g. 'bg-blue-600'
+  textColor?: string; // e.g. 'text-white'
+}
+
 export interface User {
   id: string;
   name: string;
@@ -67,6 +85,9 @@ export interface User {
   password?: string;
   role: UserRole;
   avatar?: string;
+  createdAt?: string;
+  lastLogin?: string;
+  active?: boolean;
 }
 
 // Category Model
