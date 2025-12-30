@@ -52,6 +52,16 @@ CREATE TABLE IF NOT EXISTS categories (
     slug text
 );
 
+-- TABLE USERS (Profils publics)
+CREATE TABLE IF NOT EXISTS users (
+    id uuid PRIMARY KEY, -- Doit correspondre à auth.users.id
+    email text,
+    name text,
+    role text DEFAULT 'CONTRIBUTOR',
+    avatar text,
+    "createdAt" timestamptz DEFAULT now()
+);
+
 -- TABLE VIDEOS
 CREATE TABLE IF NOT EXISTS videos (
     id text PRIMARY KEY,
@@ -133,6 +143,10 @@ ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public Access Categories" ON categories;
 CREATE POLICY "Public Access Categories" ON categories FOR ALL USING (true) WITH CHECK (true);
 
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public Access Users" ON users;
+CREATE POLICY "Public Access Users" ON users FOR ALL USING (true) WITH CHECK (true);
+
 ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public Access Videos" ON videos;
 CREATE POLICY "Public Access Videos" ON videos FOR ALL USING (true) WITH CHECK (true);
@@ -155,4 +169,5 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('images', 'images', true)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Public Access Storage" ON storage.objects;
 CREATE POLICY "Public Access Storage" ON storage.objects FOR ALL USING (bucket_id = 'images') WITH CHECK (bucket_id = 'images');
