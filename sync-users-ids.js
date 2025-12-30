@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://aqbsagaifmtxrrsngbme.supabase.co';
-const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2FpZm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5NzU0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+// WARNING: This script requires SERVICE_ROLE_KEY which should be in .env
+// DO NOT COMMIT .env TO GITHUB
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; 
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
