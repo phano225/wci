@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PublicLayout } from '../components/PublicLayout';
-import { getArticles, getVideos } from '../services/mockDatabase';
+import { getArticles, getVideos } from '../services/api';
 import { Article, ArticleStatus, AdLocation, Video } from '../types';
 import { Link } from 'react-router-dom';
 import { AdDisplay } from '../components/AdDisplay';
@@ -8,6 +8,7 @@ import { AdDisplay } from '../components/AdDisplay';
 export const HomePage = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
+  const [editoArticle, setEditoArticle] = useState<Article | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,6 +22,14 @@ export const HomePage = () => {
         
         const published = allArticles.filter(a => a.status === ArticleStatus.PUBLISHED);
         published.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        // Find the latest Edito
+        const edito = published.find(a => a.category === 'Edito' || a.category === 'Édito');
+        setEditoArticle(edito || null);
+        
+        // Filter out Edito from main lists if desired, or keep it. Usually Edito is separate.
+        // Let's keep it in the main list too unless we want to hide it. 
+        // For now, we just select it.
         
         setArticles(published);
         setVideos(allVideos);
@@ -157,21 +166,39 @@ export const HomePage = () => {
             {/* EDITO WIDGET */}
             <div className="bg-white border border-gray-200 shadow-sm">
                 <div className="bg-brand-red text-white text-sm font-bold uppercase px-4 py-2 flex items-center justify-between">
-                    <span>L'Édito de Bernard Kra</span>
+                    <span>{editoArticle ? `L'Édito de ${editoArticle.authorName}` : "L'Édito de Bernard Kra"}</span>
                     <i className="fas fa-pen-nib"></i>
                 </div>
                 <div className="p-6 text-center">
-                    <div className="inline-block relative mb-4">
-                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Editor" alt="Editor" className="w-24 h-24 rounded-full border-4 border-gray-100 shadow-sm" />
-                         <div className="absolute bottom-0 right-0 bg-brand-red text-white text-xs p-1 rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
-                         </div>
-                    </div>
-                    <h4 className="font-serif font-bold text-xl leading-tight mb-2 text-gray-900">Le chant du cygne et le temps des regrets</h4>
-                    <p className="text-sm text-gray-600 italic leading-relaxed mb-4 line-clamp-4">
-                        "L'opposition ivoirienne semble chercher son souffle dans un contexte politique en pleine mutation..."
-                    </p>
-                    <button className="text-xs font-bold text-brand-red uppercase hover:underline">Lire l'édito &rarr;</button>
+                    {editoArticle ? (
+                        <>
+                            <div className="inline-block relative mb-4">
+                                <img src={editoArticle.authorAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Editor"} alt={editoArticle.authorName} className="w-24 h-24 rounded-full border-4 border-gray-100 shadow-sm" />
+                                <div className="absolute bottom-0 right-0 bg-brand-red text-white text-xs p-1 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                                </div>
+                            </div>
+                            <h4 className="font-serif font-bold text-xl leading-tight mb-2 text-gray-900">{editoArticle.title}</h4>
+                            <p className="text-sm text-gray-600 italic leading-relaxed mb-4 line-clamp-4">
+                                "{editoArticle.excerpt}"
+                            </p>
+                            <Link to={`/article/${editoArticle.id}`} className="text-xs font-bold text-brand-red uppercase hover:underline">Lire l'édito &rarr;</Link>
+                        </>
+                    ) : (
+                        <>
+                            <div className="inline-block relative mb-4">
+                                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Editor" alt="Editor" className="w-24 h-24 rounded-full border-4 border-gray-100 shadow-sm" />
+                                 <div className="absolute bottom-0 right-0 bg-brand-red text-white text-xs p-1 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                                 </div>
+                            </div>
+                            <h4 className="font-serif font-bold text-xl leading-tight mb-2 text-gray-900">Le chant du cygne et le temps des regrets</h4>
+                            <p className="text-sm text-gray-600 italic leading-relaxed mb-4 line-clamp-4">
+                                "L'opposition ivoirienne semble chercher son souffle dans un contexte politique en pleine mutation..."
+                            </p>
+                            <button className="text-xs font-bold text-brand-red uppercase hover:underline">Lire l'édito &rarr;</button>
+                        </>
+                    )}
                 </div>
             </div>
 

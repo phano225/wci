@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PublicLayout } from '../components/PublicLayout';
-import { saveMessage } from '../services/mockDatabase';
+import { saveMessage } from '../services/api';
 
 export const ContactPage = () => {
   const [formData, setFormData] = useState({

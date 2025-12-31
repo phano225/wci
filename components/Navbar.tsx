@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, AdLocation, Article, ArticleStatus, SocialLink } from '../types';
-import { getCategories, getArticles, getSocialLinks } from '../services/mockDatabase';
+import { getCategories, getArticles, getSocialLinks } from '../services/api';
 import { AdDisplay } from './AdDisplay';
 
 export const Navbar = () => {

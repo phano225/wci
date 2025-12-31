@@ -22,7 +22,7 @@ import {
     saveSocialLink,
     deleteSocialLink,
     uploadImage
-} from '../services/mockDatabase';
+} from '../services/api';
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
 import { useNavigate, Link } from 'react-router-dom';

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { supabase } from '../supabase-config';
-import { getUsers, saveUser, IS_OFFLINE_MODE } from '../services/mockDatabase';
+import { getUsers, saveUser, IS_OFFLINE_MODE } from '../services/api';
 
 interface AuthContextType {
   user: User | null;

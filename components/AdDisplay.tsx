@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdLocation, AdType, Ad } from '../types';
-import { getActiveAdByLocation } from '../services/mockDatabase';
+import { getActiveAdByLocation } from '../services/api';
 
 interface AdDisplayProps {
   location: AdLocation;

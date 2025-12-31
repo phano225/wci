@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PublicLayout } from '../components/PublicLayout';
-import { getArticleById, getArticles, incrementArticleViews } from '../services/mockDatabase';
+import { getArticleById, getArticles, incrementArticleViews } from '../services/api';
 import { Article, ArticleStatus, AdLocation } from '../types';
 import { AdDisplay } from '../components/AdDisplay';
 
