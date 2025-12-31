@@ -170,7 +170,7 @@ export const getArticles = async (): Promise<Article[]> => {
     .select('id, title, excerpt, category, imageUrl, videoUrl, authorId, authorName, authorAvatar, status, views, createdAt, updatedAt, submittedBy, submittedAt, reviewedBy, reviewedAt, reviewComments, submissionStatus')
     .order('createdAt', { ascending: false });
   if (error) throw error;
-  return data || [];
+  return (data || []).map(item => ({ ...item, content: '' })) as Article[];
 };
 
 export const getArticleById = async (id: string): Promise<Article | undefined> => {
