@@ -97,12 +97,22 @@ export const AdminDashboard = () => {
 
   const loadData = async () => {
     setIsProcessing(true);
+    
+    // Safety timeout to prevent infinite spinner
+    const timeoutId = setTimeout(() => {
+        setIsProcessing(false);
+        // Do not alert here to avoid spamming, just stop spinner
+        console.warn('Load data timeout - stopping spinner');
+    }, 15000);
+
     try {
         console.log('Chargement des données...');
         const [arts, cats, adsList, userList, msgList, videoList, socialList] = await Promise.all([
             getArticles(), getCategories(), getAds(), getUsers(), getMessages(), getVideos(), getSocialLinks()
         ]);
         
+        clearTimeout(timeoutId); // Clear timeout if successful
+
         // Filter articles based on role
         let filteredArticles = arts;
         if (user?.role === UserRole.CONTRIBUTOR) {
@@ -118,6 +128,7 @@ export const AdminDashboard = () => {
         setVideos(videoList);
         setSocialLinks(socialList);
     } catch (e) {
+        clearTimeout(timeoutId);
         console.error('Erreur lors du chargement des données:', e);
         const errorMessage = (e as any)?.message || (e as any)?.error_description || JSON.stringify(e);
         alert(`Erreur de chargement des données: ${errorMessage}`);
@@ -287,8 +298,13 @@ export const AdminDashboard = () => {
       };
 
       await saveArticle(articleToSave);
+      
+      // OPTIMIZATION: Only reload articles, not everything
+      // And we use the lightweight getArticles() which excludes content
+      const updatedArticles = await getArticles();
+      setArticles(updatedArticles);
+      
       setIsEditorOpen(false);
-      await loadData();
 
       if (targetStatus === ArticleStatus.SUBMITTED) {
         alert('Article soumis pour révision.');
