@@ -436,18 +436,28 @@ export const AdminDashboard = () => {
   const handleSaveAd = async () => {
       if (!currentAd.title) return;
       setIsProcessing(true);
-      await saveAd({
-          id: currentAd.id || Date.now().toString(),
-          title: currentAd.title,
-          location: currentAd.location || AdLocation.HEADER_LEADERBOARD,
-          type: currentAd.type || AdType.IMAGE,
-          content: currentAd.content || '',
-          linkUrl: currentAd.linkUrl || '',
-          active: currentAd.active !== undefined ? currentAd.active : true
-      });
-      setIsAdModalOpen(false);
-      await loadData();
-      setIsProcessing(false);
+      try {
+        await saveAd({
+            id: currentAd.id || Date.now().toString(),
+            title: currentAd.title,
+            location: currentAd.location || AdLocation.HEADER_LEADERBOARD,
+            type: currentAd.type || AdType.IMAGE,
+            content: currentAd.content || '',
+            linkUrl: currentAd.linkUrl || '',
+            active: currentAd.active !== undefined ? currentAd.active : true
+        });
+        
+        // Optimistic update
+        const updatedAds = await getAds();
+        setAds(updatedAds);
+        
+        setIsAdModalOpen(false);
+      } catch (error) {
+        console.error('Erreur sauvegarde pub:', error);
+        alert('Erreur lors de la sauvegarde de la publicité.');
+      } finally {
+        setIsProcessing(false);
+      }
   };
 
   const handleAIFill = async () => {
