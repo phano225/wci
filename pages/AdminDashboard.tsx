@@ -20,7 +20,8 @@ import {
     deleteVideo,
     getSocialLinks,
     saveSocialLink,
-    deleteSocialLink
+    deleteSocialLink,
+    uploadImage
 } from '../services/mockDatabase';
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
@@ -211,30 +212,37 @@ export const AdminDashboard = () => {
     }
   };
 
-  const handleLocalImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLocalImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const base64 = ev.target?.result as string;
-            // Insert image into editor (would need ref to quill instance ideally, but appending to content works for simple case)
-            const imgTag = `<img src="${base64}" class="w-full rounded-2xl shadow-xl my-8 border border-gray-100" />`;
+        setIsProcessing(true);
+        try {
+            const imageUrl = await uploadImage(file);
+            const imgTag = `<img src="${imageUrl}" class="w-full rounded-2xl shadow-xl my-8 border border-gray-100" />`;
             setCurrentArticle(prev => ({ ...prev, content: (prev.content || '') + imgTag }));
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Erreur upload image:', error);
+            alert('Erreur lors de l\'upload de l\'image.');
+        } finally {
+            setIsProcessing(false);
+        }
     }
     e.target.value = '';
   };
 
-  const handleFeaturedImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFeaturedImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const base64 = ev.target?.result as string;
-            setCurrentArticle(prev => ({ ...prev, imageUrl: base64 }));
-        };
-        reader.readAsDataURL(file);
+        setIsProcessing(true);
+        try {
+            const imageUrl = await uploadImage(file);
+            setCurrentArticle(prev => ({ ...prev, imageUrl: imageUrl }));
+        } catch (error) {
+            console.error('Erreur upload image mise en avant:', error);
+            alert('Erreur lors de l\'upload de l\'image.');
+        } finally {
+            setIsProcessing(false);
+        }
     }
     e.target.value = '';
   };
