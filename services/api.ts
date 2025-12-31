@@ -164,7 +164,11 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 export const getArticles = async (): Promise<Article[]> => {
   if (IS_OFFLINE_MODE) return MOCK_ARTICLES;
-  const { data, error } = await supabase.from('articles').select('*').order('createdAt', { ascending: false });
+  // Select all fields EXCEPT content to reduce payload size
+  const { data, error } = await supabase
+    .from('articles')
+    .select('id, title, excerpt, category, imageUrl, videoUrl, authorId, authorName, authorAvatar, status, views, createdAt, updatedAt, submittedBy, submittedAt, reviewedBy, reviewedAt, reviewComments, submissionStatus')
+    .order('createdAt', { ascending: false });
   if (error) throw error;
   return data || [];
 };
