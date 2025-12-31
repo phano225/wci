@@ -21,7 +21,8 @@ import {
     getSocialLinks,
     saveSocialLink,
     deleteSocialLink,
-    uploadImage
+    uploadImage,
+    getArticleById
 } from '../services/api';
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
@@ -485,7 +486,25 @@ export const AdminDashboard = () => {
     }
   };
 
-
+  const handleEditArticle = async (article: Article) => {
+    setIsProcessing(true);
+    try {
+        const fullArticle = await getArticleById(article.id);
+        if (fullArticle) {
+            setCurrentArticle(fullArticle);
+            setIsEditorOpen(true);
+        } else {
+             console.error("Impossible de charger l'article complet");
+             setCurrentArticle(article);
+             setIsEditorOpen(true);
+        }
+    } catch (error) {
+        console.error("Error fetching article details:", error);
+        alert("Erreur de chargement de l'article.");
+    } finally {
+        setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -594,7 +613,7 @@ export const AdminDashboard = () => {
                             </div>
                         </div>
                         <div className="flex gap-4">
-                            <button onClick={() => { setCurrentArticle(art); setIsEditorOpen(true); }} className="px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Éditer</button>
+                            <button onClick={() => handleEditArticle(art)} className="px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Éditer</button>
                             <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(loadData); }} className="text-brand-red font-black p-4 hover:bg-red-50 rounded-2xl">✕</button>
                         </div>
                     </div>
@@ -620,7 +639,7 @@ export const AdminDashboard = () => {
                             </div>
                         </div>
                         <div className="flex gap-4">
-                            <button onClick={() => { setCurrentArticle(art); setIsEditorOpen(true); }} className="px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Examiner</button>
+                            <button onClick={() => handleEditArticle(art)} className="px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Examiner</button>
                             <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.APPROVED)} className="px-8 py-4 bg-green-50 text-green-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">Approuver</button>
                             <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.REJECTED)} className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Rejeter</button>
                         </div>
