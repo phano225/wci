@@ -187,7 +187,11 @@ export const AdminDashboard = () => {
             createdAt: currentVideo.createdAt || new Date().toISOString()
         };
         await saveVideo(videoToSave);
-        await loadData();
+        
+        // Optimistic update or partial reload for speed
+        const updatedVideos = await getVideos();
+        setVideos(updatedVideos);
+        
         setIsVideoModalOpen(false);
         setCurrentVideo({});
     } catch (error) {
@@ -204,7 +208,8 @@ export const AdminDashboard = () => {
     setIsProcessing(true);
     try {
         await deleteVideo(id);
-        await loadData();
+        const updatedVideos = await getVideos();
+        setVideos(updatedVideos);
     } catch (error) {
         console.error('Erreur suppression vidéo:', error);
         alert('Erreur lors de la suppression de la vidéo.');
