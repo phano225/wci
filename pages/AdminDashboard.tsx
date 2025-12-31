@@ -189,10 +189,18 @@ export const AdminDashboard = () => {
 
     setIsProcessing(true);
     try {
+        // Extract YouTube ID from URL if full URL is pasted
+        let videoId = currentVideo.youtubeId;
+        // Regex to handle various YouTube URL formats (standard, short, embed)
+        const urlMatch = videoId.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        if (urlMatch && urlMatch[1]) {
+            videoId = urlMatch[1];
+        }
+
         const videoToSave: Video = {
             id: currentVideo.id || crypto.randomUUID(),
             title: currentVideo.title,
-            youtubeId: currentVideo.youtubeId,
+            youtubeId: videoId,
             category: currentVideo.category,
             duration: currentVideo.duration || '',
             createdAt: currentVideo.createdAt || new Date().toISOString()
@@ -869,7 +877,7 @@ export const AdminDashboard = () => {
                     <input 
                         type="text" 
                         className="w-full p-5 bg-gray-50 rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
-                        placeholder="ID YouTube (ex: dQw4w9WgXcQ)" 
+                        placeholder="ID YouTube ou Lien (ex: https://youtu.be/...)" 
                         value={currentVideo.youtubeId || ''} 
                         onChange={e => setCurrentVideo({...currentVideo, youtubeId: e.target.value})} 
                         required
