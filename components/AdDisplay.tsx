@@ -10,16 +10,24 @@ export const AdDisplay: React.FC<AdDisplayProps> = ({ location }) => {
   const [ad, setAd] = useState<Ad | undefined>();
 
   useEffect(() => {
+    let isMounted = true;
     const fetchAd = async () => {
-        const foundAd = await getActiveAdByLocation(location);
-        setAd(foundAd);
+        try {
+            const foundAd = await getActiveAdByLocation(location);
+            if (isMounted) setAd(foundAd);
+        } catch (error) {
+            console.error('Error fetching ad:', error);
+        }
     };
     
     fetchAd();
-    // En production avec Firebase, on utiliserait onSnapshot pour le temps réel.
-    // Ici un simple polling suffit pour l'exemple.
-    const interval = setInterval(fetchAd, 10000);
-    return () => clearInterval(interval);
+    
+    // Polling toutes les 30 secondes au lieu de 10 pour économiser la bande passante
+    const interval = setInterval(fetchAd, 30000);
+    return () => {
+        isMounted = false;
+        clearInterval(interval);
+    };
   }, [location]);
 
   if (!ad) {

@@ -8,6 +8,19 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        },
+      },
+      build: {
+        // Force new hash for chunk files on every build to bust cache
+        rollupOptions: {
+            output: {
+                entryFileNames: `assets/[name].${Date.now()}.js`,
+                chunkFileNames: `assets/[name].${Date.now()}.js`,
+                assetFileNames: `assets/[name].${Date.now()}.[ext]`
+            }
+        }
       },
       plugins: [react()],
       define: {

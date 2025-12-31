@@ -107,9 +107,34 @@ export const AdminDashboard = () => {
 
     try {
         console.log('Chargement des données...');
-        const [arts, cats, adsList, userList, msgList, videoList, socialList] = await Promise.all([
-            getArticles(), getCategories(), getAds(), getUsers(), getMessages(), getVideos(), getSocialLinks()
-        ]);
+        
+        console.time('getArticles');
+        const arts = await getArticles();
+        console.timeEnd('getArticles');
+
+        console.time('getCategories');
+        const cats = await getCategories();
+        console.timeEnd('getCategories');
+
+        console.time('getAds');
+        const adsList = await getAds();
+        console.timeEnd('getAds');
+
+        console.time('getUsers');
+        const userList = await getUsers();
+        console.timeEnd('getUsers');
+
+        console.time('getMessages');
+        const msgList = await getMessages();
+        console.timeEnd('getMessages');
+
+        console.time('getVideos');
+        const videoList = await getVideos();
+        console.timeEnd('getVideos');
+
+        console.time('getSocialLinks');
+        const socialList = await getSocialLinks();
+        console.timeEnd('getSocialLinks');
         
         clearTimeout(timeoutId); // Clear timeout if successful
 
@@ -188,6 +213,13 @@ export const AdminDashboard = () => {
     }
 
     setIsProcessing(true);
+    // Safety timeout
+    const timeoutId = setTimeout(() => {
+        setIsProcessing(false);
+        console.warn('Save video timeout');
+        alert('L\'opération prend trop de temps. Vérifiez votre connexion.');
+    }, 15000);
+
     try {
         // Extract YouTube ID from URL if full URL is pasted
         let videoId = currentVideo.youtubeId;
@@ -205,15 +237,21 @@ export const AdminDashboard = () => {
             duration: currentVideo.duration || '',
             createdAt: currentVideo.createdAt || new Date().toISOString()
         };
+        
+        console.log('Saving video...', videoToSave);
         await saveVideo(videoToSave);
+        console.log('Video saved. Reloading list...');
         
         // Optimistic update or partial reload for speed
         const updatedVideos = await getVideos();
         setVideos(updatedVideos);
+        console.log('List reloaded.');
         
+        clearTimeout(timeoutId);
         setIsVideoModalOpen(false);
         setCurrentVideo({});
     } catch (error) {
+        clearTimeout(timeoutId);
         console.error('Erreur sauvegarde vidéo:', error);
         const errorMessage = (error as any)?.message || JSON.stringify(error);
         alert(`Erreur lors de la sauvegarde de la vidéo: ${errorMessage}`);
@@ -276,11 +314,19 @@ export const AdminDashboard = () => {
     if (!currentArticle.title || !user) { alert("Le titre est requis."); return; }
     
     setIsProcessing(true);
+    // Safety timeout
+    const timeoutId = setTimeout(() => {
+        setIsProcessing(false);
+        console.warn('Save article timeout');
+        alert('L\'opération prend trop de temps. Vérifiez votre connexion.');
+    }, 30000); // Articles might take longer (images etc)
+
     try {
       // Permission check
       if (targetStatus === ArticleStatus.PUBLISHED && !PERMISSIONS.canPublishArticle(user.role)) {
         alert("Vous n'avez pas la permission de publier directement.");
         setIsProcessing(false);
+        clearTimeout(timeoutId);
         return;
       }
 
@@ -305,13 +351,17 @@ export const AdminDashboard = () => {
           submissionStatus: targetStatus === ArticleStatus.SUBMITTED ? SubmissionStatus.PENDING : currentArticle.submissionStatus
       };
 
+      console.log('Saving article...', articleToSave.title);
       await saveArticle(articleToSave);
+      console.log('Article saved. Reloading list...');
       
       // OPTIMIZATION: Only reload articles, not everything
       // And we use the lightweight getArticles() which excludes content
       const updatedArticles = await getArticles();
       setArticles(updatedArticles);
+      console.log('List reloaded.');
       
+      clearTimeout(timeoutId);
       setIsEditorOpen(false);
 
       if (targetStatus === ArticleStatus.SUBMITTED) {
@@ -323,6 +373,7 @@ export const AdminDashboard = () => {
       }
 
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Erreur lors de la sauvegarde:', error);
       const errorMessage = (error as any)?.message || JSON.stringify(error);
       alert(`Erreur lors de la sauvegarde: ${errorMessage}`);
