@@ -24,15 +24,36 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       if (session?.user) {
         try {
           console.log('Récupération des utilisateurs...');
-          const users = await getUsers();
+          let users = await getUsers();
+          
+          // Retry logic for unstable connection
+          if (users.length === 0) {
+              console.warn('Liste utilisateurs vide, nouvelle tentative dans 2s...');
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              users = await getUsers();
+          }
+
           console.log('Utilisateurs trouvés:', users.length);
           const profile = users.find(u => u.email === session.user.email);
           console.log('Profil trouvé:', profile);
+          
           if (profile) {
             setUser(profile);
             console.log('Utilisateur connecté:', profile.name);
+          } else if (users.length === 0 && session.user.email) {
+            // Fallback: If we have a session but couldn't fetch the profile (likely network error),
+            // keep the user logged in with basic info from session to avoid kicking them out.
+            console.warn('Utilisation du profil de secours (session active mais DB inaccessible)');
+            setUser({
+                id: session.user.id,
+                email: session.user.email,
+                name: session.user.email.split('@')[0], // Fallback name
+                role: 'CONTRIBUTOR', // Safe default
+                active: true,
+                createdAt: new Date().toISOString()
+            } as User);
           } else {
-            console.log('Aucun profil trouvé pour cet email');
+            console.log('Aucun profil trouvé pour cet email dans la base');
             setUser(null);
           }
         } catch (error) {
