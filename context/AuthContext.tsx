@@ -144,12 +144,12 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       console.error("Erreur lors de la connexion:", e);
       // Fallback en cas d'erreur inattendue aussi
         const demoUsers = [
-            { email: 'admin@example.com', password: 'admin', role: 'admin', name: 'Administrateur' },
-            { email: 'editor@example.com', password: 'editor', role: 'editor', name: 'Éditeur' },
-            { email: 'contrib@example.com', password: 'contrib', role: 'contributor', name: 'Contributeur' }
+            { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
+            { email: 'editor@example.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
+            { email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
         ];
 
-        const demoUser = demoUsers.find(u => u.email === email && u.password === password);
+        const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
         
         if (demoUser) {
             console.log('Connexion DÉMO (après exception) réussie pour:', demoUser.name);

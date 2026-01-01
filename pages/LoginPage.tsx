@@ -91,8 +91,12 @@ export const LoginPage = () => {
                 </button>
             </div>
           </div>
-          <button type="submit" className="w-full bg-brand-blue text-white font-bold py-3 rounded hover:bg-blue-700 transition-colors shadow-md active:scale-[0.98]">
-            Se Connecter
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className={`w-full bg-brand-blue text-white font-bold py-3 rounded hover:bg-blue-700 transition-colors shadow-md active:scale-[0.98] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+          >
+            {isSubmitting ? 'Connexion en cours...' : 'Se Connecter'}
           </button>
 
           <button
