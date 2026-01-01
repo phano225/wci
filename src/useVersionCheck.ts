@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 
 export const useVersionCheck = () => {
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const checkVersion = async () => {
       try {
         // Add timestamp to avoid caching of version.json itself
@@ -10,7 +13,8 @@ export const useVersionCheck = () => {
                 'Cache-Control': 'no-cache',
                 'Pragma': 'no-cache',
                 'Expires': '0',
-            }
+            },
+            signal
         });
         
         if (!response.ok) return;
@@ -42,7 +46,8 @@ export const useVersionCheck = () => {
           // First visit or storage cleared, set current version
           localStorage.setItem('app_version', serverVersion);
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
         console.error('Error checking version:', error);
       }
     };
@@ -63,6 +68,7 @@ export const useVersionCheck = () => {
     const interval = setInterval(checkVersion, 5 * 60 * 1000);
 
     return () => {
+      controller.abort();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(interval);
     };

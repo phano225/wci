@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { testSupabaseConnection } from '../test-supabase';
 
 export const LoginPage = () => {
   const { login } = useAuth();
@@ -102,23 +101,6 @@ export const LoginPage = () => {
           >
             {isSubmitting ? 'Connexion en cours...' : 'Se Connecter'}
           </button>
-
-          <button
-            type="button"
-            onClick={testSupabaseConnection}
-            className="w-full bg-gray-500 text-white font-bold py-2 rounded hover:bg-gray-600 transition-colors shadow-md active:scale-[0.98] text-sm mt-2"
-          >
-            🔧 Tester Connexion Supabase
-          </button>
-          
-          <div className="text-center mt-6 p-4 bg-gray-50 rounded text-xs text-gray-500 border border-gray-200">
-            <p className="font-bold mb-1">Identifiants Démo :</p>
-            <ul className="text-left space-y-1 mx-auto max-w-xs">
-                <li><strong className="text-brand-dark">Admin:</strong> admin@example.com / admin</li>
-                <li><strong className="text-brand-dark">Éditeur:</strong> editor@example.com / editor</li>
-                <li><strong className="text-brand-dark">Contrib:</strong> contrib@example.com / contrib</li>
-            </ul>
-          </div>
 
           <div className="text-center mt-4">
             <button type="button" onClick={() => navigate('/')} className="text-sm text-gray-500 hover:text-brand-blue hover:underline transition-colors">
