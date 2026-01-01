@@ -674,10 +674,18 @@ export const AdminDashboard = () => {
       {/* Mobile Header */}
       <div className="md:hidden bg-brand-dark text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
           <h2 className="text-xl font-serif font-black text-brand-yellow tracking-tighter">WCI Admin</h2>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-4">
               {isMobileMenuOpen ? '✕' : '☰'}
           </button>
       </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <aside className={`w-72 bg-brand-dark text-white flex flex-col fixed h-full shadow-2xl z-40 overflow-y-auto transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:static md:h-screen`}>
@@ -746,9 +754,9 @@ export const AdminDashboard = () => {
         </div>
       </aside>
 
-      <main className="ml-72 flex-1 p-12 overflow-y-auto">
-        <header className="flex justify-between items-end mb-16">
-            <h1 className="text-5xl font-serif font-black text-brand-dark uppercase tracking-tighter">
+      <main className="flex-1 p-4 md:p-12 overflow-y-auto w-full">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-16 gap-6 md:gap-0">
+            <h1 className="text-3xl md:text-5xl font-serif font-black text-brand-dark uppercase tracking-tighter">
                 {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : activeTab === 'videos' ? 'Vidéos' : activeTab === 'social' ? 'Réseaux Sociaux' : activeTab === 'permissions' ? 'Permissions' : activeTab === 'settings' ? 'Paramètres' : 'Équipe'}
             </h1>
             <button onClick={() => { 
@@ -758,7 +766,7 @@ export const AdminDashboard = () => {
                 else if(activeTab === 'users' && PERMISSIONS.canManageUsers(user?.role!)) { setCurrentEditUser({}); setIsUserModalOpen(true); }
                 else if(activeTab === 'videos') { setCurrentVideo({}); setIsVideoModalOpen(true); }
                 else if(activeTab === 'social') { setCurrentSocialLink({}); setIsSocialModalOpen(true); }
-            }} className={`bg-brand-blue text-white px-10 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-all text-xs tracking-widest uppercase ${(
+            }} className={`w-full md:w-auto bg-brand-blue text-white px-6 md:px-10 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-all text-xs tracking-widest uppercase ${(
                 (activeTab === 'categories' && !PERMISSIONS.canManageCategories(user?.role!)) ||
                 (activeTab === 'ads' && !PERMISSIONS.canManageAds(user?.role!)) ||
                 (activeTab === 'users' && !PERMISSIONS.canManageUsers(user?.role!)) ||
@@ -769,7 +777,7 @@ export const AdminDashboard = () => {
 
         {/* --- SETTINGS --- */}
         {activeTab === 'settings' && (
-            <div className="bg-white p-12 rounded-[35px] shadow-sm border border-gray-100 max-w-2xl">
+            <div className="bg-white p-6 md:p-12 rounded-[35px] shadow-sm border border-gray-100 max-w-2xl">
                 <h3 className="text-2xl font-bold mb-6">Paramètres du Compteur de Visiteurs</h3>
                 
                 <div className="bg-blue-50 p-6 rounded-2xl mb-8 border border-blue-100">
@@ -834,7 +842,7 @@ export const AdminDashboard = () => {
                         </div>
                     </div>
                 ))}
-                {articles.length === 0 && <div className="text-center p-10 text-gray-400">Aucun article trouvé.</div>}
+                {articles.length === 0 && <div className="text-center p-6 md:p-10 text-gray-400">Aucun article trouvé.</div>}
             </div>
         )}
 
@@ -842,27 +850,27 @@ export const AdminDashboard = () => {
         {activeTab === 'submissions' && (
             <div className="space-y-4">
                 {articles.filter(art => art.status === ArticleStatus.SUBMITTED).map(art => (
-                    <div key={art.id} className="bg-yellow-50 p-6 rounded-[35px] border border-yellow-200 flex items-center justify-between group hover:shadow-xl transition-all">
-                        <div className="flex items-center gap-8">
-                            <div className="w-12 h-12 bg-yellow-200 rounded-full flex items-center justify-center">
+                    <div key={art.id} className="bg-yellow-50 p-6 rounded-[35px] border border-yellow-200 flex flex-col md:flex-row items-start md:items-center justify-between group hover:shadow-xl transition-all gap-6">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
+                            <div className="w-12 h-12 bg-yellow-200 rounded-full flex items-center justify-center shrink-0">
                                 <span className="text-yellow-600 text-xl">📝</span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-2xl text-gray-900 group-hover:text-brand-blue transition-colors">{art.title}</h3>
+                                <h3 className="font-bold text-xl md:text-2xl text-gray-900 group-hover:text-brand-blue transition-colors">{art.title}</h3>
                                 <p className="text-[10px] font-black uppercase text-gray-400 mt-2 tracking-widest">
                                     {art.category} • Soumis par {art.authorName} • {art.submittedAt ? new Date(art.submittedAt).toLocaleDateString() : ''}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-4">
-                            <button onClick={() => handleEditArticle(art)} className="px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Examiner</button>
-                            <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.APPROVED)} className="px-8 py-4 bg-green-50 text-green-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">Approuver</button>
-                            <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.REJECTED)} className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Rejeter</button>
+                        <div className="flex gap-4 w-full md:w-auto">
+                            <button onClick={() => handleEditArticle(art)} className="flex-1 md:flex-none px-4 md:px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Examiner</button>
+                            <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.APPROVED)} className="flex-1 md:flex-none px-4 md:px-8 py-4 bg-green-50 text-green-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">Approuver</button>
+                            <button onClick={() => handleReviewSubmission(art.id, SubmissionStatus.REJECTED)} className="flex-1 md:flex-none px-4 md:px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">Rejeter</button>
                         </div>
                     </div>
                 ))}
                 {articles.filter(art => art.status === ArticleStatus.SUBMITTED).length === 0 && (
-                    <div className="bg-white p-12 rounded-[35px] text-center">
+                    <div className="bg-white p-6 md:p-12 rounded-[35px] text-center">
                         <p className="text-gray-500 text-lg">Aucune soumission en attente</p>
                     </div>
                 )}
@@ -873,7 +881,7 @@ export const AdminDashboard = () => {
         {activeTab === 'categories' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {categories.map(cat => (
-                    <div key={cat.id} className="bg-white p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group">
+                    <div key={cat.id} className="bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group">
                         <div>
                             <h3 className="text-3xl font-black text-brand-dark uppercase tracking-tighter leading-none">{cat.name}</h3>
                             <p className="text-xs font-mono text-gray-400 mt-2">/{cat.slug}</p>
@@ -891,7 +899,7 @@ export const AdminDashboard = () => {
         {activeTab === 'ads' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {ads.map(ad => (
-                    <div key={ad.id} className="bg-white p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm group hover:shadow-xl transition-all">
+                    <div key={ad.id} className="bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm group hover:shadow-xl transition-all">
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${ad.active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>{ad.active ? 'Active' : 'Désactivée'}</span>
