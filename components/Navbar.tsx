@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { UserRole, AdLocation, Article, ArticleStatus, SocialLink } from '../types';
 import { getCategories, getArticles, getSocialLinks } from '../services/api';
 import { AdDisplay } from './AdDisplay';
+import { VisitorCounter } from './VisitorCounter';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
@@ -80,14 +81,17 @@ export const Navbar = () => {
 
       {/* Main Header / Logo Area */}
       <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-6">
-        {/* Logo Left */}
-        <Link to="/" className="flex-shrink-0">
-            <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="h-[80px] md:h-[100px] w-auto object-contain" 
-            />
-        </Link>
+        {/* Logo Left & Visitor Counter */}
+        <div className="flex items-center gap-8">
+            <Link to="/" className="flex-shrink-0">
+                <img 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    className="h-[80px] md:h-[100px] w-auto object-contain" 
+                />
+            </Link>
+            <VisitorCounter variant="header" />
+        </div>
         
         {/* Ad Space Right (Leaderboard) */}
         <div className="hidden md:block w-[728px] h-[90px] bg-gray-100 flex items-center justify-center border border-gray-200">

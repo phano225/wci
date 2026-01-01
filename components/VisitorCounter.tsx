@@ -5,7 +5,11 @@ interface VisitorSettings {
   base_count: number;
 }
 
-export const VisitorCounter: React.FC = () => {
+interface VisitorCounterProps {
+  variant?: 'default' | 'header';
+}
+
+export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'default' }) => {
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
@@ -71,6 +75,40 @@ export const VisitorCounter: React.FC = () => {
   }, []);
 
   if (loading) return null;
+
+  if (variant === 'header') {
+      return (
+        <div className="hidden xl:flex flex-col items-center justify-center space-y-1 mx-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm min-w-[200px]">
+            {/* Icone et Compteur Compact */}
+            <div className="flex items-center space-x-2">
+                <div className="bg-blue-100 p-1.5 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div className="text-xl font-black text-gray-800 tracking-tight">
+                  {count.toLocaleString('fr-FR')} <span className="text-xs font-bold text-gray-500 uppercase">visiteurs</span>
+                </div>
+            </div>
+
+            {/* Drapeaux Compact */}
+            <div className="flex flex-wrap justify-center gap-1.5">
+                {allFlags.map((flag) => (
+                  <img 
+                    key={flag.code}
+                    src={`https://flagcdn.com/w40/${flag.code}.png`}
+                    width="18"
+                    height="13"
+                    alt={flag.name}
+                    title={flag.name}
+                    className="rounded-sm shadow-sm opacity-90 hover:opacity-100 transition-opacity object-cover"
+                    style={{ width: '18px', height: '13px' }}
+                  />
+                ))}
+            </div>
+        </div>
+      );
+  }
 
   return (
     <div className="bg-white border-t-4 border-blue-600 shadow-lg rounded-lg p-4 max-w-md mx-auto my-6 flex flex-col items-center justify-center space-y-3 transform hover:scale-105 transition-transform duration-300">
