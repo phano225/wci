@@ -12,6 +12,7 @@
     "@google/genai": "latest",
     "@supabase/supabase-js": "^2.89.0",
     "openai": "^6.15.0",
+    "quill-image-resize-module-react": "^3.0.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-helmet-async": "^2.0.5",

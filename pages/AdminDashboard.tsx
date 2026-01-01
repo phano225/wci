@@ -27,8 +27,11 @@ import {
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
 import { useNavigate, Link } from 'react-router-dom';
-import ReactQuill from 'react-quill-new';
+import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import ImageResize from 'quill-image-resize-module-react';
+
+Quill.register('modules/imageResize', ImageResize);
 
 const formatPermissionName = (key: string) => {
     const map: Record<string, string> = {
