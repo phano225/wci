@@ -30,10 +30,29 @@ import { useNavigate, Link } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
+const formatPermissionName = (key: string) => {
+    const map: Record<string, string> = {
+        canCreateArticle: "Créer un article",
+        canEditOwnArticle: "Modifier ses articles",
+        canDeleteArticle: "Supprimer n'importe quel article",
+        canPublishArticle: "Publier directement (sans validation)",
+        canSubmitForReview: "Soumettre pour validation",
+        canReviewSubmissions: "Valider/Refuser les soumissions",
+        canManageUsers: "Gérer les utilisateurs (Ajout/Suppr)",
+        canCreateEditor: "Créer un compte Éditeur",
+        canCreateContributor: "Créer un compte Contributeur",
+        canEditOwnProfile: "Modifier son profil",
+        canDeleteOwnAccount: "Supprimer son compte",
+        canManageCategories: "Gérer les rubriques",
+        canManageAds: "Gérer les publicités",
+    };
+    return map[key] || key;
+};
+
 export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social' | 'settings'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social' | 'settings' | 'permissions'>('articles');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -697,6 +716,10 @@ export const AdminDashboard = () => {
             {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => setActiveTab('settings')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'settings' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
                 ⚙️ Paramètres
             </button>}
+
+            <button onClick={() => setActiveTab('permissions')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'permissions' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
+                🛡️ Permissions
+            </button>
         </nav>
         
         <div className="p-6 border-t border-white/5">
@@ -714,7 +737,7 @@ export const AdminDashboard = () => {
       <main className="ml-72 flex-1 p-12 overflow-y-auto">
         <header className="flex justify-between items-end mb-16">
             <h1 className="text-5xl font-serif font-black text-brand-dark uppercase tracking-tighter">
-                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : activeTab === 'videos' ? 'Vidéos' : activeTab === 'social' ? 'Réseaux Sociaux' : 'Équipe'}
+                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : activeTab === 'videos' ? 'Vidéos' : activeTab === 'social' ? 'Réseaux Sociaux' : activeTab === 'permissions' ? 'Permissions' : activeTab === 'settings' ? 'Paramètres' : 'Équipe'}
             </h1>
             <button onClick={() => { 
                 if(activeTab === 'articles') { setCurrentArticle({}); setIsEditorOpen(true); } 
@@ -1034,6 +1057,66 @@ export const AdminDashboard = () => {
                 </div>
             </div>
         )}
+        {/* --- PERMISSIONS TABLE --- */}
+        {activeTab === 'permissions' && (
+            <div className="bg-white p-12 rounded-[35px] shadow-sm border border-gray-100">
+                <div className="mb-8">
+                    <h3 className="text-2xl font-bold mb-2">Matrice des Permissions</h3>
+                    <p className="text-gray-500">Vue d'ensemble des droits d'accès pour chaque rôle système.</p>
+                </div>
+                
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-gray-100">
+                                <th className="text-left py-6 text-xs font-black uppercase text-gray-400 tracking-widest w-1/3">Action</th>
+                                <th className="text-center py-6 text-xs font-black uppercase text-brand-blue tracking-widest bg-blue-50/50 rounded-t-xl">
+                                    <span className="block text-lg mb-1">👑</span>
+                                    Admin
+                                </th>
+                                <th className="text-center py-6 text-xs font-black uppercase text-green-600 tracking-widest bg-green-50/50 rounded-t-xl">
+                                    <span className="block text-lg mb-1">✍️</span>
+                                    Éditeur
+                                </th>
+                                <th className="text-center py-6 text-xs font-black uppercase text-purple-600 tracking-widest bg-purple-50/50 rounded-t-xl">
+                                    <span className="block text-lg mb-1">📝</span>
+                                    Contributeur
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {Object.entries(PERMISSIONS).map(([key, checkFn]) => (
+                                <tr key={key} className="hover:bg-gray-50 transition-colors">
+                                    <td className="py-5 px-4 text-sm font-bold text-gray-700">
+                                        {formatPermissionName(key)}
+                                        <code className="block text-[9px] font-normal text-gray-300 mt-1 font-mono">{key}</code>
+                                    </td>
+                                    <td className="text-center py-5 bg-blue-50/20">
+                                        {checkFn(UserRole.ADMIN) ? 
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full text-lg shadow-sm">✓</span> : 
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-300 rounded-full text-sm">✕</span>
+                                        }
+                                    </td>
+                                    <td className="text-center py-5 bg-green-50/20">
+                                        {checkFn(UserRole.EDITOR) ? 
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full text-lg shadow-sm">✓</span> : 
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-300 rounded-full text-sm">✕</span>
+                                        }
+                                    </td>
+                                    <td className="text-center py-5 bg-purple-50/20">
+                                        {checkFn(UserRole.CONTRIBUTOR) ? 
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full text-lg shadow-sm">✓</span> : 
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-300 rounded-full text-sm">✕</span>
+                                        }
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        )}
+
       </main>
 
       {/* --- MODAL VIDÉO --- */}
