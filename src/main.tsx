@@ -36,7 +36,9 @@ ReactDOM.createRoot(
 ).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <HelmetProvider>
+        <App />
+      </HelmetProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );
