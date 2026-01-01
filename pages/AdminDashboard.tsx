@@ -58,6 +58,7 @@ export const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social' | 'settings' | 'permissions'>('articles');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -669,10 +670,18 @@ export const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-brand-dark text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+          <h2 className="text-xl font-serif font-black text-brand-yellow tracking-tighter">WCI Admin</h2>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+              {isMobileMenuOpen ? '✕' : '☰'}
+          </button>
+      </div>
+
       {/* Sidebar */}
-      <aside className="w-72 bg-brand-dark text-white flex flex-col fixed h-full shadow-2xl z-40 overflow-y-auto">
-        <div className="p-10 text-center border-b border-white/5">
+      <aside className={`w-72 bg-brand-dark text-white flex flex-col fixed h-full shadow-2xl z-40 overflow-y-auto transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:static md:h-screen`}>
+        <div className="p-10 text-center border-b border-white/5 hidden md:block">
             <h2 className="text-3xl font-serif font-black text-brand-yellow tracking-tighter">WCI Admin</h2>
         </div>
         
@@ -799,12 +808,12 @@ export const AdminDashboard = () => {
         {activeTab === 'articles' && (
             <div className="space-y-4">
                 {articles.map(art => (
-                    <div key={art.id} className="bg-white p-6 rounded-[35px] border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all">
-                        <div className="flex items-center gap-8">
-                            <img src={art.imageUrl} className="w-20 h-20 rounded-3xl object-cover shadow-sm" alt="" />
+                    <div key={art.id} className="bg-white p-6 rounded-[35px] border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between group hover:shadow-xl transition-all gap-6">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
+                            <img src={art.imageUrl} className="w-full md:w-20 h-40 md:h-20 rounded-3xl object-cover shadow-sm" alt="" />
                             <div>
-                                <h3 className="font-bold text-2xl text-gray-900 group-hover:text-brand-blue transition-colors">{art.title}</h3>
-                                <div className="flex items-center gap-2 mt-2">
+                                <h3 className="font-bold text-xl md:text-2xl text-gray-900 group-hover:text-brand-blue transition-colors">{art.title}</h3>
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
                                     <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${
                                         art.status === ArticleStatus.PUBLISHED ? 'bg-green-100 text-green-700' : 
                                         art.status === ArticleStatus.SUBMITTED ? 'bg-yellow-100 text-yellow-700' : 
@@ -819,8 +828,8 @@ export const AdminDashboard = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="flex gap-4">
-                            <button onClick={() => handleEditArticle(art)} className="px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Éditer</button>
+                        <div className="flex gap-4 w-full md:w-auto">
+                            <button onClick={() => handleEditArticle(art)} className="flex-1 md:flex-none px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Éditer</button>
                             <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(loadData); }} className="text-brand-red font-black p-4 hover:bg-red-50 rounded-2xl">✕</button>
                         </div>
                     </div>
