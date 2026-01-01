@@ -6,8 +6,11 @@ import { LoginPage } from '../pages/LoginPage';
 import { AdminDashboard } from '../pages/AdminDashboard';
 import { ArticlePage } from '../pages/ArticlePage';
 import { ContactPage } from '../pages/ContactPage';
+import { useVersionCheck } from './useVersionCheck';
 
 function App() {
+  useVersionCheck();
+
   return (
     <AuthProvider>
       <HashRouter>

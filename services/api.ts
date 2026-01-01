@@ -316,7 +316,7 @@ export const getActiveAdByLocation = async (location: AdLocation): Promise<Ad | 
         .from('ads')
         .select('*')
         .eq('location', location)
-        .eq('isActive', true);
+        .eq('active', true);
         
     if (error || !data || data.length === 0) return undefined;
     return data[Math.floor(Math.random() * data.length)];

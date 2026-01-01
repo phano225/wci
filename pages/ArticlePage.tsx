@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { PublicLayout } from '../components/PublicLayout';
 import { getArticleById, getArticles, incrementArticleViews } from '../services/api';
 import { Article, ArticleStatus, AdLocation } from '../types';
@@ -37,35 +38,6 @@ export const ArticlePage = () => {
     fetchData();
   }, [id]);
 
-  useEffect(() => {
-    if (article) {
-        document.title = `${article.title}`;
-        const setMeta = (attrName: string, attrValue: string, content: string) => {
-            let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
-            if (!element) {
-                element = document.createElement('meta');
-                element.setAttribute(attrName, attrValue);
-                document.head.appendChild(element);
-            }
-            element.setAttribute('content', content);
-        };
-        setMeta('property', 'og:type', 'article');
-        setMeta('property', 'og:site_name', 'Actualités');
-        setMeta('property', 'og:title', article.title);
-        setMeta('property', 'og:description', article.excerpt);
-        setMeta('property', 'og:image', article.imageUrl);
-        setMeta('property', 'og:url', window.location.href);
-        setMeta('name', 'twitter:card', 'summary_large_image');
-        setMeta('name', 'twitter:title', article.title);
-        setMeta('name', 'twitter:description', article.excerpt);
-        setMeta('name', 'twitter:image', article.imageUrl);
-
-        return () => {
-            document.title = 'L\'actualité en continu';
-        };
-    }
-  }, [article]);
-
   if (loading) {
       return <PublicLayout><div className="flex justify-center h-64 items-center">Chargement de l'article...</div></PublicLayout>;
   }
@@ -86,6 +58,21 @@ export const ArticlePage = () => {
 
   return (
     <PublicLayout>
+      {article && (
+        <Helmet>
+          <title>{article.title}</title>
+          <meta property="og:type" content="article" />
+          <meta property="og:site_name" content="Actualités" />
+          <meta property="og:title" content={article.title} />
+          <meta property="og:description" content={article.excerpt} />
+          <meta property="og:image" content={article.imageUrl} />
+          <meta property="og:url" content={window.location.href} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={article.title} />
+          <meta name="twitter:description" content={article.excerpt} />
+          <meta name="twitter:image" content={article.imageUrl} />
+        </Helmet>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <div className="lg:col-span-8">

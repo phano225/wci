@@ -33,7 +33,7 @@ import 'react-quill-new/dist/quill.snow.css';
 export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social' | 'settings'>('articles');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -44,6 +44,7 @@ export const AdminDashboard = () => {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [visitorBaseCount, setVisitorBaseCount] = useState(0);
   
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -119,6 +120,17 @@ export const AdminDashboard = () => {
         console.time('getAds');
         const adsList = await getAds();
         console.timeEnd('getAds');
+
+        // Check for visitor counter config
+        const visitorConfig = adsList.find(a => a.id === 'visitor_counter_config');
+        if (visitorConfig && visitorConfig.content) {
+            try {
+                const config = JSON.parse(visitorConfig.content);
+                setVisitorBaseCount(config.base_count || 0);
+            } catch (e) {
+                console.error('Error parsing visitor config', e);
+            }
+        }
 
         console.time('getUsers');
         const userList = await getUsers();
@@ -484,6 +496,22 @@ export const AdminDashboard = () => {
     setIsProcessing(false);
   };
   
+  const handleAdImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        setIsProcessing(true);
+        try {
+            const imageUrl = await uploadImage(file);
+            setCurrentAd(prev => ({ ...prev, imageUrl: imageUrl, content: imageUrl }));
+        } catch (error) {
+            console.error('Erreur upload image pub:', error);
+            alert('Erreur lors de l\'upload de l\'image.');
+        } finally {
+            setIsProcessing(false);
+        }
+    }
+  };
+
   const handleSaveAd = async () => {
       if (!currentAd.title) return;
       setIsProcessing(true);
@@ -494,6 +522,7 @@ export const AdminDashboard = () => {
             location: currentAd.location || AdLocation.HEADER_LEADERBOARD,
             type: currentAd.type || AdType.IMAGE,
             content: currentAd.content || '',
+            imageUrl: currentAd.imageUrl || '',
             linkUrl: currentAd.linkUrl || '',
             active: currentAd.active !== undefined ? currentAd.active : true
         });
@@ -517,7 +546,7 @@ export const AdminDashboard = () => {
     try {
         const res = await generateArticleDraft(currentArticle.title, currentArticle.category || 'Information');
         setCurrentArticle(prev => ({ ...prev, content: res }));
-    } catch (e) { alert("Erreur IA. Vérifiez votre clé Gemini."); }
+    } catch (e) { alert("Erreur IA. Vérifiez votre clé API Grok."); }
     setIsProcessing(false);
   };
   
@@ -573,6 +602,27 @@ export const AdminDashboard = () => {
       alert('Erreur lors de la révision de la soumission.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleSaveVisitorSettings = async () => {
+    setIsProcessing(true);
+    try {
+        await saveAd({
+            id: 'visitor_counter_config',
+            title: 'Visitor Counter Config',
+            location: 'SYSTEM_SETTINGS' as AdLocation,
+            type: AdType.SCRIPT,
+            content: JSON.stringify({ base_count: visitorBaseCount }),
+            active: true
+        });
+        alert('Compteur mis à jour !');
+        await loadData();
+    } catch (e) {
+        console.error(e);
+        alert('Erreur lors de la mise à jour');
+    } finally {
+        setIsProcessing(false);
     }
   };
 
@@ -643,6 +693,10 @@ export const AdminDashboard = () => {
             {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('social')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'social' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
                 🌐 Réseaux Sociaux
             </button>}
+
+            {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => setActiveTab('settings')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'settings' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
+                ⚙️ Paramètres
+            </button>}
         </nav>
         
         <div className="p-6 border-t border-white/5">
@@ -677,6 +731,43 @@ export const AdminDashboard = () => {
                 (activeTab === 'messages') // Cannot add messages manually
             ) ? 'hidden' : ''}`}>+ AJOUTER</button>
         </header>
+
+        {/* --- SETTINGS --- */}
+        {activeTab === 'settings' && (
+            <div className="bg-white p-12 rounded-[35px] shadow-sm border border-gray-100 max-w-2xl">
+                <h3 className="text-2xl font-bold mb-6">Paramètres du Compteur de Visiteurs</h3>
+                
+                <div className="bg-blue-50 p-6 rounded-2xl mb-8 border border-blue-100">
+                    <p className="text-blue-800 text-sm mb-2 font-bold">COMMENT ÇA MARCHE :</p>
+                    <ul className="text-blue-700 text-sm list-disc pl-5 space-y-1">
+                        <li>Ce nombre sert de base de départ.</li>
+                        <li>Chaque visiteur verra ce nombre + un incrément aléatoire unique stocké dans son navigateur.</li>
+                        <li>L'incrément augmente de ~100k à chaque rechargement pour cet utilisateur.</li>
+                        <li>Pour tout le monde, le compteur commence au moins à la valeur ci-dessous.</li>
+                    </ul>
+                </div>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-3">Base de visiteurs (Minimum affiché)</label>
+                        <input 
+                            type="number" 
+                            value={visitorBaseCount} 
+                            onChange={(e) => setVisitorBaseCount(parseInt(e.target.value) || 0)}
+                            className="w-full bg-gray-50 border-none p-5 rounded-2xl font-bold text-xl focus:ring-2 focus:ring-brand-blue"
+                        />
+                    </div>
+                    
+                    <button 
+                        onClick={handleSaveVisitorSettings}
+                        disabled={isProcessing}
+                        className="w-full py-5 bg-brand-blue text-white font-black rounded-2xl text-sm uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+                    >
+                        {isProcessing ? 'Enregistrement...' : 'Sauvegarder les paramètres'}
+                    </button>
+                </div>
+            </div>
+        )}
 
         {/* --- ARTICLES --- */}
         {activeTab === 'articles' && (
@@ -914,6 +1005,33 @@ export const AdminDashboard = () => {
                     </tbody>
                 </table>
                 {socialLinks.length === 0 && <div className="text-center p-10 text-gray-400">Aucun réseau social configuré.</div>}
+            </div>
+        )}
+
+        {/* --- PARAMÈTRES (Compteur Visiteurs) --- */}
+        {activeTab === 'settings' && (
+            <div className="bg-white p-10 rounded-[50px] shadow-sm border border-gray-100 max-w-2xl">
+                <h3 className="text-2xl font-black text-brand-dark mb-6 uppercase tracking-tighter">Compteur de Visiteurs</h3>
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Nombre de visiteurs de base</label>
+                        <input 
+                            type="number" 
+                            className="w-full p-6 bg-gray-50 rounded-[25px] font-bold text-xl outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all"
+                            value={visitorBaseCount}
+                            onChange={(e) => setVisitorBaseCount(parseInt(e.target.value) || 0)}
+                        />
+                        <p className="text-xs text-gray-400 mt-2">
+                            Ce nombre servira de base. Sur le site, un nombre aléatoire (simulant des visites en temps réel) sera ajouté à chaque rechargement.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={handleSaveVisitorSettings}
+                        className="w-full py-5 bg-brand-blue text-white rounded-[30px] font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
+                    >
+                        Sauvegarder
+                    </button>
+                </div>
             </div>
         )}
       </main>
@@ -1333,10 +1451,42 @@ export const AdminDashboard = () => {
                         onChange={e => setCurrentSocialLink({...currentSocialLink, url: e.target.value})} 
                         required
                     />
+                    <div className="space-y-4">
+                        <label className="text-xs font-bold text-gray-400 uppercase ml-4">Choisir une icône</label>
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                            {[
+                                { name: 'Facebook', class: 'fab fa-facebook-f', color: 'bg-blue-600' },
+                                { name: 'Twitter/X', class: 'fab fa-x-twitter', color: 'bg-black' },
+                                { name: 'Instagram', class: 'fab fa-instagram', color: 'bg-pink-600' },
+                                { name: 'LinkedIn', class: 'fab fa-linkedin-in', color: 'bg-blue-700' },
+                                { name: 'YouTube', class: 'fab fa-youtube', color: 'bg-red-600' },
+                                { name: 'TikTok', class: 'fab fa-tiktok', color: 'bg-black' },
+                                { name: 'WhatsApp', class: 'fab fa-whatsapp', color: 'bg-green-500' },
+                                { name: 'Email', class: 'fas fa-envelope', color: 'bg-gray-600' },
+                                { name: 'Site Web', class: 'fas fa-globe', color: 'bg-gray-800' },
+                            ].map((icon) => (
+                                <button
+                                    key={icon.name}
+                                    type="button"
+                                    onClick={() => setCurrentSocialLink({
+                                        ...currentSocialLink,
+                                        platform: icon.name,
+                                        iconClass: icon.class,
+                                        bgColor: icon.color
+                                    })}
+                                    className={`p-3 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${currentSocialLink.iconClass === icon.class ? 'border-brand-blue bg-blue-50 text-brand-blue' : 'border-transparent bg-gray-50 hover:bg-gray-100 text-gray-500'}`}
+                                >
+                                    <i className={`${icon.class} text-xl`}></i>
+                                    <span className="text-[9px] font-bold uppercase truncate w-full text-center">{icon.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <input 
                         type="text" 
                         className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
-                        placeholder="Classe Icône (ex: fab fa-facebook-f)..." 
+                        placeholder="Ou saisissez une classe (ex: fab fa-facebook-f)..." 
                         value={currentSocialLink.iconClass || ''} 
                         onChange={e => setCurrentSocialLink({...currentSocialLink, iconClass: e.target.value})} 
                         required

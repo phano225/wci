@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { VisitorCounter } from './VisitorCounter';
 
 export const Footer = () => {
     return (
@@ -21,6 +22,10 @@ export const Footer = () => {
                              <p>RCCM-CI- Abidj-03-2022-B113-11685</p>
                              <p>N° RECEPISSE : N° 10/D 25/04/2023 Délivré/Procureur République Côte d'Ivoire</p>
                              <p>ADRESSE POSTALE : 01 BP 845 Abdj 01</p>
+                        </div>
+                        
+                        <div className="mt-6 pt-6 border-t border-gray-800">
+                            <VisitorCounter />
                         </div>
                     </div>
 

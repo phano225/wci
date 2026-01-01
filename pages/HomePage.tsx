@@ -114,6 +114,11 @@ export const HomePage = () => {
   return (
     <PublicLayout>
       
+      {/* HEADER AD */}
+      <div className="mb-8 flex justify-center">
+        <AdDisplay location={AdLocation.HEADER_LEADERBOARD} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         
         {/* === MAIN HERO AREA (Left 8 cols) === */}
