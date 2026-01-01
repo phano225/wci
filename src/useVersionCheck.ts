@@ -47,8 +47,8 @@ export const useVersionCheck = () => {
           localStorage.setItem('app_version', serverVersion);
         }
       } catch (error: any) {
-        if (error.name === 'AbortError') return;
-        console.error('Error checking version:', error);
+        if (error.name === 'AbortError' || error.message?.includes('aborted') || error.message === 'Failed to fetch') return;
+        console.warn('Silent version check error:', error);
       }
     };
 
