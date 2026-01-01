@@ -56,8 +56,10 @@ export const VisitorCounter: React.FC = () => {
         localStorage.setItem(storageKey, newOffset.toString());
         
         setCount(base + newOffset);
-      } catch (err) {
-        console.error("Error fetching visitor count", err);
+      } catch (err: any) {
+        if (err.name !== 'AbortError' && err.message !== 'Failed to fetch') {
+            console.error("Error fetching visitor count", err);
+        }
         // Fallback
         setCount(1000000);
       } finally {

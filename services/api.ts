@@ -55,7 +55,8 @@ export const getSocialLinks = async (): Promise<SocialLink[]> => {
         const { data, error } = await supabase.from('social_links').select('*');
         if (error) { console.error('Supabase error:', error); return []; }
         return data || [];
-    } catch (e) {
+    } catch (e: any) {
+        if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
         console.error('Network/Fetch error in getSocialLinks:', e);
         return [];
     }
@@ -98,7 +99,8 @@ export const getVideos = async (): Promise<Video[]> => {
       const { data, error } = await supabase.from('videos').select('*').order('createdAt', { ascending: false });
       if (error) { console.error('Supabase error:', error); return []; }
       return data || [];
-  } catch (e) {
+  } catch (e: any) {
+      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
       console.error('Network/Fetch error in getVideos:', e);
       return [];
   }
@@ -141,7 +143,8 @@ export const getUsers = async (): Promise<User[]> => {
       const { data, error } = await supabase.from('users').select('*');
       if (error) { console.error('Supabase error:', error); return []; }
       return data || [];
-  } catch (e) {
+  } catch (e: any) {
+      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
       console.error('Network/Fetch error in getUsers:', e);
       return [];
   }
@@ -184,7 +187,8 @@ export const getCategories = async (): Promise<Category[]> => {
       const { data, error } = await supabase.from('categories').select('*');
       if (error) throw error;
       return data || [];
-  } catch (e) {
+  } catch (e: any) {
+      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
       console.error('Network/Fetch error in getCategories:', e);
       return [];
   }
@@ -231,7 +235,8 @@ export const getArticles = async (): Promise<Article[]> => {
         .order('createdAt', { ascending: false });
       if (error) throw error;
       return (data || []).map(item => ({ ...item, content: '' })) as Article[];
-  } catch (e) {
+  } catch (e: any) {
+      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
       console.error('Network/Fetch error in getArticles:', e);
       return [];
   }
@@ -243,7 +248,8 @@ export const getArticleById = async (id: string): Promise<Article | undefined> =
       const { data, error } = await supabase.from('articles').select('*').eq('id', id).single();
       if (error) return undefined;
       return data;
-  } catch (e) {
+  } catch (e: any) {
+      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return undefined;
       console.error('Network/Fetch error in getArticleById:', e);
       return undefined;
   }

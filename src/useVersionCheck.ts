@@ -47,7 +47,15 @@ export const useVersionCheck = () => {
           localStorage.setItem('app_version', serverVersion);
         }
       } catch (error: any) {
-        if (error.name === 'AbortError' || error.message?.includes('aborted') || error.message === 'Failed to fetch') return;
+        // Ignore network errors and aborts
+        if (
+            error.name === 'AbortError' || 
+            error.message?.includes('aborted') || 
+            error.message === 'Failed to fetch' ||
+            error.message?.includes('NetworkError') ||
+            error.message?.includes('Network request failed')
+        ) return;
+        
         console.warn('Silent version check error:', error);
       }
     };
