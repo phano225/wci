@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 
 export const useVersionCheck = () => {
   useEffect(() => {
+    // Disable version check in development mode to avoid noisy network abort errors during HMR/reloads
+    if (import.meta.env.DEV) return;
+
     const controller = new AbortController();
     const signal = controller.signal;
 
