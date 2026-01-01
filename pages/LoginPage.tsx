@@ -30,6 +30,8 @@ export const LoginPage = () => {
     } catch (error) {
       console.error('Erreur lors de la connexion:', error);
       setError('Erreur de connexion. Vérifiez votre connexion internet.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
