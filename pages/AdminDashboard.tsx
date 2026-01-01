@@ -1124,7 +1124,7 @@ export const AdminDashboard = () => {
                           <select className="w-full p-6 bg-gray-50 rounded-[25px] font-bold outline-none" value={currentAd.type || AdType.IMAGE} onChange={e => setCurrentAd({...currentAd, type: e.target.value as AdType})}>
                               <option value={AdType.IMAGE}>Image</option>
                               <option value={AdType.VIDEO}>Vidéo</option>
-                              <option value={AdType.SCRIPT}>Script HTML</option>
+                              <option value={AdType.SCRIPT}>Script HTML / Code</option>
                           </select>
                           <select className="w-full p-6 bg-gray-50 rounded-[25px] font-bold outline-none" value={currentAd.location || AdLocation.HEADER_LEADERBOARD} onChange={e => setCurrentAd({...currentAd, location: e.target.value as AdLocation})}>
                               <option value={AdLocation.HEADER_LEADERBOARD}>Haut de page</option>
@@ -1132,8 +1132,39 @@ export const AdminDashboard = () => {
                               <option value={AdLocation.SIDEBAR_SKYSCRAPER}>Sidebar (Large)</option>
                           </select>
                       </div>
-                      <textarea className="w-full p-8 bg-gray-50 rounded-[35px] font-mono text-xs outline-none h-44" placeholder="URL du média ou Code Script..." value={currentAd.content || ''} onChange={e => setCurrentAd({...currentAd, content: e.target.value})} />
-                      <input type="text" className="w-full p-6 bg-gray-50 rounded-[25px] font-bold outline-none" placeholder="Lien de redirection..." value={currentAd.linkUrl || ''} onChange={e => setCurrentAd({...currentAd, linkUrl: e.target.value})} />
+
+                      {/* Gestion dynamique du contenu selon le type */}
+                      {currentAd.type === AdType.SCRIPT ? (
+                          <textarea 
+                            className="w-full p-8 bg-gray-900 text-green-400 rounded-[35px] font-mono text-xs outline-none h-44 border border-gray-700" 
+                            placeholder="<!-- Collez votre code Script ou HTML ici -->" 
+                            value={currentAd.content || ''} 
+                            onChange={e => setCurrentAd({...currentAd, content: e.target.value})} 
+                          />
+                      ) : (
+                          <div className="space-y-4">
+                              <div className="flex gap-4">
+                                  <input 
+                                    type="text" 
+                                    className="flex-1 p-6 bg-gray-50 rounded-[25px] font-bold outline-none text-xs" 
+                                    placeholder="URL de l'image/vidéo..." 
+                                    value={currentAd.content || ''} 
+                                    onChange={e => setCurrentAd({...currentAd, content: e.target.value, imageUrl: e.target.value})} 
+                                  />
+                                  <label className="p-6 bg-brand-blue text-white rounded-[25px] font-bold cursor-pointer hover:bg-blue-700 transition-colors whitespace-nowrap">
+                                      Upload 📤
+                                      <input type="file" accept="image/*" className="hidden" onChange={handleAdImageUpload} />
+                                  </label>
+                              </div>
+                              {currentAd.imageUrl && (
+                                  <div className="w-full h-32 bg-gray-100 rounded-[25px] overflow-hidden border border-gray-200 flex items-center justify-center">
+                                      <img src={currentAd.imageUrl} alt="Aperçu" className="h-full object-contain" />
+                                  </div>
+                              )}
+                          </div>
+                      )}
+
+                      <input type="text" className="w-full p-6 bg-gray-50 rounded-[25px] font-bold outline-none" placeholder="Lien de redirection (Optionnel)..." value={currentAd.linkUrl || ''} onChange={e => setCurrentAd({...currentAd, linkUrl: e.target.value})} />
                       <label className="flex items-center gap-4 cursor-pointer">
                           <input type="checkbox" checked={currentAd.active} onChange={e => setCurrentAd({...currentAd, active: e.target.checked})} className="w-6 h-6 rounded border-gray-300 text-brand-blue" />
                           <span className="font-bold uppercase text-xs tracking-widest">Activer cette publicité</span>
