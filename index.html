@@ -9,10 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script>
       window.onload = function() {
-        if (typeof tailwind === 'undefined') {
-            console.warn('Tailwind failed to load from CDN. Check your internet connection.');
-        } else {
-            tailwind.config = {
+        if (window.tailwind) {
+            window.tailwind.config = {
                 theme: {
                   extend: {
                     colors: {
@@ -29,6 +27,8 @@
                   }
                 }
             }
+        } else {
+            console.warn('Tailwind failed to load. Check internet connection.');
         }
       }
     </script>

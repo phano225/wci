@@ -51,9 +51,14 @@ const MOCK_MESSAGES: ContactMessage[] = [];
 
 export const getSocialLinks = async (): Promise<SocialLink[]> => {
     if (IS_OFFLINE_MODE) return MOCK_SOCIAL_LINKS;
-    const { data, error } = await supabase.from('social_links').select('*');
-    if (error) { console.error('Supabase error:', error); return []; }
-    return data || [];
+    try {
+        const { data, error } = await supabase.from('social_links').select('*');
+        if (error) { console.error('Supabase error:', error); return []; }
+        return data || [];
+    } catch (e) {
+        console.error('Network/Fetch error in getSocialLinks:', e);
+        return [];
+    }
 };
 
 export const saveSocialLink = async (link: SocialLink): Promise<void> => {
@@ -63,8 +68,13 @@ export const saveSocialLink = async (link: SocialLink): Promise<void> => {
         else MOCK_SOCIAL_LINKS.push({ ...link, id: Math.random().toString(36).substr(2, 9) });
         return;
     }
-    const { error } = await supabase.from('social_links').upsert(link);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('social_links').upsert(link);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error saving social link:', e);
+        throw e;
+    }
 };
 
 export const deleteSocialLink = async (id: string): Promise<void> => {
@@ -73,15 +83,25 @@ export const deleteSocialLink = async (id: string): Promise<void> => {
         if (index >= 0) MOCK_SOCIAL_LINKS.splice(index, 1);
         return;
     }
-    const { error } = await supabase.from('social_links').delete().eq('id', id);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('social_links').delete().eq('id', id);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error deleting social link:', e);
+        throw e;
+    }
 };
 
 export const getVideos = async (): Promise<Video[]> => {
   if (IS_OFFLINE_MODE) return MOCK_VIDEOS;
-  const { data, error } = await supabase.from('videos').select('*').order('createdAt', { ascending: false });
-  if (error) { console.error('Supabase error:', error); return []; }
-  return data || [];
+  try {
+      const { data, error } = await supabase.from('videos').select('*').order('createdAt', { ascending: false });
+      if (error) { console.error('Supabase error:', error); return []; }
+      return data || [];
+  } catch (e) {
+      console.error('Network/Fetch error in getVideos:', e);
+      return [];
+  }
 };
 
 export const saveVideo = async (video: Video): Promise<void> => {
@@ -91,8 +111,13 @@ export const saveVideo = async (video: Video): Promise<void> => {
     else MOCK_VIDEOS.push({ ...video, id: Math.random().toString(36).substr(2, 9) });
     return;
   }
-  const { error } = await supabase.from('videos').upsert(video);
-  if (error) throw error;
+  try {
+      const { error } = await supabase.from('videos').upsert(video);
+      if (error) throw error;
+  } catch (e) {
+      console.error('Error saving video:', e);
+      throw e;
+  }
 };
 
 export const deleteVideo = async (id: string): Promise<void> => {
@@ -101,16 +126,25 @@ export const deleteVideo = async (id: string): Promise<void> => {
     if (index >= 0) MOCK_VIDEOS.splice(index, 1);
     return;
   }
-  const { error } = await supabase.from('videos').delete().eq('id', id);
-  if (error) throw error;
+  try {
+      const { error } = await supabase.from('videos').delete().eq('id', id);
+      if (error) throw error;
+  } catch (e) {
+      console.error('Error deleting video:', e);
+      throw e;
+  }
 };
 
 export const getUsers = async (): Promise<User[]> => {
   if (IS_OFFLINE_MODE) return MOCK_USERS;
-  // Note: For security, accessing 'users' usually requires admin rights or specific RLS policies
-  const { data, error } = await supabase.from('users').select('*');
-  if (error) { console.error('Supabase error:', error); return []; }
-  return data || [];
+  try {
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) { console.error('Supabase error:', error); return []; }
+      return data || [];
+  } catch (e) {
+      console.error('Network/Fetch error in getUsers:', e);
+      return [];
+  }
 };
 
 export const saveUser = async (user: User): Promise<void> => {
@@ -120,8 +154,13 @@ export const saveUser = async (user: User): Promise<void> => {
         else MOCK_USERS.push(user);
         return;
     }
-    const { error } = await supabase.from('users').upsert(user);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('users').upsert(user);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error saving user:', e);
+        throw e;
+    }
 };
 
 export const deleteUser = async (id: string): Promise<void> => {
@@ -130,15 +169,25 @@ export const deleteUser = async (id: string): Promise<void> => {
         if (index >= 0) MOCK_USERS.splice(index, 1);
         return;
     }
-    const { error } = await supabase.from('users').delete().eq('id', id);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('users').delete().eq('id', id);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error deleting user:', e);
+        throw e;
+    }
 };
 
 export const getCategories = async (): Promise<Category[]> => {
   if (IS_OFFLINE_MODE) return MOCK_CATEGORIES;
-  const { data, error } = await supabase.from('categories').select('*');
-  if (error) throw error;
-  return data || [];
+  try {
+      const { data, error } = await supabase.from('categories').select('*');
+      if (error) throw error;
+      return data || [];
+  } catch (e) {
+      console.error('Network/Fetch error in getCategories:', e);
+      return [];
+  }
 };
 
 export const saveCategory = async (category: Category): Promise<void> => {
@@ -148,8 +197,13 @@ export const saveCategory = async (category: Category): Promise<void> => {
         else MOCK_CATEGORIES.push({ ...category, id: Math.random().toString(36).substr(2, 9) });
         return;
     }
-    const { error } = await supabase.from('categories').upsert(category);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('categories').upsert(category);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error saving category:', e);
+        throw e;
+    }
 };
 
 export const deleteCategory = async (id: string): Promise<void> => {
@@ -158,26 +212,41 @@ export const deleteCategory = async (id: string): Promise<void> => {
         if (index >= 0) MOCK_CATEGORIES.splice(index, 1);
         return;
     }
-    const { error } = await supabase.from('categories').delete().eq('id', id);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('categories').delete().eq('id', id);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error deleting category:', e);
+        throw e;
+    }
 };
 
 export const getArticles = async (): Promise<Article[]> => {
   if (IS_OFFLINE_MODE) return MOCK_ARTICLES;
-  // Select all fields EXCEPT content to reduce payload size
-  const { data, error } = await supabase
-    .from('articles')
-    .select('id, title, excerpt, category, imageUrl, videoUrl, authorId, authorName, authorAvatar, status, views, createdAt, updatedAt, submittedBy, submittedAt, reviewedBy, reviewedAt, reviewComments, submissionStatus')
-    .order('createdAt', { ascending: false });
-  if (error) throw error;
-  return (data || []).map(item => ({ ...item, content: '' })) as Article[];
+  try {
+      // Select all fields EXCEPT content to reduce payload size
+      const { data, error } = await supabase
+        .from('articles')
+        .select('id, title, excerpt, category, imageUrl, videoUrl, authorId, authorName, authorAvatar, status, views, createdAt, updatedAt, submittedBy, submittedAt, reviewedBy, reviewedAt, reviewComments, submissionStatus')
+        .order('createdAt', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => ({ ...item, content: '' })) as Article[];
+  } catch (e) {
+      console.error('Network/Fetch error in getArticles:', e);
+      return [];
+  }
 };
 
 export const getArticleById = async (id: string): Promise<Article | undefined> => {
   if (IS_OFFLINE_MODE) return MOCK_ARTICLES.find(a => a.id === id);
-  const { data, error } = await supabase.from('articles').select('*').eq('id', id).single();
-  if (error) return undefined;
-  return data;
+  try {
+      const { data, error } = await supabase.from('articles').select('*').eq('id', id).single();
+      if (error) return undefined;
+      return data;
+  } catch (e) {
+      console.error('Network/Fetch error in getArticleById:', e);
+      return undefined;
+  }
 };
 
 export const saveArticle = async (article: Article): Promise<void> => {
@@ -196,8 +265,13 @@ export const saveArticle = async (article: Article): Promise<void> => {
         }
         return;
     }
-    const { error } = await supabase.from('articles').upsert(article);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('articles').upsert(article);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error saving article:', e);
+        throw e;
+    }
 };
 
 export const deleteArticle = async (id: string): Promise<void> => {
@@ -206,8 +280,13 @@ export const deleteArticle = async (id: string): Promise<void> => {
         if (index >= 0) MOCK_ARTICLES.splice(index, 1);
         return;
     }
-    const { error } = await supabase.from('articles').delete().eq('id', id);
-    if (error) throw error;
+    try {
+        const { error } = await supabase.from('articles').delete().eq('id', id);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Error deleting article:', e);
+        throw e;
+    }
 };
 
 export const incrementArticleViews = async (id: string): Promise<void> => {
