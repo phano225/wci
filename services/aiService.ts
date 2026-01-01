@@ -1,20 +1,20 @@
 import OpenAI from 'openai';
 
 const getClient = () => {
-    // Prefer VITE_GROK_API_KEY
+    // Utiliser import.meta.env pour Vite au lieu de process.env
     const apiKey = import.meta.env.VITE_GROK_API_KEY; 
     
-    if (!apiKey) {
-        console.warn("VITE_GROK_API_KEY is missing. AI features may not work.");
-    }
-
+    // Détection basique pour savoir si c'est une clé Groq (commence souvent par gsk_)
     const isGroq = apiKey?.startsWith('gsk_');
+
+    // Si c'est Groq, on utilise leur endpoint compatible OpenAI
+    // Sinon on suppose que c'est xAI (Grok)
     const baseURL = isGroq ? "https://api.groq.com/openai/v1" : "https://api.x.ai/v1";
 
     return new OpenAI({
-        apiKey: apiKey || 'dummy-key', // Prevent crash on init, fail on request if missing
+        apiKey: apiKey || 'dummy-key', // Évite que le SDK plante si la clé est vide (l'appel échouera proprement plus tard)
         baseURL: baseURL,
-        dangerouslyAllowBrowser: true 
+        dangerouslyAllowBrowser: true // Nécessaire car on appelle depuis le front (pas idéal en prod mais ok pour démo)
     });
 };
 
