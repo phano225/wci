@@ -47,16 +47,43 @@ const MOCK_ADS: Ad[] = [
 
 const MOCK_MESSAGES: ContactMessage[] = [];
 
+// Helper to detect network errors (offline, aborted, etc.)
+const isNetworkError = (error: any) => {
+    if (!error) return false;
+    // Check for standard Error objects
+    if (error.name === 'AbortError' || 
+        error.message === 'Failed to fetch' || 
+        error.message === 'Load failed' ||
+        error.message?.includes('NetworkError') ||
+        error.message?.includes('Network request failed') ||
+        error.message?.includes('aborted')) {
+        return true;
+    }
+    // Check for Supabase error objects which might look like { message: "TypeError: Failed to fetch", ... }
+    if (typeof error.message === 'string' && (
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('Network request failed') ||
+        error.message.includes('aborted')
+    )) {
+        return true;
+    }
+    return false;
+};
+
 // --- IMPLEMENTATION SUPABASE ---
 
 export const getSocialLinks = async (): Promise<SocialLink[]> => {
     if (IS_OFFLINE_MODE) return MOCK_SOCIAL_LINKS;
     try {
         const { data, error } = await supabase.from('social_links').select('*');
-        if (error) { console.error('Supabase error:', error); return []; }
+        if (error) { 
+            if (!isNetworkError(error)) console.error('Supabase error:', error); 
+            return []; 
+        }
         return data || [];
     } catch (e: any) {
-        if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
+        if (isNetworkError(e)) return [];
         console.error('Network/Fetch error in getSocialLinks:', e);
         return [];
     }
@@ -97,10 +124,13 @@ export const getVideos = async (): Promise<Video[]> => {
   if (IS_OFFLINE_MODE) return MOCK_VIDEOS;
   try {
       const { data, error } = await supabase.from('videos').select('*').order('createdAt', { ascending: false });
-      if (error) { console.error('Supabase error:', error); return []; }
+      if (error) { 
+          if (!isNetworkError(error)) console.error('Supabase error:', error); 
+          return []; 
+      }
       return data || [];
   } catch (e: any) {
-      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
+      if (isNetworkError(e)) return [];
       console.error('Network/Fetch error in getVideos:', e);
       return [];
   }
@@ -141,10 +171,13 @@ export const getUsers = async (): Promise<User[]> => {
   if (IS_OFFLINE_MODE) return MOCK_USERS;
   try {
       const { data, error } = await supabase.from('users').select('*');
-      if (error) { console.error('Supabase error:', error); return []; }
+      if (error) { 
+          if (!isNetworkError(error)) console.error('Supabase error:', error); 
+          return []; 
+      }
       return data || [];
   } catch (e: any) {
-      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
+      if (isNetworkError(e)) return [];
       console.error('Network/Fetch error in getUsers:', e);
       return [];
   }
@@ -185,10 +218,13 @@ export const getCategories = async (): Promise<Category[]> => {
   if (IS_OFFLINE_MODE) return MOCK_CATEGORIES;
   try {
       const { data, error } = await supabase.from('categories').select('*');
-      if (error) throw error;
+      if (error) { 
+          if (!isNetworkError(error)) console.error('Supabase error:', error); 
+          return []; 
+      }
       return data || [];
   } catch (e: any) {
-      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
+      if (isNetworkError(e)) return [];
       console.error('Network/Fetch error in getCategories:', e);
       return [];
   }
@@ -233,10 +269,13 @@ export const getArticles = async (): Promise<Article[]> => {
         .from('articles')
         .select('id, title, excerpt, category, imageUrl, videoUrl, authorId, authorName, authorAvatar, status, views, createdAt, updatedAt, submittedBy, submittedAt, reviewedBy, reviewedAt, reviewComments, submissionStatus')
         .order('createdAt', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        if (!isNetworkError(error)) console.error('Supabase error in getArticles:', error);
+        throw error;
+      }
       return (data || []).map(item => ({ ...item, content: '' })) as Article[];
   } catch (e: any) {
-      if (e.name === 'AbortError' || e.message === 'Failed to fetch') return [];
+      if (isNetworkError(e)) return [];
       console.error('Network/Fetch error in getArticles:', e);
       return [];
   }
@@ -307,9 +346,18 @@ export const incrementArticleViews = async (id: string): Promise<void> => {
 
 export const getAds = async (): Promise<Ad[]> => {
     if (IS_OFFLINE_MODE) return MOCK_ADS;
-    const { data, error } = await supabase.from('ads').select('*');
-    if (error) { console.error('Supabase error:', error); return []; }
-    return data || [];
+    try {
+        const { data, error } = await supabase.from('ads').select('*');
+        if (error) { 
+            if (!isNetworkError(error)) console.error('Supabase error:', error); 
+            return []; 
+        }
+        return data || [];
+    } catch (e) {
+        if (isNetworkError(e)) return [];
+        console.error('Network/Fetch error in getAds:', e);
+        return [];
+    }
 };
 
 export const getActiveAdByLocation = async (location: AdLocation): Promise<Ad | undefined> => {
@@ -351,9 +399,18 @@ export const deleteAd = async (id: string): Promise<void> => {
 
 export const getMessages = async (): Promise<ContactMessage[]> => {
     if (IS_OFFLINE_MODE) return MOCK_MESSAGES;
-    const { data, error } = await supabase.from('messages').select('*').order('date', { ascending: false });
-    if (error) { console.error('Supabase error:', error); return []; }
-    return data || [];
+    try {
+        const { data, error } = await supabase.from('messages').select('*').order('date', { ascending: false });
+        if (error) { 
+            if (!isNetworkError(error)) console.error('Supabase error:', error); 
+            return []; 
+        }
+        return data || [];
+    } catch (e) {
+        if (isNetworkError(e)) return [];
+        console.error('Network/Fetch error in getMessages:', e);
+        return [];
+    }
 };
 
 export const updateMessageStatus = async (id: string, status: 'READ' | 'ARCHIVED'): Promise<void> => {

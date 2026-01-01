@@ -1,12 +1,11 @@
 import OpenAI from 'openai';
 
 const getClient = () => {
-    // Prefer GROK_API_KEY, fallback to API_KEY if it happens to be the Grok one, 
-    // but really we expect GROK_API_KEY to be set in .env
-    const apiKey = process.env.GROK_API_KEY; 
+    // Prefer VITE_GROK_API_KEY
+    const apiKey = import.meta.env.VITE_GROK_API_KEY; 
     
     if (!apiKey) {
-        console.warn("GROK_API_KEY is missing. AI features may not work.");
+        console.warn("VITE_GROK_API_KEY is missing. AI features may not work.");
     }
 
     const isGroq = apiKey?.startsWith('gsk_');
@@ -20,7 +19,7 @@ const getClient = () => {
 };
 
 const getModel = () => {
-    const apiKey = process.env.GROK_API_KEY;
+    const apiKey = import.meta.env.VITE_GROK_API_KEY;
     const isGroq = apiKey?.startsWith('gsk_');
     return isGroq ? "llama-3.3-70b-versatile" : "grok-beta";
 };
