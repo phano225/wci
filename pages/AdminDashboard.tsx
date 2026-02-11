@@ -27,6 +27,7 @@ import {
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
 import { useNavigate, Link } from 'react-router-dom';
+import { LoginPage } from './LoginPage';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import ImageResize from 'quill-image-resize-module-react';
@@ -116,9 +117,14 @@ export const AdminDashboard = () => {
   }), []);
 
   useEffect(() => {
-    if (!user) { navigate('/login'); return; }
-    loadData();
+    if (user) {
+      loadData();
+    }
   }, [user, activeTab]);
+
+  if (!user) {
+      return <LoginPage />;
+  }
 
   const loadData = async () => {
     setIsProcessing(true);

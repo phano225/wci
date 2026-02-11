@@ -65,10 +65,7 @@ export const Navbar = () => {
                  </div>
                  <Link to="/contact" className="hover:text-brand-red transition-colors hidden sm:block">Nous contacter</Link>
                  {!user ? (
-                    <Link to="/login" className="flex items-center gap-1 hover:text-brand-red transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
-                        Connexion
-                    </Link>
+                    <span className="hidden"></span>
                  ) : (
                     <div className="flex items-center gap-2">
                         <Link to="/admin" className="text-brand-red">Admin</Link>
