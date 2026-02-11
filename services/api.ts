@@ -3,17 +3,36 @@ import { supabase } from '../supabase-config';
 
 // --- CONFIGURATION DU MODE HORS LIGNE ---
 // Mettez cette valeur à 'false' pour que le site se connecte à la vraie base de données.
-export const IS_OFFLINE_MODE = true;
+export const IS_OFFLINE_MODE = false;
+
+// --- LOCAL STORAGE HELPERS ---
+const loadFromStorage = <T>(key: string, defaultData: T): T => {
+    try {
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : defaultData;
+    } catch (e) {
+        console.error(`Error loading ${key} from storage`, e);
+        return defaultData;
+    }
+};
+
+const saveToStorage = (key: string, data: any) => {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+        console.error(`Error saving ${key} to storage`, e);
+    }
+};
 
 // --- DONNÉES DE FALLBACK (MODE HORS LIGNE / DÉMO) ---
 
-const MOCK_USERS: User[] = [
+const DEFAULT_MOCK_USERS: User[] = [
   { id: 'demo-admin', name: 'Administrateur', email: 'admin@example.com', role: UserRole.ADMIN, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin' },
   { id: 'demo-editor', name: 'Éditeur', email: 'editor@example.com', role: UserRole.EDITOR, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=editor' },
   { id: 'demo-contributor', name: 'Contributeur', email: 'contrib@example.com', role: UserRole.CONTRIBUTOR, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=contrib' }
 ];
 
-const MOCK_CATEGORIES: Category[] = [
+const DEFAULT_MOCK_CATEGORIES: Category[] = [
   { id: '1', name: 'Politique', slug: 'politique' },
   { id: '2', name: 'Société', slug: 'societe' },
   { id: '3', name: 'Économie', slug: 'economie' },
@@ -23,9 +42,9 @@ const MOCK_CATEGORIES: Category[] = [
   { id: '7', name: 'Faits Divers', slug: 'faits-divers' }
 ];
 
-const MOCK_ARTICLES: Article[] = [];
+const DEFAULT_MOCK_ARTICLES: Article[] = [];
 
-const MOCK_VIDEOS: Video[] = [
+const DEFAULT_MOCK_VIDEOS: Video[] = [
   { id: 'demo-new', title: '🔴 DÉMO LIVE : Cette vidéo a été ajoutée pour le test', youtubeId: 'LXb3EKWsInQ', category: 'Technologie', duration: '01:00', createdAt: new Date().toISOString() },
   { id: 'v1', title: 'Déclaration exclusive : Les nouvelles mesures du gouvernement pour 2024', youtubeId: 'ScMzIvxBSi4', category: 'Politique', duration: '02:30', createdAt: new Date().toISOString() },
   { id: 'v2', title: 'Analyse économique : L\'impact de l\'inflation', youtubeId: 'C0DPdy98e4c', category: 'Économie', duration: '05:45', createdAt: new Date().toISOString() },
@@ -33,19 +52,28 @@ const MOCK_VIDEOS: Video[] = [
   { id: 'v4', title: 'Sport : Les éléphants se préparent', youtubeId: '7Pq-S557XQU', category: 'Sport', duration: '04:20', createdAt: new Date().toISOString() }
 ];
 
-const MOCK_SOCIAL_LINKS: SocialLink[] = [
+const DEFAULT_MOCK_SOCIAL_LINKS: SocialLink[] = [
   { id: '1', platform: 'Facebook', url: 'https://facebook.com', iconClass: 'fab fa-facebook-f', bgColor: 'bg-blue-600', textColor: 'text-white' },
   { id: '2', platform: 'Twitter', url: 'https://twitter.com', iconClass: 'fab fa-twitter', bgColor: 'bg-black', textColor: 'text-white' },
   { id: '3', platform: 'YouTube', url: 'https://youtube.com', iconClass: 'fab fa-youtube', bgColor: 'bg-red-600', textColor: 'text-white' },
   { id: '4', platform: 'WhatsApp', url: 'https://whatsapp.com', iconClass: 'fab fa-whatsapp', bgColor: 'bg-green-500', textColor: 'text-white' }
 ];
 
-const MOCK_ADS: Ad[] = [
+const DEFAULT_MOCK_ADS: Ad[] = [
     { id: 'ad1', title: 'Pub Header', imageUrl: 'https://placehold.co/728x90/EEE/31343C?text=Publicite+728x90', content: 'https://placehold.co/728x90/EEE/31343C?text=Publicite+728x90', targetUrl: '#', linkUrl: '#', location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE, isActive: true, views: 1000, clicks: 50, createdAt: new Date().toISOString() },
     { id: 'ad2', title: 'Pub Sidebar', imageUrl: 'https://placehold.co/300x250/EEE/31343C?text=Publicite+Carree', content: 'https://placehold.co/300x250/EEE/31343C?text=Publicite+Carree', targetUrl: '#', linkUrl: '#', location: AdLocation.SIDEBAR_SQUARE, type: AdType.IMAGE, isActive: true, views: 800, clicks: 20, createdAt: new Date().toISOString() },
 ];
 
-const MOCK_MESSAGES: ContactMessage[] = [];
+const DEFAULT_MOCK_MESSAGES: ContactMessage[] = [];
+
+// Load data from storage or use defaults
+const MOCK_USERS = loadFromStorage('wci_users', DEFAULT_MOCK_USERS);
+const MOCK_CATEGORIES = loadFromStorage('wci_categories', DEFAULT_MOCK_CATEGORIES);
+const MOCK_ARTICLES = loadFromStorage('wci_articles', DEFAULT_MOCK_ARTICLES);
+const MOCK_VIDEOS = loadFromStorage('wci_videos', DEFAULT_MOCK_VIDEOS);
+const MOCK_SOCIAL_LINKS = loadFromStorage('wci_social_links', DEFAULT_MOCK_SOCIAL_LINKS);
+const MOCK_ADS = loadFromStorage('wci_ads', DEFAULT_MOCK_ADS);
+const MOCK_MESSAGES = loadFromStorage('wci_messages', DEFAULT_MOCK_MESSAGES);
 
 // Helper to detect network errors (offline, aborted, etc.)
 const isNetworkError = (error: any) => {
@@ -94,6 +122,7 @@ export const saveSocialLink = async (link: SocialLink): Promise<void> => {
         const index = MOCK_SOCIAL_LINKS.findIndex(l => l.id === link.id);
         if (index >= 0) MOCK_SOCIAL_LINKS[index] = link;
         else MOCK_SOCIAL_LINKS.push({ ...link, id: Math.random().toString(36).substr(2, 9) });
+        saveToStorage('wci_social_links', MOCK_SOCIAL_LINKS);
         return;
     }
     try {
@@ -109,6 +138,7 @@ export const deleteSocialLink = async (id: string): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         const index = MOCK_SOCIAL_LINKS.findIndex(l => l.id === id);
         if (index >= 0) MOCK_SOCIAL_LINKS.splice(index, 1);
+        saveToStorage('wci_social_links', MOCK_SOCIAL_LINKS);
         return;
     }
     try {
@@ -141,6 +171,7 @@ export const saveVideo = async (video: Video): Promise<void> => {
     const index = MOCK_VIDEOS.findIndex(v => v.id === video.id);
     if (index >= 0) MOCK_VIDEOS[index] = video;
     else MOCK_VIDEOS.push({ ...video, id: Math.random().toString(36).substr(2, 9) });
+    saveToStorage('wci_videos', MOCK_VIDEOS);
     return;
   }
   try {
@@ -156,6 +187,7 @@ export const deleteVideo = async (id: string): Promise<void> => {
   if (IS_OFFLINE_MODE) {
     const index = MOCK_VIDEOS.findIndex(v => v.id === id);
     if (index >= 0) MOCK_VIDEOS.splice(index, 1);
+    saveToStorage('wci_videos', MOCK_VIDEOS);
     return;
   }
   try {
@@ -188,6 +220,7 @@ export const saveUser = async (user: User): Promise<void> => {
         const index = MOCK_USERS.findIndex(u => u.id === user.id);
         if (index >= 0) MOCK_USERS[index] = user;
         else MOCK_USERS.push(user);
+        saveToStorage('wci_users', MOCK_USERS);
         return;
     }
     try {
@@ -203,6 +236,7 @@ export const deleteUser = async (id: string): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         const index = MOCK_USERS.findIndex(u => u.id === id);
         if (index >= 0) MOCK_USERS.splice(index, 1);
+        saveToStorage('wci_users', MOCK_USERS);
         return;
     }
     try {
@@ -235,6 +269,7 @@ export const saveCategory = async (category: Category): Promise<void> => {
         const index = MOCK_CATEGORIES.findIndex(c => c.id === category.id);
         if (index >= 0) MOCK_CATEGORIES[index] = category;
         else MOCK_CATEGORIES.push({ ...category, id: Math.random().toString(36).substr(2, 9) });
+        saveToStorage('wci_categories', MOCK_CATEGORIES);
         return;
     }
     try {
@@ -250,6 +285,7 @@ export const deleteCategory = async (id: string): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         const index = MOCK_CATEGORIES.findIndex(c => c.id === id);
         if (index >= 0) MOCK_CATEGORIES.splice(index, 1);
+        saveToStorage('wci_categories', MOCK_CATEGORIES);
         return;
     }
     try {
@@ -308,6 +344,7 @@ export const saveArticle = async (article: Article): Promise<void> => {
                 views: 0
             });
         }
+        saveToStorage('wci_articles', MOCK_ARTICLES);
         return;
     }
     try {
@@ -323,6 +360,7 @@ export const deleteArticle = async (id: string): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         const index = MOCK_ARTICLES.findIndex(a => a.id === id);
         if (index >= 0) MOCK_ARTICLES.splice(index, 1);
+        saveToStorage('wci_articles', MOCK_ARTICLES);
         return;
     }
     try {
@@ -337,7 +375,10 @@ export const deleteArticle = async (id: string): Promise<void> => {
 export const incrementArticleViews = async (id: string): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         const article = MOCK_ARTICLES.find(a => a.id === id);
-        if (article) article.views = (article.views || 0) + 1;
+        if (article) {
+            article.views = (article.views || 0) + 1;
+            saveToStorage('wci_articles', MOCK_ARTICLES);
+        }
         return;
     }
     const { error } = await supabase.rpc('increment_page_view', { page_id: id });
@@ -389,6 +430,7 @@ export const saveAd = async (ad: Ad): Promise<void> => {
         const index = MOCK_ADS.findIndex(a => a.id === ad.id);
         if (index >= 0) MOCK_ADS[index] = ad;
         else MOCK_ADS.push({ ...ad, id: Math.random().toString(36).substr(2, 9) });
+        saveToStorage('wci_ads', MOCK_ADS);
         return;
     }
     const { error } = await supabase.from('ads').upsert(ad);
@@ -399,6 +441,7 @@ export const deleteAd = async (id: string): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         const index = MOCK_ADS.findIndex(a => a.id === id);
         if (index >= 0) MOCK_ADS.splice(index, 1);
+        saveToStorage('wci_ads', MOCK_ADS);
         return;
     }
     const { error } = await supabase.from('ads').delete().eq('id', id);
@@ -424,7 +467,10 @@ export const getMessages = async (): Promise<ContactMessage[]> => {
 export const updateMessageStatus = async (id: string, status: 'READ' | 'ARCHIVED'): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         const msg = MOCK_MESSAGES.find(m => m.id === id);
-        if (msg) msg.status = status;
+        if (msg) {
+            msg.status = status;
+            saveToStorage('wci_messages', MOCK_MESSAGES);
+        }
         return;
     }
     const { error } = await supabase.from('messages').update({ status }).eq('id', id);
@@ -439,6 +485,7 @@ export const saveMessage = async (message: { name: string; email: string; subjec
             date: new Date().toISOString(),
             status: 'UNREAD'
         });
+        saveToStorage('wci_messages', MOCK_MESSAGES);
         return;
     }
     const { error } = await supabase.from('messages').insert([{
