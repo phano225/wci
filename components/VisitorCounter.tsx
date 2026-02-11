@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase-config';
+import { IS_OFFLINE_MODE } from '../services/api';
 
 interface VisitorSettings {
   base_count: number;
@@ -35,20 +36,23 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        // On utilise la table 'ads' pour stocker la config (hack pour éviter migration)
-        const { data, error } = await supabase
-          .from('ads')
-          .select('content')
-          .eq('id', 'visitor_counter_config')
-          .single();
+        let base = 900000; // Valeur par défaut
 
-        let base = 900000; // Valeur par défaut si pas de config
-        if (data && data.content) {
-            try {
-                const parsed = JSON.parse(data.content);
-                if (parsed.base_count) base = parseInt(parsed.base_count);
-            } catch (e) {
-                // content might be raw text if not json
+        if (!IS_OFFLINE_MODE) {
+            // On utilise la table 'ads' pour stocker la config (hack pour éviter migration)
+            const { data, error } = await supabase
+              .from('ads')
+              .select('content')
+              .eq('id', 'visitor_counter_config')
+              .single();
+
+            if (data && data.content) {
+                try {
+                    const parsed = JSON.parse(data.content);
+                    if (parsed.base_count) base = parseInt(parsed.base_count);
+                } catch (e) {
+                    // content might be raw text if not json
+                }
             }
         }
 

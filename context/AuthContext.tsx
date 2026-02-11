@@ -18,6 +18,12 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (IS_OFFLINE_MODE) {
+        console.log('MODE HORS LIGNE: Authentification Supabase désactivée.');
+        setIsLoading(false);
+        return;
+    }
+
     console.log('Initialisation de l\'authentification...');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Changement d\'état auth:', event, session?.user?.email);

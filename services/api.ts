@@ -3,7 +3,7 @@ import { supabase } from '../supabase-config';
 
 // --- CONFIGURATION DU MODE HORS LIGNE ---
 // Mettez cette valeur à 'false' pour que le site se connecte à la vraie base de données.
-export const IS_OFFLINE_MODE = false;
+export const IS_OFFLINE_MODE = true;
 
 // --- DONNÉES DE FALLBACK (MODE HORS LIGNE / DÉMO) ---
 
@@ -41,8 +41,8 @@ const MOCK_SOCIAL_LINKS: SocialLink[] = [
 ];
 
 const MOCK_ADS: Ad[] = [
-    { id: 'ad1', title: 'Pub Header', imageUrl: 'https://via.placeholder.com/728x90.png?text=Publicité+728x90', content: 'https://via.placeholder.com/728x90.png?text=Publicité+728x90', targetUrl: '#', linkUrl: '#', location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE, isActive: true, views: 1000, clicks: 50, createdAt: new Date().toISOString() },
-    { id: 'ad2', title: 'Pub Sidebar', imageUrl: 'https://via.placeholder.com/300x250.png?text=Publicité+Carrée', content: 'https://via.placeholder.com/300x250.png?text=Publicité+Carrée', targetUrl: '#', linkUrl: '#', location: AdLocation.SIDEBAR_SQUARE, type: AdType.IMAGE, isActive: true, views: 800, clicks: 20, createdAt: new Date().toISOString() },
+    { id: 'ad1', title: 'Pub Header', imageUrl: 'https://placehold.co/728x90/EEE/31343C?text=Publicite+728x90', content: 'https://placehold.co/728x90/EEE/31343C?text=Publicite+728x90', targetUrl: '#', linkUrl: '#', location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE, isActive: true, views: 1000, clicks: 50, createdAt: new Date().toISOString() },
+    { id: 'ad2', title: 'Pub Sidebar', imageUrl: 'https://placehold.co/300x250/EEE/31343C?text=Publicite+Carree', content: 'https://placehold.co/300x250/EEE/31343C?text=Publicite+Carree', targetUrl: '#', linkUrl: '#', location: AdLocation.SIDEBAR_SQUARE, type: AdType.IMAGE, isActive: true, views: 800, clicks: 20, createdAt: new Date().toISOString() },
 ];
 
 const MOCK_MESSAGES: ContactMessage[] = [];
@@ -362,18 +362,26 @@ export const getAds = async (): Promise<Ad[]> => {
 
 export const getActiveAdByLocation = async (location: AdLocation): Promise<Ad | undefined> => {
     if (IS_OFFLINE_MODE) {
-        const eligibleAds = MOCK_ADS.filter(ad => ad.location === location && (ad.isActive || ad.active));
-        if (eligibleAds.length === 0) return undefined;
-        return eligibleAds[Math.floor(Math.random() * eligibleAds.length)];
+        return MOCK_ADS.find(ad => ad.location === location && ad.isActive);
     }
-    const { data, error } = await supabase
-        .from('ads')
-        .select('*')
-        .eq('location', location)
-        .eq('active', true);
+    try {
+        const { data, error } = await supabase
+            .from('ads')
+            .select('*')
+            .eq('location', location)
+            .eq('active', true)
+            .maybeSingle(); // Use maybeSingle to avoid 406 error if multiple ads
         
-    if (error || !data || data.length === 0) return undefined;
-    return data[Math.floor(Math.random() * data.length)];
+        if (error) {
+            if (!isNetworkError(error)) console.error('Error fetching ad:', error);
+            return undefined;
+        }
+        return data;
+    } catch (e: any) {
+        if (isNetworkError(e)) return undefined;
+        console.error('Network error fetching ad:', e);
+        return undefined;
+    }
 };
 
 export const saveAd = async (ad: Ad): Promise<void> => {
