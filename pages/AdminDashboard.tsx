@@ -823,33 +823,54 @@ export const AdminDashboard = () => {
         {activeTab === 'articles' && (
             <div className="space-y-4">
                 {articles.map(art => (
-                    <div key={art.id} className="bg-white p-6 rounded-[35px] border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between group hover:shadow-xl transition-all gap-6">
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
-                            <img src={art.imageUrl} className="w-full md:w-20 h-40 md:h-20 rounded-3xl object-cover shadow-sm" alt="" />
-                            <div>
-                                <h3 className="font-bold text-xl md:text-2xl text-gray-900 group-hover:text-brand-blue transition-colors">{art.title}</h3>
-                                <div className="flex flex-wrap items-center gap-2 mt-2">
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${
-                                        art.status === ArticleStatus.PUBLISHED ? 'bg-green-100 text-green-700' : 
-                                        art.status === ArticleStatus.SUBMITTED ? 'bg-yellow-100 text-yellow-700' : 
-                                        'bg-gray-100 text-gray-600'
-                                    }`}>
-                                        {art.status === ArticleStatus.SUBMITTED ? 'EN ATTENTE' : art.status}
-                                    </span>
-                                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{art.category} • {art.views} vues</p>
-                                </div>
-                                {art.reviewComments && (
-                                    <p className="text-red-500 text-xs mt-1">💬 Note Admin: {art.reviewComments}</p>
-                                )}
+                    <div key={art.id} className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col md:flex-row items-center gap-4 hover:shadow-lg transition-all group relative overflow-hidden">
+                        {/* Status Strip */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                            art.status === ArticleStatus.PUBLISHED ? 'bg-green-500' : 
+                            art.status === ArticleStatus.SUBMITTED ? 'bg-yellow-500' : 'bg-gray-300'
+                        }`} />
+                        
+                        <img src={art.imageUrl} className="w-full md:w-24 h-48 md:h-24 rounded-xl object-cover shadow-sm bg-gray-50" alt="" />
+                        
+                        <div className="flex-1 min-w-0 w-full">
+                            <div className="flex items-center gap-2 mb-2">
+                                 <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
+                                    art.status === ArticleStatus.PUBLISHED ? 'bg-green-100 text-green-700' : 
+                                    art.status === ArticleStatus.SUBMITTED ? 'bg-yellow-100 text-yellow-700' : 
+                                    'bg-gray-100 text-gray-600'
+                                }`}>
+                                    {art.status === ArticleStatus.SUBMITTED ? 'EN ATTENTE' : art.status === 'PUBLISHED' ? 'PUBLIÉ' : 'BROUILLON'}
+                                </span>
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-gray-50 px-2 py-1 rounded-md">{art.category}</span>
                             </div>
+                            <h3 className="font-bold text-lg md:text-xl text-gray-900 truncate group-hover:text-brand-blue transition-colors font-serif">{art.title}</h3>
+                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-400 font-medium uppercase tracking-wide">
+                                <span className="flex items-center gap-1" title="Vues">👁️ {art.views || 0}</span>
+                                <span className="flex items-center gap-1" title="Date de modification">📅 {new Date(art.updatedAt || art.createdAt).toLocaleDateString()}</span>
+                                {art.authorName && <span className="flex items-center gap-1" title="Auteur">👤 {art.authorName}</span>}
+                            </div>
+                            {art.reviewComments && (
+                                <p className="text-red-500 text-xs mt-2 bg-red-50 p-2 rounded-lg border border-red-100">💬 Note: {art.reviewComments}</p>
+                            )}
                         </div>
-                        <div className="flex gap-4 w-full md:w-auto">
-                            <button onClick={() => handleEditArticle(art)} className="flex-1 md:flex-none px-8 py-4 bg-blue-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Éditer</button>
-                            <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(loadData); }} className="text-brand-red font-black p-4 hover:bg-red-50 rounded-2xl">✕</button>
+
+                        <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0 border-t md:border-t-0 pt-4 md:pt-0 border-gray-100">
+                            <button onClick={() => handleEditArticle(art)} className="flex-1 md:flex-none px-6 py-3 bg-gray-50 text-brand-blue rounded-xl font-bold text-xs uppercase hover:bg-brand-blue hover:text-white transition-all shadow-sm hover:shadow-md">
+                                Éditer
+                            </button>
+                            <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(loadData); }} className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-brand-red hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100">
+                                🗑️
+                            </button>
                         </div>
                     </div>
                 ))}
-                {articles.length === 0 && <div className="text-center p-6 md:p-10 text-gray-400">Aucun article trouvé.</div>}
+                {articles.length === 0 && (
+                    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-[35px] border border-dashed border-gray-300 text-center">
+                        <div className="text-4xl mb-4">📄</div>
+                        <p className="text-gray-500 font-medium">Aucun article trouvé.</p>
+                        <button onClick={() => { setCurrentArticle({}); setIsEditorOpen(true); }} className="mt-4 text-brand-blue font-bold hover:underline">Créer votre premier article</button>
+                    </div>
+                )}
             </div>
         )}
 
