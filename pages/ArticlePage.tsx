@@ -61,16 +61,46 @@ export const ArticlePage = () => {
       {article && (
         <Helmet>
           <title>{article.title}</title>
+          <meta name="description" content={article.excerpt} />
+          
+          {/* Open Graph / Facebook */}
           <meta property="og:type" content="article" />
-          <meta property="og:site_name" content="Actualités" />
+          <meta property="og:url" content={window.location.href} />
           <meta property="og:title" content={article.title} />
           <meta property="og:description" content={article.excerpt} />
           <meta property="og:image" content={article.imageUrl} />
-          <meta property="og:url" content={window.location.href} />
-          <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={article.title} />
-          <meta name="twitter:description" content={article.excerpt} />
-          <meta name="twitter:image" content={article.imageUrl} />
+          <meta property="og:image:alt" content={article.title} />
+
+          {/* Twitter */}
+          <meta property="twitter:card" content="summary_large_image" />
+          <meta property="twitter:url" content={window.location.href} />
+          <meta property="twitter:title" content={article.title} />
+          <meta property="twitter:description" content={article.excerpt} />
+          <meta property="twitter:image" content={article.imageUrl} />
+
+          {/* Schema.org JSON-LD */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "NewsArticle",
+              "headline": article.title,
+              "image": [article.imageUrl],
+              "datePublished": article.createdAt,
+              "author": [{
+                  "@type": "Person",
+                  "name": article.authorName || "WCI Rédaction"
+              }],
+              "publisher": {
+                  "@type": "Organization",
+                  "name": "WCI",
+                  "logo": {
+                      "@type": "ImageObject",
+                      "url": window.location.origin + "/logo.png"
+                  }
+              },
+              "description": article.excerpt
+            })}
+          </script>
         </Helmet>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
