@@ -138,18 +138,19 @@ export const AdminDashboard = () => {
 
     try {
         console.log('Chargement des données...');
-        
-        console.time('getArticles');
-        const arts = await getArticles();
-        console.timeEnd('getArticles');
+        console.time('loadDataParallel');
 
-        console.time('getCategories');
-        const cats = await getCategories();
-        console.timeEnd('getCategories');
+        const [arts, cats, adsList, userList, msgList, videoList, socialList] = await Promise.all([
+            getArticles(),
+            getCategories(),
+            getAds(),
+            getUsers(),
+            getMessages(),
+            getVideos(),
+            getSocialLinks()
+        ]);
 
-        console.time('getAds');
-        const adsList = await getAds();
-        console.timeEnd('getAds');
+        console.timeEnd('loadDataParallel');
 
         // Check for visitor counter config
         const visitorConfig = adsList.find(a => a.id === 'visitor_counter_config');
@@ -161,22 +162,6 @@ export const AdminDashboard = () => {
                 console.error('Error parsing visitor config', e);
             }
         }
-
-        console.time('getUsers');
-        const userList = await getUsers();
-        console.timeEnd('getUsers');
-
-        console.time('getMessages');
-        const msgList = await getMessages();
-        console.timeEnd('getMessages');
-
-        console.time('getVideos');
-        const videoList = await getVideos();
-        console.timeEnd('getVideos');
-
-        console.time('getSocialLinks');
-        const socialList = await getSocialLinks();
-        console.timeEnd('getSocialLinks');
         
         clearTimeout(timeoutId); // Clear timeout if successful
 

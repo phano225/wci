@@ -24,6 +24,50 @@ const saveToStorage = (key: string, data: any) => {
     }
 };
 
+// --- CACHE HELPERS ---
+const CACHE_PREFIX = 'wci_cache_';
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+interface CacheItem<T> {
+  data: T;
+  timestamp: number;
+}
+
+const getFromCache = <T>(key: string): T | null => {
+  const itemStr = localStorage.getItem(CACHE_PREFIX + key);
+  if (!itemStr) return null;
+  
+  try {
+    const item: CacheItem<T> = JSON.parse(itemStr);
+    const now = Date.now();
+    if (now - item.timestamp > CACHE_EXPIRY) {
+      localStorage.removeItem(CACHE_PREFIX + key);
+      return null;
+    }
+    return item.data;
+  } catch {
+    return null;
+  }
+};
+
+const setCache = <T>(key: string, data: T) => {
+  const item: CacheItem<T> = {
+    data,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(item));
+};
+
+export const clearCache = (key?: string) => {
+    if (key) {
+        localStorage.removeItem(CACHE_PREFIX + key);
+    } else {
+        Object.keys(localStorage).forEach(k => {
+            if (k.startsWith(CACHE_PREFIX)) localStorage.removeItem(k);
+        });
+    }
+};
+
 // --- DONNÉES DE FALLBACK (MODE HORS LIGNE / DÉMO) ---
 
 const DEFAULT_MOCK_USERS: User[] = [
@@ -250,13 +294,20 @@ export const deleteUser = async (id: string): Promise<void> => {
 
 export const getCategories = async (): Promise<Category[]> => {
   if (IS_OFFLINE_MODE) return MOCK_CATEGORIES;
+
+  // Check cache first
+  const cached = getFromCache<Category[]>('categories');
+  if (cached) return cached;
+
   try {
       const { data, error } = await supabase.from('categories').select('*');
       if (error) { 
           if (!isNetworkError(error)) console.error('Supabase error:', error); 
           return []; 
       }
-      return data || [];
+      const categories = data || [];
+      setCache('categories', categories);
+      return categories;
   } catch (e: any) {
       if (isNetworkError(e)) return [];
       console.error('Network/Fetch error in getCategories:', e);
@@ -270,11 +321,13 @@ export const saveCategory = async (category: Category): Promise<void> => {
         if (index >= 0) MOCK_CATEGORIES[index] = category;
         else MOCK_CATEGORIES.push({ ...category, id: Math.random().toString(36).substr(2, 9) });
         saveToStorage('wci_categories', MOCK_CATEGORIES);
+        clearCache('categories');
         return;
     }
     try {
         const { error } = await supabase.from('categories').upsert(category);
         if (error) throw error;
+        clearCache('categories');
     } catch (e) {
         console.error('Error saving category:', e);
         throw e;
@@ -286,11 +339,13 @@ export const deleteCategory = async (id: string): Promise<void> => {
         const index = MOCK_CATEGORIES.findIndex(c => c.id === id);
         if (index >= 0) MOCK_CATEGORIES.splice(index, 1);
         saveToStorage('wci_categories', MOCK_CATEGORIES);
+        clearCache('categories');
         return;
     }
     try {
         const { error } = await supabase.from('categories').delete().eq('id', id);
         if (error) throw error;
+        clearCache('categories');
     } catch (e) {
         console.error('Error deleting category:', e);
         throw e;
@@ -299,6 +354,11 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 export const getArticles = async (): Promise<Article[]> => {
   if (IS_OFFLINE_MODE) return MOCK_ARTICLES;
+
+  // Check cache first
+  const cached = getFromCache<Article[]>('articles');
+  if (cached) return cached;
+
   try {
       // Select all fields EXCEPT content to reduce payload size
       const { data, error } = await supabase
@@ -309,7 +369,9 @@ export const getArticles = async (): Promise<Article[]> => {
         if (!isNetworkError(error)) console.error('Supabase error in getArticles:', error);
         throw error;
       }
-      return (data || []).map(item => ({ ...item, content: '' })) as Article[];
+      const articles = (data || []).map(item => ({ ...item, content: '' })) as Article[];
+      setCache('articles', articles);
+      return articles;
   } catch (e: any) {
       if (isNetworkError(e)) return [];
       console.error('Network/Fetch error in getArticles:', e);
@@ -345,11 +407,13 @@ export const saveArticle = async (article: Article): Promise<void> => {
             });
         }
         saveToStorage('wci_articles', MOCK_ARTICLES);
+        clearCache('articles');
         return;
     }
     try {
         const { error } = await supabase.from('articles').upsert(article);
         if (error) throw error;
+        clearCache('articles');
     } catch (e) {
         console.error('Error saving article:', e);
         throw e;
@@ -361,11 +425,13 @@ export const deleteArticle = async (id: string): Promise<void> => {
         const index = MOCK_ARTICLES.findIndex(a => a.id === id);
         if (index >= 0) MOCK_ARTICLES.splice(index, 1);
         saveToStorage('wci_articles', MOCK_ARTICLES);
+        clearCache('articles');
         return;
     }
     try {
         const { error } = await supabase.from('articles').delete().eq('id', id);
         if (error) throw error;
+        clearCache('articles');
     } catch (e) {
         console.error('Error deleting article:', e);
         throw e;
