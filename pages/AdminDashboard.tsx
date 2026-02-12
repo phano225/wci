@@ -1218,12 +1218,12 @@ export const AdminDashboard = () => {
 
       {/* --- STUDIO RÉDACTION WYSIWYG MODERNE --- */}
       {isEditorOpen && (
-        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden">
-            <header className="px-4 py-3 md:px-12 md:py-6 border-b flex flex-row justify-between items-center bg-white z-10 shadow-sm gap-4">
+        <div className="fixed inset-0 bg-[#0a0a0a] z-[100] flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden">
+            <header className="px-4 py-3 md:px-12 md:py-6 border-b border-gray-800 flex flex-row justify-between items-center bg-[#0a0a0a] z-10 shadow-sm gap-4">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => setIsEditorOpen(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full hover:bg-gray-100 flex items-center justify-center text-xl md:text-3xl transition-all">✕</button>
+                    <button onClick={() => setIsEditorOpen(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full hover:bg-gray-800 text-white flex items-center justify-center text-xl md:text-3xl transition-all">✕</button>
                     <div>
-                        <h2 className="text-lg md:text-2xl font-serif font-black text-brand-dark uppercase tracking-tighter truncate max-w-[150px] md:max-w-none">Éditeur</h2>
+                        <h2 className="text-lg md:text-2xl font-serif font-black text-white uppercase tracking-tighter truncate max-w-[150px] md:max-w-none">Éditeur</h2>
                         {user?.role === UserRole.CONTRIBUTOR && (
                             <span className="text-[10px] md:text-xs text-orange-500 font-bold block">Mode Contributeur</span>
                         )}
@@ -1232,10 +1232,10 @@ export const AdminDashboard = () => {
                 
                 {/* Desktop Actions */}
                 <div className="hidden md:flex gap-2">
-                    <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-100 rounded-2xl font-black text-xs uppercase hover:bg-gray-50 whitespace-nowrap">Brouillon</button>
+                    <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-700 text-gray-300 rounded-2xl font-black text-xs uppercase hover:bg-gray-800 whitespace-nowrap">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-brand-blue text-white rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">PUBLIER</button>
+                        <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-[#fbbf24] text-black rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
@@ -1246,21 +1246,21 @@ export const AdminDashboard = () => {
                 {/* Mobile Settings Toggle */}
                 <button 
                     onClick={() => setIsMobileEditorSettingsOpen(!isMobileEditorSettingsOpen)}
-                    className="md:hidden w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl shrink-0"
+                    className="md:hidden w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center text-xl shrink-0"
                 >
                     ⚙️
                 </button>
             </header>
 
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-gray-50 relative">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-[#0a0a0a] relative">
                 <div className="flex-1 overflow-y-auto p-2 md:py-12 md:px-8 pb-24 md:pb-12">
                     <div className="max-w-[850px] mx-auto">
                         {/* Title Section */}
-                        <div className="bg-white p-3 md:p-6 rounded-lg shadow-sm border border-gray-200 mb-4 md:mb-6">
+                        <div className="bg-[#141414] p-3 md:p-6 rounded-lg shadow-sm border border-gray-800 mb-4 md:mb-6">
                             <input 
                                 type="text" 
                                 placeholder="Saisissez votre titre ici" 
-                                className="w-full text-lg md:text-3xl font-serif font-bold bg-transparent outline-none border-none text-brand-dark placeholder:text-gray-300"
+                                className="w-full text-lg md:text-3xl font-serif font-bold bg-transparent outline-none border-none text-white placeholder:text-gray-600"
                                 value={currentArticle.title || ''}
                                 onChange={e => setCurrentArticle({...currentArticle, title: e.target.value})}
                             />
@@ -1277,46 +1277,71 @@ export const AdminDashboard = () => {
                             />
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-gray-50 text-gray-700 px-4 py-2 rounded border border-gray-300 text-[10px] md:text-xs font-bold uppercase hover:bg-white hover:border-gray-400 transition-all flex items-center gap-2"
+                                className="bg-[#141414] text-gray-300 px-4 py-2 rounded border border-gray-700 text-[10px] md:text-xs font-bold uppercase hover:bg-[#1a1a1a] hover:border-gray-600 transition-all flex items-center gap-2"
                             >
                                 <span>📷</span> Média
                             </button>
                             <button 
                                 onClick={handleAIFill}
-                                className="bg-white text-brand-dark px-4 py-2 rounded border border-gray-300 text-[10px] md:text-xs font-bold uppercase hover:bg-brand-yellow/10 hover:border-brand-yellow transition-all flex items-center gap-2"
+                                className="bg-[#141414] text-gray-300 px-4 py-2 rounded border border-gray-700 text-[10px] md:text-xs font-bold uppercase hover:bg-brand-yellow/10 hover:border-brand-yellow transition-all flex items-center gap-2"
                                 title="Générer un brouillon avec l'IA"
                             >
                                 <span>✨</span> IA
                             </button>
                         </div>
 
-                        {/* Editor Section */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[500px] md:min-h-[700px] flex flex-col relative overflow-visible">
+                        {/* Editor Section - DARK THEME */}
+                        <div className="bg-[#0a0a0a] rounded-lg shadow-2xl border border-gray-800 min-h-[500px] md:min-h-[700px] flex flex-col relative overflow-visible">
                             <style>{`
+                                /* Toolbar Dark Theme */
                                 .ql-toolbar.ql-snow { 
                                     border: none !important; 
-                                    border-bottom: 1px solid #e5e7eb !important; 
-                                    background: #ffffff; 
-                                    padding: 8px 4px !important;
+                                    border-bottom: 1px solid #333 !important; 
+                                    background: #141414; 
+                                    padding: 12px 8px !important;
                                     position: sticky;
                                     top: 0;
                                     z-index: 30;
                                     display: flex;
                                     flex-wrap: wrap;
                                     justify-content: center;
+                                    border-top-left-radius: 0.5rem;
+                                    border-top-right-radius: 0.5rem;
                                 }
-                                .ql-formats { margin-right: 5px !important; }
+                                
+                                /* Icons Color Fix */
+                                .ql-snow .ql-stroke { stroke: #a3a3a3 !important; }
+                                .ql-snow .ql-fill { fill: #a3a3a3 !important; }
+                                .ql-snow .ql-picker { color: #a3a3a3 !important; }
+                                .ql-snow .ql-picker-options { background-color: #1a1a1a !important; color: #a3a3a3 !important; border: 1px solid #333 !important; }
+                                
+                                /* Hover States */
+                                .ql-snow .ql-picker:hover { color: #fff !important; }
+                                .ql-snow .ql-picker:hover .ql-picker-label { color: #fff !important; }
+                                .ql-snow .ql-picker-label:hover { color: #fff !important; }
+                                .ql-snow .ql-picker-item:hover { color: #fff !important; background-color: #333 !important; }
+                                button.ql-active .ql-stroke { stroke: #fbbf24 !important; } /* Active Gold */
+                                button.ql-active .ql-fill { fill: #fbbf24 !important; }
+                                button:hover .ql-stroke { stroke: #fff !important; }
+                                button:hover .ql-fill { fill: #fff !important; }
+
+                                .ql-formats { margin-right: 15px !important; border-right: 1px solid #333; padding-right: 15px; }
+                                .ql-formats:last-child { border-right: none; }
+                                
                                 .ql-snow .ql-picker-label { padding-left: 4px !important; }
-                                .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', serif; font-size: 16px; }
+                                .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', serif; font-size: 18px; background-color: #0a0a0a; }
+                                
                                 .ql-editor { 
                                     min-height: 500px; 
-                                    padding: 16px 12px !important; 
-                                    color: #1a202c; 
-                                    line-height: 1.7;
+                                    padding: 30px !important; 
+                                    color: #e5e5e5; 
+                                    line-height: 1.8;
                                 }
+                                .ql-editor.ql-blank::before { color: #555 !important; font-style: italic; }
+
                                 @media (min-width: 768px) {
-                                    .ql-toolbar.ql-snow { padding: 12px !important; justify-content: flex-start; }
-                                    .ql-editor { min-height: 600px; padding: 32px !important; }
+                                    .ql-toolbar.ql-snow { padding: 16px !important; justify-content: flex-start; gap: 5px; }
+                                    .ql-editor { min-height: 600px; padding: 40px !important; max-width: 900px; margin: 0 auto; }
                                 }
                             `}</style>
                             <ReactQuill 
@@ -1332,11 +1357,11 @@ export const AdminDashboard = () => {
                 </div>
 
                 {/* Mobile Bottom Action Bar */}
-                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-40 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-                    <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-200 bg-gray-50 rounded-xl font-black text-[10px] uppercase text-gray-600">Brouillon</button>
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-gray-800 p-3 z-40 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
+                    <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-700 bg-transparent rounded-xl font-black text-[10px] uppercase text-gray-300">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-brand-blue text-white rounded-xl font-black text-xs uppercase shadow-lg">PUBLIER</button>
+                        <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-[#fbbf24] text-black rounded-xl font-black text-xs uppercase shadow-lg">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
@@ -1346,24 +1371,24 @@ export const AdminDashboard = () => {
 
                 {/* Sidebar - Responsive Overlay on Mobile */}
                 <aside className={`
-                    fixed inset-0 z-50 bg-white overflow-y-auto p-6 transition-transform duration-300 ease-in-out
-                    md:static md:translate-x-0 md:w-[450px] md:border-l md:p-12 md:space-y-12 md:shadow-2xl md:z-10
+                    fixed inset-0 z-50 bg-[#0a0a0a] overflow-y-auto p-6 transition-transform duration-300 ease-in-out
+                    md:static md:translate-x-0 md:w-[450px] md:border-l md:border-gray-800 md:p-12 md:space-y-12 md:shadow-2xl md:z-10
                     ${isMobileEditorSettingsOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
                 `}>
                     <div className="flex justify-between items-center mb-8 md:hidden">
-                        <h3 className="text-2xl font-serif font-black text-brand-dark uppercase">Paramètres</h3>
-                        <button onClick={() => setIsMobileEditorSettingsOpen(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl">✕</button>
+                        <h3 className="text-2xl font-serif font-black text-white uppercase">Paramètres</h3>
+                        <button onClick={() => setIsMobileEditorSettingsOpen(false)} className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl text-white">✕</button>
                     </div>
 
                     <div className="space-y-4 mb-8 md:mb-0">
-                        <label className="block text-[11px] font-black uppercase text-brand-blue tracking-widest">Rubrique</label>
-                        <select className="w-full p-6 bg-gray-50 rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" value={currentArticle.category || ''} onChange={e => setCurrentArticle({...currentArticle, category: e.target.value})}>
+                        <label className="block text-[11px] font-black uppercase text-gray-400 tracking-widest">Rubrique</label>
+                        <select className="w-full p-6 bg-[#141414] text-white rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-yellow/30 transition-all" value={currentArticle.category || ''} onChange={e => setCurrentArticle({...currentArticle, category: e.target.value})}>
                             <option value="">Sélectionner...</option>
                             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                         </select>
                     </div>
                     <div className="space-y-4 mb-8 md:mb-0">
-                        <label className="block text-[11px] font-black uppercase text-brand-blue tracking-widest">Image de Une (URL)</label>
+                        <label className="block text-[11px] font-black uppercase text-gray-400 tracking-widest">Image de Une (URL)</label>
                         <input 
                             type="file" 
                             ref={featuredImageRef} 
@@ -1372,10 +1397,10 @@ export const AdminDashboard = () => {
                             onChange={handleFeaturedImage} 
                         />
                         <div className="flex gap-2">
-                            <input type="text" className="flex-1 p-6 bg-gray-50 rounded-[25px] text-xs font-mono outline-none" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} placeholder="https://..." />
+                            <input type="text" className="flex-1 p-6 bg-[#141414] text-white rounded-[25px] text-xs font-mono outline-none" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} placeholder="https://..." />
                             <button 
                                 onClick={() => featuredImageRef.current?.click()}
-                                className="w-16 bg-gray-100 hover:bg-brand-blue hover:text-white rounded-[25px] flex items-center justify-center transition-all"
+                                className="w-16 bg-[#141414] text-white hover:bg-brand-blue hover:text-white rounded-[25px] flex items-center justify-center transition-all border border-gray-800"
                                 title="Uploader une image locale"
                             >
                                 📷
@@ -1383,16 +1408,16 @@ export const AdminDashboard = () => {
                         </div>
                         {currentArticle.imageUrl && <img src={currentArticle.imageUrl} className="w-full h-48 object-cover rounded-[35px] shadow-xl" alt="Aperçu" />}
                     </div>
-                    <div className="bg-blue-50/40 p-10 rounded-[45px] space-y-6 mb-8 md:mb-0">
+                    <div className="bg-[#141414] p-10 rounded-[45px] space-y-6 mb-8 md:mb-0 border border-gray-800">
                         <div className="flex justify-between items-center">
-                            <label className="text-[11px] font-black uppercase text-brand-blue tracking-widest">Chapeau (IA)</label>
-                            <button onClick={handleAISummary} className="text-[9px] font-black bg-brand-dark text-white px-6 py-2 rounded-full hover:bg-brand-red transition-all">GÉNÉRER RÉSUMÉ</button>
+                            <label className="text-[11px] font-black uppercase text-gray-400 tracking-widest">Chapeau (IA)</label>
+                            <button onClick={handleAISummary} className="text-[9px] font-black bg-brand-yellow text-black px-6 py-2 rounded-full hover:bg-white transition-all">GÉNÉRER RÉSUMÉ</button>
                         </div>
-                        <textarea className="w-full p-6 bg-white rounded-[35px] text-base italic font-serif border-none outline-none h-40 resize-none shadow-sm" value={currentArticle.excerpt || ''} onChange={e => setCurrentArticle({...currentArticle, excerpt: e.target.value})} placeholder="Court résumé de l'article..." />
+                        <textarea className="w-full p-6 bg-[#0a0a0a] text-gray-300 rounded-[35px] text-base italic font-serif border-none outline-none h-40 resize-none shadow-sm" value={currentArticle.excerpt || ''} onChange={e => setCurrentArticle({...currentArticle, excerpt: e.target.value})} placeholder="Court résumé de l'article..." />
                     </div>
                     <div className="space-y-4">
-                        <label className="block text-[11px] font-black uppercase text-brand-blue tracking-widest">Vidéo (URL)</label>
-                        <input type="text" className="w-full p-6 bg-gray-50 rounded-[25px] text-xs font-mono outline-none" placeholder="Lien vidéo..." value={currentArticle.videoUrl || ''} onChange={e => setCurrentArticle({...currentArticle, videoUrl: e.target.value})} />
+                        <label className="block text-[11px] font-black uppercase text-gray-400 tracking-widest">Vidéo (URL)</label>
+                        <input type="text" className="w-full p-6 bg-[#141414] text-white rounded-[25px] text-xs font-mono outline-none" placeholder="Lien vidéo..." value={currentArticle.videoUrl || ''} onChange={e => setCurrentArticle({...currentArticle, videoUrl: e.target.value})} />
                     </div>
                 </aside>
             </div>
