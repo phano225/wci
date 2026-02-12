@@ -56,6 +56,12 @@ export const ArticlePage = () => {
   const shareUrl = window.location.href;
   const shareText = article.title;
 
+  const getAbsoluteUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   return (
     <PublicLayout>
       {article && (
@@ -68,7 +74,7 @@ export const ArticlePage = () => {
           <meta property="og:url" content={window.location.href} />
           <meta property="og:title" content={article.title} />
           <meta property="og:description" content={article.excerpt} />
-          <meta property="og:image" content={article.imageUrl} />
+          <meta property="og:image" content={getAbsoluteUrl(article.imageUrl)} />
           <meta property="og:image:alt" content={article.title} />
 
           {/* Twitter */}
@@ -76,7 +82,7 @@ export const ArticlePage = () => {
           <meta property="twitter:url" content={window.location.href} />
           <meta property="twitter:title" content={article.title} />
           <meta property="twitter:description" content={article.excerpt} />
-          <meta property="twitter:image" content={article.imageUrl} />
+          <meta property="twitter:image" content={getAbsoluteUrl(article.imageUrl)} />
 
           {/* Schema.org JSON-LD */}
           <script type="application/ld+json">
@@ -84,7 +90,7 @@ export const ArticlePage = () => {
               "@context": "https://schema.org",
               "@type": "NewsArticle",
               "headline": article.title,
-              "image": [article.imageUrl],
+              "image": [getAbsoluteUrl(article.imageUrl)],
               "datePublished": article.createdAt,
               "author": [{
                   "@type": "Person",
