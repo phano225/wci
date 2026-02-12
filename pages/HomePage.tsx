@@ -58,54 +58,39 @@ export const HomePage = () => {
   const economie = getByCategory('Économie');
   const international = getByCategory('International');
   const sport = getByCategory('Sport');
+  const culture = getByCategory('Culture');
 
   // Reusable Category Section Component
   const CategorySection = ({ title, data, color = 'red' }: { title: string, data: Article[], color?: string }) => {
       if (!data || data.length === 0) return null;
-      const main = data[0];
-      const side = data.slice(1, 5); // 4 small articles
+      const items = data.slice(0, 4); // Take first 4 articles
 
       return (
-        <section className="mb-12">
+        <section className="mb-12 border-b border-gray-100 pb-8 last:border-0">
             <div className="flex items-center mb-6">
                 <h2 className="text-sm font-bold uppercase text-white bg-brand-red px-4 py-2 shadow-sm">{title}</h2>
                 <div className="h-0.5 flex-1 bg-gray-200"></div>
                 <Link to={`/?cat=${title}`} className="text-xs font-bold text-brand-red uppercase ml-2 hover:underline">Voir plus de {title} &rarr;</Link>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Main Article (Left/Top) - Spans 7 cols */}
-                <div className="lg:col-span-7">
-                    <Link to={`/article/${main.id}`} className="group block h-full">
-                        <div className="relative h-[300px] lg:h-[400px] overflow-hidden mb-4">
-                            <img src={main.imageUrl} alt={main.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                            <div className="absolute top-4 left-4">
-                                <span className="bg-brand-red text-white text-xs font-bold uppercase px-2 py-1 shadow-md">{main.category}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {items.map(article => (
+                    <Link to={`/article/${article.id}`} key={article.id} className="group block h-full flex flex-col">
+                        <div className="relative h-48 overflow-hidden mb-3">
+                            <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            <div className="absolute top-0 left-0">
+                                <span className="bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-1 shadow-md">{article.category}</span>
                             </div>
                         </div>
-                        <h3 className="text-2xl md:text-3xl font-serif font-bold text-gray-900 group-hover:text-brand-red leading-tight mb-3">
-                            {main.title}
+                        <h3 className="text-base font-serif font-bold text-gray-900 group-hover:text-brand-red leading-tight mb-2 line-clamp-2">
+                            {article.title}
                         </h3>
-                        <p className="text-gray-600 leading-relaxed line-clamp-3">{main.excerpt}</p>
+                        <p className="text-xs text-gray-500 line-clamp-2 mb-2 flex-1">{article.excerpt}</p>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                            {new Date(article.createdAt).toLocaleDateString()}
+                        </div>
                     </Link>
-                </div>
-
-                {/* Side Grid (Right) - Spans 5 cols */}
-                <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {side.map(article => (
-                        <Link to={`/article/${article.id}`} key={article.id} className="group block flex flex-col h-full">
-                             <div className="h-32 overflow-hidden mb-2 relative">
-                                <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                                <span className="absolute bottom-0 left-0 bg-brand-red text-white text-[10px] font-bold uppercase px-1">
-                                    {article.category}
-                                </span>
-                             </div>
-                             <h4 className="text-sm font-bold leading-snug group-hover:text-brand-red transition-colors line-clamp-3">
-                                {article.title}
-                             </h4>
-                        </Link>
-                    ))}
-                </div>
+                ))}
             </div>
         </section>
       );
@@ -291,6 +276,8 @@ export const HomePage = () => {
         <CategorySection title="Économie" data={economie} color="blue" />
         <CategorySection title="Société" data={societe} color="green" />
         <CategorySection title="International" data={international} />
+        <CategorySection title="Sport" data={sport} />
+        <CategorySection title="Culture" data={culture} />
       </div>
 
     </PublicLayout>
