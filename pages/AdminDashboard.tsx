@@ -1297,15 +1297,25 @@ export const AdminDashboard = () => {
                                     border: none !important; 
                                     border-bottom: 1px solid #e5e7eb !important; 
                                     background: #ffffff; 
-                                    padding: 8px !important;
+                                    padding: 8px 4px !important;
                                     position: sticky;
                                     top: 0;
                                     z-index: 30;
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    justify-content: center;
                                 }
+                                .ql-formats { margin-right: 5px !important; }
+                                .ql-snow .ql-picker-label { padding-left: 4px !important; }
                                 .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', serif; font-size: 16px; }
-                                .ql-editor { min-height: 500px; padding: 16px !important; color: #1a202c; }
+                                .ql-editor { 
+                                    min-height: 500px; 
+                                    padding: 16px 12px !important; 
+                                    color: #1a202c; 
+                                    line-height: 1.7;
+                                }
                                 @media (min-width: 768px) {
-                                    .ql-toolbar.ql-snow { padding: 12px !important; }
+                                    .ql-toolbar.ql-snow { padding: 12px !important; justify-content: flex-start; }
                                     .ql-editor { min-height: 600px; padding: 32px !important; }
                                 }
                             `}</style>
