@@ -44,17 +44,19 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    if (qTitle && qImage) {
-      const title = String(qTitle);
-      const description = String(qDesc || '');
-      const image = String(qImage).startsWith('http') ? String(qImage) : `${origin}${String(qImage).startsWith('/') ? '' : '/'}${qImage}`;
-      const url = id ? `${origin}/article/${id}` : `${origin}/`;
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.status(200).send(html({ title, description, image, url }));
-      return;
-    }
-
-    if (!supabase) {
+    // Priorité: si Supabase est configuré et un id est fourni, on récupère en base
+    if (!supabase || !id) {
+      // Pas de backend dispo: utiliser paramètres de requête si fournis
+      if (qTitle && qImage) {
+        const title = String(qTitle);
+        const description = String(qDesc || '');
+        const image = String(qImage).startsWith('http') ? String(qImage) : `${origin}${String(qImage).startsWith('/') ? '' : '/'}${qImage}`;
+        const url = id ? `${origin}/article/${id}` : `${origin}/`;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.status(200).send(html({ title, description, image, url }));
+        return;
+      }
+      // Fallback générique
       const fallback = {
         title: 'WCI - L’actualité en continu',
         description: 'Suivez l’actualité en temps réel sur WCI.',

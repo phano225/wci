@@ -210,7 +210,7 @@ export const ArticlePage = () => {
     return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  const shareUrl = `${window.location.origin}/api/og/${article.id}?title=${encodeURIComponent(article.title)}&desc=${encodeURIComponent(article.excerpt || '')}&image=${encodeURIComponent(getAbsoluteUrl(article.imageUrl))}`;
+  const shareUrl = `${window.location.origin}/api/og/${article.id}`;
   const shareText = article.title;
 
   return (
