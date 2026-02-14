@@ -2,9 +2,7 @@ import { useEffect } from 'react';
 
 export const useVersionCheck = () => {
   useEffect(() => {
-    // Désactive les logs hors erreurs selon le niveau
     const LOG_DEBUG = import.meta.env.VITE_LOG_LEVEL === 'debug';
-    if (import.meta.env.DEV && !LOG_DEBUG) return;
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -43,6 +41,11 @@ export const useVersionCheck = () => {
                 console.error('Failed to clear cache', e);
             }
           }
+          // Clear localStorage app caches (wci_cache_*)
+          try {
+            const keys = Object.keys(localStorage);
+            keys.forEach(k => { if (k.startsWith('wci_cache_')) localStorage.removeItem(k); });
+          } catch {}
           
           // Hard reload from server
           window.location.reload();
@@ -64,8 +67,9 @@ export const useVersionCheck = () => {
       }
     };
 
-    // Check on mount
+    // Check on mount + soon after to catch immediate deploy updates
     checkVersion();
+    const early = setTimeout(checkVersion, 5000);
 
     // Check on visibility change (when user comes back to tab)
     const handleVisibilityChange = () => {
@@ -83,6 +87,7 @@ export const useVersionCheck = () => {
       controller.abort();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(interval);
+      clearTimeout(early);
     };
   }, []);
 };

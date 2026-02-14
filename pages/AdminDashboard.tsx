@@ -510,6 +510,21 @@ export const AdminDashboard = () => {
     setIsProcessing(false);
   };
   
+  const handleUserAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsProcessing(true);
+    try {
+      const url = await uploadImage(file);
+      setCurrentEditUser(prev => ({ ...prev, avatar: url }));
+    } catch (error) {
+      console.error('Erreur upload avatar:', error);
+      alert("Échec de l'upload de la photo de profil.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
   const handleAdImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -1551,6 +1566,21 @@ export const AdminDashboard = () => {
                   <button onClick={() => setIsUserModalOpen(false)} className="absolute top-12 right-12 text-gray-300 text-2xl">✕</button>
                   <h2 className="text-4xl font-serif font-black mb-12 text-brand-dark uppercase tracking-tighter">Profil Staff</h2>
                   <div className="space-y-8">
+                      {/* Avatar */}
+                      <div className="flex items-center gap-6">
+                          <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                              <img 
+                                src={currentEditUser.avatar || 'https://via.placeholder.com/80?text=Avatar'} 
+                                alt="Avatar" 
+                                className="w-full h-full object-cover" 
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-[11px] font-black uppercase text-gray-500 mb-2">Photo de profil</label>
+                              <input type="file" accept="image/*" onChange={handleUserAvatarUpload} />
+                          </div>
+                      </div>
+
                       {/* Name - Editable only if admin or creating new */}
                       <input 
                         type="text" 

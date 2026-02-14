@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { supabase } from '../supabase-config';
-import { getUsers, saveUser, IS_OFFLINE_MODE } from '../services/api';
+import { getUsers, saveUser, IS_OFFLINE_MODE, clearCache } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -139,6 +139,8 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         return false;
       }
       
+      // Clear app caches on successful login
+      try { clearCache(); } catch {}
       return true;
     } catch (e) {
       console.error("Erreur lors de la connexion:", e);
@@ -172,9 +174,11 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const logout = async () => {
     if (IS_OFFLINE_MODE) {
         setUser(null);
+        try { clearCache(); } catch {}
         return;
     }
     await supabase.auth.signOut();
+    try { clearCache(); } catch {}
   };
 
   const updateUser = async (userData: User) => {
