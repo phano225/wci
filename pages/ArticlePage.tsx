@@ -204,7 +204,7 @@ export const ArticlePage = () => {
     );
   }
 
-  const shareUrl = window.location.href;
+  const shareUrl = `${window.location.origin}/api/og/${article.id}`;
   const shareText = article.title;
 
   const getAbsoluteUrl = (url: string) => {
