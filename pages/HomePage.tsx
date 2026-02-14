@@ -11,6 +11,7 @@ export const HomePage = () => {
   const [editoArticle, setEditoArticle] = useState<Article | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +38,20 @@ export const HomePage = () => {
     };
     fetchData();
   }, []);
+
+  const carouselItems = articles.slice(0, 5);
+  useEffect(() => {
+    if (carouselItems.length === 0) return;
+    const t = setInterval(() => {
+      setCarouselIndex(i => (i + 1) % carouselItems.length);
+    }, 5000);
+    return () => clearInterval(t);
+  }, [carouselItems.length]);
+
+  const isNew = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime();
+    return diff < 24 * 60 * 60 * 1000;
+  };
 
   if (loading) {
       return (
@@ -152,6 +167,43 @@ export const HomePage = () => {
 
         {/* === SIDEBAR (Right 4 cols) === */}
         <div className="lg:col-span-4 space-y-8">
+            {carouselItems.length > 0 && (
+              <div className="bg-white border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="bg-brand-red text-white text-sm font-bold uppercase px-4 py-2 flex items-center justify-between">
+                  <span>À la une</span>
+                  <span className="text-[10px] tracking-widest">Derniers articles</span>
+                </div>
+                <div className="relative h-72">
+                  <Link to={`/article/${carouselItems[carouselIndex].id}`} className="block h-full">
+                    <img src={carouselItems[carouselIndex].imageUrl} alt={carouselItems[carouselIndex].title} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                    <span className="absolute top-2 left-2 bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-1 shadow">
+                      {carouselItems[carouselIndex].category}
+                    </span>
+                    {isNew(carouselItems[carouselIndex].createdAt) && (
+                      <span className="absolute top-2 right-2 flex items-center gap-1 bg-yellow-400 text-black text-[10px] font-extrabold uppercase px-2 py-1 shadow animate-pulse">
+                        <span className="w-2 h-2 bg-red-600 rounded-full"></span>
+                        À lire urgent
+                      </span>
+                    )}
+                    <div className="absolute bottom-0 left-0 p-4">
+                      <h3 className="text-white font-serif font-bold text-lg leading-tight line-clamp-3 drop-shadow">{carouselItems[carouselIndex].title}</h3>
+                    </div>
+                  </Link>
+                  <button onClick={() => setCarouselIndex(i => (i - 1 + carouselItems.length) % carouselItems.length)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/70">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M12.293 15.707a1 1 0 010-1.414L15.586 11H4a1 1 0 110-2h11.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd"/></svg>
+                  </button>
+                  <button onClick={() => setCarouselIndex(i => (i + 1) % carouselItems.length)} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/70">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M7.707 4.293a1 1 0 010 1.414L4.414 9H16a1 1 0 110 2H4.414l3.293 3.293a1 1 0 11-1.414 1.414l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                  </button>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                    {carouselItems.map((_, idx) => (
+                      <button key={idx} onClick={() => setCarouselIndex(idx)} className={`w-2 h-2 rounded-full ${idx === carouselIndex ? 'bg-white' : 'bg-white/50'}`}></button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* EDITO WIDGET */}
             <div className="bg-white border border-gray-200 shadow-sm">
