@@ -1,1 +1,19 @@
-{"rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
+{
+  "rewrites": [
+    {
+      "source": "/article/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "User-Agent",
+          "value": ".*(facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Discordbot|Slackbot|Applebot|TelegramBot|Pinterest|Google-Structured-Data-Testing-Tool).*"
+        }
+      ],
+      "destination": "/api/og-article?id=:id"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
