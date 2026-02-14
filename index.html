@@ -15,9 +15,18 @@
     <meta property="og:title" content="WCI - L'actualité en continu" />
     <meta property="og:description" content="Suivez l'actualité en temps réel sur WCI. Articles, vidéos et reportages exclusifs." />
     <meta property="og:image" content="/logo.png" />
-    <meta property="og:url" content="https://wci-news.com" />
+    <meta property="og:url" content="https://journal.worldcanalinfo.com" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:image" content="/logo.png" />
+    
+    <!-- Migration HashRouter -> BrowserRouter -->
+    <script>
+      // Si l'URL contient un hash (ex: /#/article/123), on le transforme en chemin normal (/article/123)
+      if (window.location.hash && window.location.hash.startsWith('#/')) {
+        var newPath = window.location.hash.substring(1);
+        window.history.replaceState(null, '', newPath);
+      }
+    </script>
 
     <title>L'actualité en continu</title>
     <script src="https://cdn.tailwindcss.com" onerror="this.onerror=null; this.src='https://unpkg.com/tailwindcss-jit-cdn'"></script>
