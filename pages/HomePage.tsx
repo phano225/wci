@@ -167,7 +167,8 @@ export const HomePage = () => {
 
         {/* === SIDEBAR (Right 4 cols) === */}
         <div className="lg:col-span-4 space-y-8">
-            {carouselItems.length > 0 && (
+            {/* Zone mise en avant (remplace l'ancien Édito si dispo) */}
+            {carouselItems.length > 0 ? (
               <div className="bg-white border border-gray-200 shadow-sm relative overflow-hidden">
                 <div className="bg-brand-red text-white text-sm font-bold uppercase px-4 py-2 flex items-center justify-between">
                   <span>À la une</span>
@@ -203,9 +204,8 @@ export const HomePage = () => {
                   </div>
                 </div>
               </div>
-            )}
-            
-            {/* EDITO WIDGET */}
+            ) : (
+            /* EDITO WIDGET (fallback) */
             <div className="bg-white border border-gray-200 shadow-sm">
                 <div className="bg-brand-red text-white text-sm font-bold uppercase px-4 py-2 flex items-center justify-between">
                     <span>{editoArticle ? `L'Édito de ${editoArticle.authorName}` : "L'Édito de Bernard Kra"}</span>
@@ -243,6 +243,7 @@ export const HomePage = () => {
                     )}
                 </div>
             </div>
+            )}
 
             {/* LES TOPS DE LA SEMAINE */}
             <div>
