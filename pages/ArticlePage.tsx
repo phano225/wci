@@ -204,14 +204,14 @@ export const ArticlePage = () => {
     );
   }
 
-  const shareUrl = `${window.location.origin}/api/og/${article.id}`;
-  const shareText = article.title;
-
   const getAbsoluteUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
     return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
   };
+
+  const shareUrl = `${window.location.origin}/api/og/${article.id}?title=${encodeURIComponent(article.title)}&desc=${encodeURIComponent(article.excerpt || '')}&image=${encodeURIComponent(getAbsoluteUrl(article.imageUrl))}`;
+  const shareText = article.title;
 
   return (
     <PublicLayout>

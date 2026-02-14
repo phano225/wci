@@ -30,9 +30,31 @@ const html = (meta: { title: string; description: string; image: string; url: st
 
 export default async function handler(req: any, res: any) {
   try {
-    const { id } = req.query as { id?: string };
+    const { id, title: qTitle, desc: qDesc, image: qImage } = req.query as { id?: string; title?: string; desc?: string; image?: string };
     const origin = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
-    if (!id || !supabase) {
+    if (!id && (!qTitle || !qImage)) {
+      const fallback = {
+        title: 'WCI - L’actualité en continu',
+        description: 'Suivez l’actualité en temps réel sur WCI.',
+        image: `${origin}/logo.png`,
+        url: `${origin}/`
+      };
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.status(200).send(html(fallback));
+      return;
+    }
+
+    if (qTitle && qImage) {
+      const title = String(qTitle);
+      const description = String(qDesc || '');
+      const image = String(qImage).startsWith('http') ? String(qImage) : `${origin}${String(qImage).startsWith('/') ? '' : '/'}${qImage}`;
+      const url = id ? `${origin}/article/${id}` : `${origin}/`;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.status(200).send(html({ title, description, image, url }));
+      return;
+    }
+
+    if (!supabase) {
       const fallback = {
         title: 'WCI - L’actualité en continu',
         description: 'Suivez l’actualité en temps réel sur WCI.',
