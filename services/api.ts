@@ -447,8 +447,25 @@ export const incrementArticleViews = async (id: string): Promise<void> => {
         }
         return;
     }
-    const { error } = await supabase.rpc('increment_page_view', { page_id: id });
-    if (error) console.error('Error incrementing views:', error);
+    try {
+        // Try preferred RPC
+        let { error } = await supabase.rpc('increment_page_view', { page_id: id });
+        if (error) {
+            // Try legacy RPC name if available
+            const alt = await supabase.rpc('increment_views', { article_id: id });
+            if (alt.error) {
+                // Silent fail in production to avoid console spam; log only in debug
+                if (import.meta.env.DEV && import.meta.env.VITE_LOG_LEVEL === 'debug') {
+                    console.warn('increment views fallback failed:', error, alt.error);
+                }
+            }
+        }
+    } catch (e) {
+        // Network or RLS issues: ignore for UX; views are non-critical
+        if (import.meta.env.DEV && import.meta.env.VITE_LOG_LEVEL === 'debug') {
+            console.warn('Increment views exception (ignored):', e);
+        }
+    }
 };
 
 export const getAds = async (): Promise<Ad[]> => {

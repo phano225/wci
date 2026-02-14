@@ -2,10 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { PublicLayout } from '../components/PublicLayout';
 import { getArticles, getVideos } from '../services/api';
 import { Article, ArticleStatus, AdLocation, Video } from '../types';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { AdDisplay } from '../components/AdDisplay';
 
+// Transforme les URLs d'images WordPress pour éviter ORB via proxy
+const resolveImage = (url?: string, opts?: { w?: number; h?: number }) => {
+  if (!url) return '';
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('worldcanalinfo.com') && u.pathname.startsWith('/wp-content/')) {
+      const base = `${u.hostname}${u.pathname}${u.search}`;
+      const params = new URLSearchParams();
+      if (opts?.w) params.set('w', String(opts.w));
+      if (opts?.h) params.set('h', String(opts.h));
+      params.set('fit', 'cover');
+      return `https://images.weserv.nl/?url=${encodeURIComponent(base)}${params.toString() ? `&${params.toString()}` : ''}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+};
+
 export const HomePage = () => {
+  const [searchParams] = useSearchParams();
+  const selectedCat = searchParams.get('cat') || '';
   const [articles, setArticles] = useState<Article[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [editoArticle, setEditoArticle] = useState<Article | null>(null);
@@ -64,6 +85,9 @@ export const HomePage = () => {
   }
 
   const getByCategory = (cat: string) => articles.filter(a => a.category === cat);
+  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const catParam = selectedCat ? normalize(selectedCat) : '';
+  const catArticles = catParam ? articles.filter(a => normalize(a.category) === catParam) : [];
 
   const featured = articles[0]; 
   const recentGrid = articles.slice(1, 7); // 6 articles for the grid below hero
@@ -74,6 +98,16 @@ export const HomePage = () => {
   const international = getByCategory('International');
   const sport = getByCategory('Sport');
   const culture = getByCategory('Culture');
+  const primaryCats = new Set(['Politique','Société','Économie','International','Sport','Culture','Edito','Édito']);
+  const otherCats = Array.from(new Set(articles.map(a => a.category))).filter(c => c && !primaryCats.has(c));
+  const otherSections = otherCats
+      .map(cat => ({ title: cat, data: getByCategory(cat) }))
+      .filter(s => s.data && s.data.length > 0)
+      .slice(0, 6);
+  const usedIds = new Set<string>();
+  if (featured) usedIds.add(featured.id);
+  recentGrid.forEach(a => usedIds.add(a.id));
+  const otherArticles = articles.filter(a => !primaryCats.has(a.category) && !usedIds.has(a.id)).slice(0, 8);
 
   // Reusable Category Section Component
   const CategorySection = ({ title, data, color = 'red' }: { title: string, data: Article[], color?: string }) => {
@@ -92,7 +126,18 @@ export const HomePage = () => {
                 {items.map(article => (
                     <Link to={`/article/${article.id}`} key={article.id} className="group block h-full flex flex-col">
                         <div className="relative h-48 overflow-hidden mb-3">
-                            <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            <img 
+                              src={resolveImage(article.imageUrl, { w: 800, h: 450 })} 
+                              alt={article.title} 
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              referrerPolicy="no-referrer"
+                              crossOrigin="anonymous"
+                              onError={(e) => { 
+                                const img = e.currentTarget as HTMLImageElement; 
+                                img.onerror = null; 
+                                img.src = 'https://via.placeholder.com/800x450?text=Image+indisponible'; 
+                              }} 
+                            />
                             <div className="absolute top-0 left-0">
                                 <span className="bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-1 shadow-md">{article.category}</span>
                             </div>
@@ -111,6 +156,51 @@ export const HomePage = () => {
       );
   };
 
+  if (selectedCat) {
+    return (
+      <PublicLayout>
+        <div className="mb-8 flex justify-center">
+          <AdDisplay location={AdLocation.HEADER_LEADERBOARD} />
+        </div>
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="flex items-center mb-6">
+            <h2 className="text-sm font-bold uppercase text-white bg-brand-red px-4 py-2 shadow-sm">{selectedCat}</h2>
+            <div className="h-0.5 flex-1 bg-gray-200"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {catArticles.map(article => (
+              <Link to={`/article/${article.id}`} key={article.id} className="group block">
+                <div className="h-40 overflow-hidden mb-3 relative">
+                  <img 
+                    src={resolveImage(article.imageUrl, { w: 600, h: 400 })} 
+                    alt={article.title} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
+                    onError={(e) => { 
+                      const img = e.currentTarget as HTMLImageElement; 
+                      img.onerror = null; 
+                      img.src = 'https://via.placeholder.com/600x400?text=Image+indisponible'; 
+                    }}
+                  />
+                  <span className="absolute top-0 left-0 bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-0.5">
+                    {article.category}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-gray-900 group-hover:text-brand-red leading-tight line-clamp-3">
+                  {article.title}
+                </h3>
+              </Link>
+            ))}
+          </div>
+          {catArticles.length === 0 && (
+            <div className="text-center text-gray-500 py-20">Aucun article dans cette rubrique pour le moment.</div>
+          )}
+        </div>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       
@@ -128,7 +218,18 @@ export const HomePage = () => {
             <div className="mb-8 relative group">
                 {featured && (
                     <Link to={`/article/${featured.id}`} className="block h-[450px] md:h-[550px] relative overflow-hidden">
-                        <img src={featured.imageUrl} alt={featured.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <img 
+                          src={resolveImage(featured.imageUrl, { w: 1200, h: 600 })} 
+                          alt={featured.title} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                          onError={(e) => { 
+                            const img = e.currentTarget as HTMLImageElement; 
+                            img.onerror = null; 
+                            img.src = 'https://via.placeholder.com/1200x600?text=Image+indisponible'; 
+                          }}
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
                         <div className="absolute bottom-0 left-0 p-6 md:p-10 w-full">
                             <span className="bg-brand-red text-white text-xs font-bold uppercase px-3 py-1 mb-3 inline-block shadow-sm">
@@ -151,7 +252,18 @@ export const HomePage = () => {
                 {recentGrid.map(article => (
                     <Link to={`/article/${article.id}`} key={article.id} className="group block">
                         <div className="h-40 overflow-hidden mb-3 relative">
-                            <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            <img 
+                              src={resolveImage(article.imageUrl, { w: 600, h: 400 })} 
+                              alt={article.title} 
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                              referrerPolicy="no-referrer"
+                              crossOrigin="anonymous"
+                              onError={(e) => { 
+                                const img = e.currentTarget as HTMLImageElement; 
+                                img.onerror = null; 
+                                img.src = 'https://via.placeholder.com/600x400?text=Image+indisponible'; 
+                              }}
+                            />
                             <span className="absolute top-0 left-0 bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-0.5">
                                 {article.category}
                             </span>
@@ -162,6 +274,41 @@ export const HomePage = () => {
                     </Link>
                 ))}
             </div>
+
+            {otherArticles.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center mb-4">
+                  <h2 className="text-sm font-bold uppercase text-white bg-brand-blue px-4 py-2">Autres rubriques</h2>
+                  <div className="h-0.5 flex-1 bg-gray-200"></div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {otherArticles.map(article => (
+                    <Link to={`/article/${article.id}`} key={article.id} className="group block h-full">
+                      <div className="relative h-40 overflow-hidden mb-3">
+                        <img 
+                          src={resolveImage(article.imageUrl, { w: 600, h: 400 })} 
+                          alt={article.title} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                          onError={(e) => { 
+                            const img = e.currentTarget as HTMLImageElement; 
+                            img.onerror = null; 
+                            img.src = 'https://via.placeholder.com/600x400?text=Image+indisponible'; 
+                          }}
+                        />
+                        <span className="absolute top-0 left-0 bg-gray-900/80 text-white text-[10px] font-bold uppercase px-2 py-0.5">
+                          {article.category}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-gray-900 group-hover:text-brand-blue leading-tight line-clamp-3">
+                        {article.title}
+                      </h3>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
         </div>
 
@@ -176,7 +323,18 @@ export const HomePage = () => {
                 </div>
                 <div className="relative h-72">
                   <Link to={`/article/${carouselItems[carouselIndex].id}`} className="block h-full">
-                    <img src={carouselItems[carouselIndex].imageUrl} alt={carouselItems[carouselIndex].title} className="w-full h-full object-cover" />
+                    <img 
+                      src={resolveImage(carouselItems[carouselIndex].imageUrl, { w: 800, h: 450 })} 
+                      alt={carouselItems[carouselIndex].title} 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => { 
+                        const img = e.currentTarget as HTMLImageElement; 
+                        img.onerror = null; 
+                        img.src = 'https://via.placeholder.com/800x450?text=Image+indisponible'; 
+                      }}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
                     <span className="absolute top-2 left-2 bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-1 shadow">
                       {carouselItems[carouselIndex].category}
@@ -215,7 +373,18 @@ export const HomePage = () => {
                     {editoArticle ? (
                         <>
                             <div className="inline-block relative mb-4">
-                                <img src={editoArticle.authorAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Editor"} alt={editoArticle.authorName} className="w-24 h-24 rounded-full border-4 border-gray-100 shadow-sm" />
+                                <img 
+                                  src={resolveImage(editoArticle.authorAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Editor", { w: 96, h: 96 })} 
+                                  alt={editoArticle.authorName} 
+                                  className="w-24 h-24 rounded-full border-4 border-gray-100 shadow-sm" 
+                                  referrerPolicy="no-referrer"
+                                  crossOrigin="anonymous"
+                                  onError={(e) => { 
+                                    const img = e.currentTarget as HTMLImageElement; 
+                                    img.onerror = null; 
+                                    img.src = 'https://via.placeholder.com/96?text=NA'; 
+                                  }}
+                                />
                                 <div className="absolute bottom-0 right-0 bg-brand-red text-white text-xs p-1 rounded-full">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
                                 </div>
@@ -331,6 +500,9 @@ export const HomePage = () => {
         <CategorySection title="International" data={international} />
         <CategorySection title="Sport" data={sport} />
         <CategorySection title="Culture" data={culture} />
+        {otherSections.map(sec => (
+          <CategorySection key={sec.title} title={sec.title} data={sec.data} />
+        ))}
       </div>
 
     </PublicLayout>

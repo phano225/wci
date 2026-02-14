@@ -16,16 +16,12 @@ export const LoginPage = () => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
-    console.log('Tentative de connexion avec:', email);
 
     try {
       const success = await login(email, password);
-      console.log('Résultat de login:', success);
       if (success) {
-        console.log('Redirection vers /admin');
         navigate('/admin');
       } else {
-        console.log('Échec de connexion');
         setError('Email ou mot de passe incorrect.');
       }
     } catch (error) {

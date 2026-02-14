@@ -28,7 +28,7 @@ export const Navbar = () => {
         const published = articles
             .filter(a => a.status === ArticleStatus.PUBLISHED)
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 5); // Take top 5 for flash info
+            .slice(0, 3); // Limit to top 3 for flash info
             
         setFlashArticles(published);
     };
@@ -99,7 +99,7 @@ export const Navbar = () => {
       {/* Navigation Links - RED BAR */}
       <nav className="bg-[#E50914] sticky top-0 z-40 shadow-md border-t-4 border-black">
         <div className="container mx-auto px-0 md:px-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
                 
                 {/* Mobile Menu Button */}
                 <button className="md:hidden p-3 text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -108,23 +108,25 @@ export const Navbar = () => {
                     </svg>
                 </button>
 
-                {/* Desktop Nav */}
-                <ul className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row absolute md:relative top-full left-0 w-full md:w-auto bg-[#E50914] md:bg-transparent shadow-lg md:shadow-none text-white text-[13px] font-bold uppercase tracking-wider`}>
-                    <li className="border-b md:border-b-0 border-red-700">
-                        <Link to="/" className="block py-4 px-4 bg-black bg-opacity-20 hover:bg-black hover:bg-opacity-40 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                            </svg>
-                        </Link>
-                    </li>
-                    {categories.map((cat) => (
-                        <li key={cat} className="border-b md:border-b-0 border-red-700 md:border-l border-red-600">
-                            <Link to={`/?cat=${cat}`} className="block py-4 px-5 hover:bg-black hover:bg-opacity-20 transition-colors whitespace-nowrap">
-                                {cat}
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
+                {/* Desktop Nav (scrollable if overflow) */}
+                <div className="flex-1 overflow-x-auto">
+                  <ul className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row md:flex-nowrap absolute md:relative top-full left-0 w-full md:w-auto bg-[#E50914] md:bg-transparent shadow-lg md:shadow-none text-white text-[13px] font-bold uppercase tracking-wider whitespace-nowrap`}>
+                      <li className="border-b md:border-b-0 border-red-700">
+                          <Link to="/" className="block py-4 px-4 bg-black bg-opacity-20 hover:bg-black hover:bg-opacity-40 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                              </svg>
+                          </Link>
+                      </li>
+                      {categories.map((cat) => (
+                          <li key={cat} className="border-b md:border-b-0 border-red-700 md:border-l border-red-600">
+                              <Link to={`/?cat=${cat}`} className="block py-4 px-4 md:px-5 hover:bg-black hover:bg-opacity-20 transition-colors">
+                                  {cat}
+                              </Link>
+                          </li>
+                      ))}
+                  </ul>
+                </div>
 
                 {/* Search Icon (Right) */}
                 <div className="hidden md:block pr-2">
@@ -147,16 +149,28 @@ export const Navbar = () => {
                     Flash Info
                 </div>
                 <div className="flex-1 overflow-hidden relative h-5 ml-6">
-                    <div className="animate-marquee whitespace-nowrap text-xs font-bold text-gray-800 uppercase tracking-wide">
-                        {flashArticles.map((article) => (
-                            <span key={article.id} className="mx-8">
-                                <span className="text-red-600 mr-2">●</span>
-                                <Link to={`/article/${article.id}`} className="hover:text-[#E50914] transition-colors">
-                                    {article.title}
-                                </Link>
-                            </span>
-                        ))}
+                  <div className="whitespace-nowrap text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    <div className="inline-block animate-marquee">
+                      {flashArticles.map((article) => (
+                        <span key={article.id} className="mx-8">
+                          <span className="text-red-600 mr-2">●</span>
+                          <Link to={`/article/${article.id}`} className="hover:text-[#E50914] transition-colors">
+                            {article.title}
+                          </Link>
+                        </span>
+                      ))}
                     </div>
+                    <div className="inline-block animate-marquee-slow">
+                      {flashArticles.map((article) => (
+                        <span key={`${article.id}-dup`} className="mx-8">
+                          <span className="text-red-600 mr-2">●</span>
+                          <Link to={`/article/${article.id}`} className="hover:text-[#E50914] transition-colors">
+                            {article.title}
+                          </Link>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
             </div>
         </div>

@@ -2,10 +2,9 @@ import { useEffect } from 'react';
 
 export const useVersionCheck = () => {
   useEffect(() => {
-    // Disabled in development to prevent console spam
-    if (import.meta.env.DEV) {
-        return;
-    }
+    // Désactive les logs hors erreurs selon le niveau
+    const LOG_DEBUG = import.meta.env.VITE_LOG_LEVEL === 'debug';
+    if (import.meta.env.DEV && !LOG_DEBUG) return;
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -28,10 +27,10 @@ export const useVersionCheck = () => {
         const serverVersion = data.version;
         const localVersion = localStorage.getItem('app_version');
 
-        console.log(`🔍 Version Check: Local=${localVersion}, Server=${serverVersion}`);
+        if (LOG_DEBUG) console.log(`🔍 Version Check: Local=${localVersion}, Server=${serverVersion}`);
 
         if (localVersion && localVersion !== serverVersion) {
-          console.log('✨ New version detected! Refreshing...');
+          if (LOG_DEBUG) console.log('✨ New version detected! Refreshing...');
           localStorage.setItem('app_version', serverVersion);
           
           // Clear caches if possible
@@ -39,7 +38,7 @@ export const useVersionCheck = () => {
             try {
                 const keys = await caches.keys();
                 await Promise.all(keys.map(key => caches.delete(key)));
-                console.log('🧹 Cache cleared');
+                if (LOG_DEBUG) console.log('🧹 Cache cleared');
             } catch (e) {
                 console.error('Failed to clear cache', e);
             }
@@ -61,7 +60,7 @@ export const useVersionCheck = () => {
             error.message?.includes('Network request failed')
         ) return;
         
-        console.warn('Silent version check error:', error);
+        if (LOG_DEBUG) console.warn('Silent version check error:', error);
       }
     };
 

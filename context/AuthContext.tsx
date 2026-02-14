@@ -19,37 +19,33 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   useEffect(() => {
     if (IS_OFFLINE_MODE) {
-        console.log('MODE HORS LIGNE: Authentification Supabase désactivée.');
         setIsLoading(false);
         return;
     }
 
-    console.log('Initialisation de l\'authentification...');
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Changement d\'état auth:', event, session?.user?.email);
+      
       if (session?.user) {
         try {
-          console.log('Récupération des utilisateurs...');
+          
           let users = await getUsers();
           
           // Retry logic for unstable connection
           if (users.length === 0) {
-              console.warn('Liste utilisateurs vide, nouvelle tentative dans 2s...');
+              
               await new Promise(resolve => setTimeout(resolve, 2000));
               users = await getUsers();
           }
 
-          console.log('Utilisateurs trouvés:', users.length);
           const profile = users.find(u => u.email === session.user.email);
-          console.log('Profil trouvé:', profile);
           
           if (profile) {
             setUser(profile);
-            console.log('Utilisateur connecté:', profile.name);
           } else if (users.length === 0 && session.user.email) {
             // Fallback: If we have a session but couldn't fetch the profile (likely network error),
             // keep the user logged in with basic info from session to avoid kicking them out.
-            console.warn('Utilisation du profil de secours (session active mais DB inaccessible)');
+            
             setUser({
                 id: session.user.id,
                 email: session.user.email,
@@ -59,7 +55,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
                 createdAt: new Date().toISOString()
             } as User);
           } else {
-            console.log('Aucun profil trouvé pour cet email dans la base');
+            
             setUser(null);
           }
         } catch (error) {
@@ -67,7 +63,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
           setUser(null);
         }
       } else {
-        console.log('Aucune session active');
+        
         setUser(null);
       }
       setIsLoading(false);
@@ -78,7 +74,6 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     // --- MODE HORS LIGNE ---
     if (IS_OFFLINE_MODE) {
-        console.log('MODE HORS LIGNE: Connexion locale simulée.');
         const demoUsers = [
             { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
             { email: 'admin@example.com', password: 'admin123', role: 'ADMIN', name: 'Administrateur' },
@@ -101,9 +96,9 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         return false;
     }
 
-    console.log('--- LOGIN START (Supabase Real) ---');
+    
     try {
-      console.log('Tentative de connexion pour:', email);
+      
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -111,7 +106,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         
         // FALLBACK: Mode démo si Supabase échoue ou n'est pas configuré
         // Ceci permet de tester l'interface sans backend fonctionnel
-        console.log('Tentative de connexion en mode DÉMO/FALLBACK...');
+        
         
         const demoUsers = [
             { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
@@ -120,13 +115,12 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
             { email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
         ];
 
-        console.log('Utilisateurs démo disponibles:', demoUsers);
-        console.log('Comparaison avec:', email, password);
+        
 
         const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
         
         if (demoUser) {
-            console.log('Connexion DÉMO réussie pour:', demoUser.name);
+            
             const userProfile: User = {
                 id: 'demo-' + demoUser.role,
                 email: demoUser.email,
@@ -139,12 +133,12 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
             setUser(userProfile);
             return true;
         } else {
-            console.log('Échec connexion DÉMO: Aucun utilisateur correspondant trouvé');
+            
         }
  
         return false;
       }
-      console.log('Connexion Supabase réussie');
+      
       return true;
     } catch (e) {
       console.error("Erreur lors de la connexion:", e);
@@ -158,7 +152,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
         
         if (demoUser) {
-            console.log('Connexion DÉMO (après exception) réussie pour:', demoUser.name);
+            
             const userProfile: User = {
                 id: 'demo-' + demoUser.role,
                 email: demoUser.email,

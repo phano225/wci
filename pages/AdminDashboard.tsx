@@ -132,14 +132,9 @@ export const AdminDashboard = () => {
     // Safety timeout to prevent infinite spinner
     const timeoutId = setTimeout(() => {
         setIsProcessing(false);
-        // Do not alert here to avoid spamming, just stop spinner
-        console.warn('Load data timeout - stopping spinner');
     }, 15000);
 
     try {
-        console.log('Chargement des données...');
-        console.time('loadDataParallel');
-
         const [arts, cats, adsList, userList, msgList, videoList, socialList] = await Promise.all([
             getArticles(),
             getCategories(),
@@ -149,8 +144,6 @@ export const AdminDashboard = () => {
             getVideos(),
             getSocialLinks()
         ]);
-
-        console.timeEnd('loadDataParallel');
 
         // Check for visitor counter config
         const visitorConfig = adsList.find(a => a.id === 'visitor_counter_config');
@@ -243,7 +236,7 @@ export const AdminDashboard = () => {
     // Safety timeout
     const timeoutId = setTimeout(() => {
         setIsProcessing(false);
-        console.warn('Save video timeout');
+        /* no-op */
         alert('L\'opération prend trop de temps. Vérifiez votre connexion.');
     }, 15000);
 
@@ -265,14 +258,11 @@ export const AdminDashboard = () => {
             createdAt: currentVideo.createdAt || new Date().toISOString()
         };
         
-        console.log('Saving video...', videoToSave);
         await saveVideo(videoToSave);
-        console.log('Video saved. Reloading list...');
         
         // Optimistic update or partial reload for speed
         const updatedVideos = await getVideos();
         setVideos(updatedVideos);
-        console.log('List reloaded.');
         
         clearTimeout(timeoutId);
         setIsVideoModalOpen(false);
@@ -344,9 +334,8 @@ export const AdminDashboard = () => {
     // Safety timeout
     const timeoutId = setTimeout(() => {
         setIsProcessing(false);
-        console.warn('Save article timeout');
         alert('L\'opération prend trop de temps. Vérifiez votre connexion.');
-    }, 30000); // Articles might take longer (images etc)
+    }, 30000);
 
     try {
       // Permission check
@@ -378,15 +367,12 @@ export const AdminDashboard = () => {
           submissionStatus: targetStatus === ArticleStatus.SUBMITTED ? SubmissionStatus.PENDING : currentArticle.submissionStatus
       };
 
-      console.log('Saving article...', articleToSave.title);
       await saveArticle(articleToSave);
-      console.log('Article saved. Reloading list...');
       
       // OPTIMIZATION: Only reload articles, not everything
       // And we use the lightweight getArticles() which excludes content
       const updatedArticles = await getArticles();
       setArticles(updatedArticles);
-      console.log('List reloaded.');
       
       clearTimeout(timeoutId);
       setIsEditorOpen(false);
@@ -413,11 +399,24 @@ export const AdminDashboard = () => {
     if (!currentCategory.name) return;
     setIsProcessing(true);
     try {
+        const existing = currentCategory.id ? categories.find(c => c.id === currentCategory.id) : undefined;
+        const oldName = existing?.name;
+
         await saveCategory({
             id: currentCategory.id || Date.now().toString(),
             name: currentCategory.name,
             slug: currentCategory.name.toLowerCase().replace(/\s+/g, '-')
         });
+
+        // Propager le renommage aux articles référencés par l'ancien nom
+        if (oldName && oldName !== currentCategory.name) {
+            const toUpdate = articles.filter(a => a.category === oldName);
+            for (const art of toUpdate) {
+                const updated: Article = { ...art, category: currentCategory.name, updatedAt: new Date().toISOString() };
+                await saveArticle(updated);
+            }
+        }
+
         setIsCategoryModalOpen(false);
         await loadData();
     } catch (error) {

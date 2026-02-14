@@ -6,8 +6,14 @@
   "scripts": {
     "dev": "node generate-version.js && vite",
     "build": "node generate-version.js && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "migrate:images": "node migrate-images-to-supabase.js",
+    "import:wp": "node import-wordpress-csv.js",
+    "verify:wp": "node verify-import.js",
+    "count:csv": "node count-csv-posts.js",
+    "sync:categories": "node sync-categories.js"
   },
+  "bin": {},
   "dependencies": {
     "@google/genai": "latest",
     "@supabase/supabase-js": "^2.89.0",
