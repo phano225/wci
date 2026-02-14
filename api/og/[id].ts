@@ -87,6 +87,12 @@ export default async function handler(req: any, res: any) {
       if (!u) return '';
       return String(u).startsWith('http') ? String(u) : `${origin}${String(u).startsWith('/') ? '' : '/'}${u}`;
     };
+    const proxify = (u: string) => {
+      if (!u) return u;
+      if (u.startsWith(origin)) return u;
+      if (u.includes('supabase.co')) return u;
+      return `${origin}/api/img?src=${encodeURIComponent(u)}`;
+    };
     const pickImage = () => {
       const c: string = data.content || '';
       const m = c.match(/<img[^>]+src=["']([^"']+)["']/i);
@@ -95,7 +101,7 @@ export default async function handler(req: any, res: any) {
     };
     const title = data.title || 'WCI';
     const description = data.excerpt || '';
-    const image = pickImage();
+    const image = proxify(pickImage());
     const url = `${origin}/article/${id}`;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
