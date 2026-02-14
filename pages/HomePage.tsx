@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { PublicLayout } from '../components/PublicLayout';
 import { getArticles, getVideos } from '../services/api';
 import { Article, ArticleStatus, AdLocation, Video } from '../types';
@@ -159,6 +160,10 @@ export const HomePage = () => {
   if (selectedCat) {
     return (
       <PublicLayout>
+        <Helmet>
+          <title>{`${selectedCat} | WCI`}</title>
+          <meta name="description" content={`Derniers articles de ${selectedCat} sur WCI`} />
+        </Helmet>
         <div className="mb-8 flex justify-center">
           <AdDisplay location={AdLocation.HEADER_LEADERBOARD} />
         </div>
@@ -203,6 +208,10 @@ export const HomePage = () => {
 
   return (
     <PublicLayout>
+      <Helmet>
+        <title>{`WCI | L'actualité en continu`}</title>
+        <meta name="description" content="Articles, vidéos et reportages — l’actualité en continu sur WCI." />
+      </Helmet>
       
       {/* HEADER AD */}
       <div className="mb-8 flex justify-center">

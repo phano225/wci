@@ -217,7 +217,7 @@ export const ArticlePage = () => {
     <PublicLayout>
       {article && (
         <Helmet>
-          <title>{article.title}</title>
+          <title>{`${article.title} | WCI`}</title>
           <meta name="description" content={article.excerpt} />
           
           {/* Open Graph / Facebook */}

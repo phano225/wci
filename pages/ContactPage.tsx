@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { PublicLayout } from '../components/PublicLayout';
 import { saveMessage } from '../services/api';
 
@@ -31,6 +32,10 @@ export const ContactPage = () => {
 
   return (
     <PublicLayout>
+      <Helmet>
+        <title>{`Nous contacter | WCI`}</title>
+        <meta name="description" content="Contactez la rédaction WCI — proposez un sujet, un communiqué ou une remarque." />
+      </Helmet>
       <div className="max-w-3xl mx-auto py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">Contactez-nous</h1>
