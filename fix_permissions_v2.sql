@@ -49,8 +49,14 @@ END $$;
 CREATE TABLE IF NOT EXISTS categories (
     id text PRIMARY KEY,
     name text,
-    slug text
+    slug text,
+    position integer
 );
+
+DO $$
+BEGIN
+    BEGIN ALTER TABLE categories ADD COLUMN position integer; EXCEPTION WHEN duplicate_column THEN END;
+END $$;
 
 -- TABLE USERS (Profils publics)
 CREATE TABLE IF NOT EXISTS users (

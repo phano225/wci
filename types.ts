@@ -95,6 +95,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  position?: number;
 }
 
 // Article Model

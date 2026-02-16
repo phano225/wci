@@ -21,7 +21,13 @@ export const Navbar = () => {
             getArticles(),
             getSocialLinks()
         ]);
-        setCategories(cats.map(c => c.name));
+        const sortedCats = [...cats].sort((a, b) => {
+          const pa = typeof a.position === 'number' ? a.position : 9999;
+          const pb = typeof b.position === 'number' ? b.position : 9999;
+          if (pa !== pb) return pa - pb;
+          return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+        });
+        setCategories(sortedCats.map(c => c.name));
         setSocialLinks(socials);
 
         // Filter published articles and sort by newest first

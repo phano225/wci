@@ -53,6 +53,14 @@ const formatPermissionName = (key: string) => {
     return map[key] || key;
 };
 
+const sortCategoriesForDisplay = (list: Category[]) =>
+  [...list].sort((a, b) => {
+    const pa = typeof a.position === 'number' ? a.position : 9999;
+    const pb = typeof b.position === 'number' ? b.position : 9999;
+    if (pa !== pb) return pa - pb;
+    return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+  });
+
 export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -86,6 +94,8 @@ export const AdminDashboard = () => {
   const [currentEditUser, setCurrentEditUser] = useState<Partial<User>>({});
   const [currentVideo, setCurrentVideo] = useState<Partial<Video>>({});
   const [currentSocialLink, setCurrentSocialLink] = useState<Partial<SocialLink>>({});
+  const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
+  const [bulkCategoryTarget, setBulkCategoryTarget] = useState<string>('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const featuredImageRef = useRef<HTMLInputElement>(null);
@@ -166,7 +176,7 @@ export const AdminDashboard = () => {
         }
         
         setArticles(filteredArticles);
-        setCategories(cats);
+        setCategories(sortCategoriesForDisplay(cats));
         setAds(adsList);
         setStaff(userList);
         setMessages(msgList);
@@ -401,11 +411,17 @@ export const AdminDashboard = () => {
     try {
         const existing = currentCategory.id ? categories.find(c => c.id === currentCategory.id) : undefined;
         const oldName = existing?.name;
+        let position = existing?.position;
+        if (position === undefined) {
+          const maxPos = categories.reduce((max, c) => (typeof c.position === 'number' && c.position > max ? c.position : max), -1);
+          position = maxPos + 1;
+        }
 
         await saveCategory({
             id: currentCategory.id || Date.now().toString(),
             name: currentCategory.name,
-            slug: currentCategory.name.toLowerCase().replace(/\s+/g, '-')
+            slug: currentCategory.name.toLowerCase().replace(/\s+/g, '-'),
+            position
         });
 
         // Propager le renommage aux articles référencés par l'ancien nom
@@ -438,34 +454,38 @@ export const AdminDashboard = () => {
       // Réaffecter les articles
       if (articlesInCategory.length > 0) {
           if (!targetCategoryForReassign) {
-              alert("Veuillez sélectionner une catégorie de destination.");
+              alert("Veuillez sélectionner une action pour les articles.");
               setIsProcessing(false);
               return;
           }
-          
-          let targetCatName = targetCategoryForReassign;
-          
-          // Si nouvelle catégorie demandée
-          if (targetCategoryForReassign === '__new__') {
-              const newCatName = prompt("Nom de la nouvelle catégorie :");
-              if (!newCatName) { setIsProcessing(false); return; }
-              
-              const newCat = {
-                  id: Date.now().toString(),
-                  name: newCatName,
-                  slug: newCatName.toLowerCase().replace(/\s+/g, '-')
-              };
-              await saveCategory(newCat);
-              targetCatName = newCatName;
-          }
 
-          for (const article of articlesInCategory) {
-            const updatedArticle: Article = {
-              ...article,
-              category: targetCatName,
-              updatedAt: new Date().toISOString()
-            };
-            await saveArticle(updatedArticle);
+          if (targetCategoryForReassign !== '__delete__') {
+            let targetCatName = targetCategoryForReassign;
+
+            if (targetCategoryForReassign === '__new__') {
+                const newCatName = prompt("Nom de la nouvelle catégorie :");
+                if (!newCatName) { setIsProcessing(false); return; }
+
+                let position = categories.reduce((max, c) => (typeof c.position === 'number' && c.position > max ? c.position : max), -1);
+                position += 1;
+                const newCat: Category = {
+                    id: Date.now().toString(),
+                    name: newCatName,
+                    slug: newCatName.toLowerCase().replace(/\s+/g, '-'),
+                    position
+                };
+                await saveCategory(newCat);
+                targetCatName = newCatName;
+            }
+
+            for (const article of articlesInCategory) {
+              const updatedArticle: Article = {
+                ...article,
+                category: targetCatName,
+                updatedAt: new Date().toISOString()
+              };
+              await saveArticle(updatedArticle);
+            }
           }
       }
 
@@ -477,6 +497,71 @@ export const AdminDashboard = () => {
     } catch (error) {
       console.error('Erreur suppression rubrique:', error);
       alert('Erreur lors de la suppression.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const toggleArticleSelection = (id: string) => {
+    setSelectedArticleIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const resetArticleSelection = () => {
+    setSelectedArticleIds([]);
+    setBulkCategoryTarget('');
+  };
+
+  const handleBulkChangeCategory = async () => {
+    if (!bulkCategoryTarget) {
+      alert('Veuillez choisir une rubrique de destination.');
+      return;
+    }
+    if (selectedArticleIds.length === 0) {
+      alert('Sélectionnez au moins un article.');
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      for (const id of selectedArticleIds) {
+        const article = articles.find(a => a.id === id);
+        if (!article) continue;
+        const updated: Article = { ...article, category: bulkCategoryTarget, updatedAt: new Date().toISOString() };
+        await saveArticle(updated);
+      }
+      resetArticleSelection();
+      await loadData();
+      alert('Rubrique mise à jour pour les articles sélectionnés.');
+    } catch (error) {
+      console.error('Erreur lors du transfert de rubrique:', error);
+      alert('Erreur lors du transfert de rubrique.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const moveCategory = async (id: string, direction: 'up' | 'down') => {
+    if (categories.length < 2) return;
+    const ordered = sortCategoriesForDisplay(categories);
+    const index = ordered.findIndex(c => c.id === id);
+    if (index === -1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= ordered.length) return;
+    const list = [...ordered];
+    const temp = list[index];
+    list[index] = list[targetIndex];
+    list[targetIndex] = temp;
+    const withPositions = list.map((c, idx) => ({ ...c, position: idx }));
+    setIsProcessing(true);
+    try {
+      for (const cat of withPositions) {
+        await saveCategory(cat);
+      }
+      await loadData();
+    } catch (error) {
+      console.error('Erreur lors du réordonnancement des rubriques:', error);
+      alert('Erreur lors de la mise à jour de l’ordre des rubriques.');
     } finally {
       setIsProcessing(false);
     }
@@ -821,6 +906,40 @@ export const AdminDashboard = () => {
         {/* --- ARTICLES --- */}
         {activeTab === 'articles' && (
             <div className="space-y-4">
+                {articles.length > 0 && (
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="text-[11px] font-black uppercase tracking-widest text-gray-500">
+                      {selectedArticleIds.length > 0 ? `${selectedArticleIds.length} article(s) sélectionné(s)` : `${articles.length} article(s)`}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        className="p-3 rounded-2xl bg-white border border-gray-200 text-xs font-bold uppercase tracking-widest"
+                        value={bulkCategoryTarget}
+                        onChange={e => setBulkCategoryTarget(e.target.value)}
+                      >
+                        <option value="">Transférer vers...</option>
+                        {categories.map(c => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={handleBulkChangeCategory}
+                        className="px-4 py-3 bg-brand-blue text-white rounded-2xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                        disabled={selectedArticleIds.length === 0}
+                      >
+                        Transférer
+                      </button>
+                      {selectedArticleIds.length > 0 && (
+                        <button
+                          onClick={resetArticleSelection}
+                          className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-700"
+                        >
+                          Réinitialiser
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {articles.map(art => (
                     <div key={art.id} className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col md:flex-row items-center gap-4 hover:shadow-lg transition-all group relative overflow-hidden">
                         {/* Status Strip */}
@@ -828,6 +947,13 @@ export const AdminDashboard = () => {
                             art.status === ArticleStatus.PUBLISHED ? 'bg-green-500' : 
                             art.status === ArticleStatus.SUBMITTED ? 'bg-yellow-500' : 'bg-gray-300'
                         }`} />
+                        
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 text-brand-blue border-gray-300 rounded self-start mt-2 md:mt-0"
+                          checked={selectedArticleIds.includes(art.id)}
+                          onChange={() => toggleArticleSelection(art.id)}
+                        />
                         
                         <img src={art.imageUrl} className="w-full md:w-24 h-48 md:h-24 rounded-xl object-cover shadow-sm bg-gray-50" alt="" />
                         
@@ -907,15 +1033,33 @@ export const AdminDashboard = () => {
         {/* --- RUBRIQUES --- */}
         {activeTab === 'categories' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categories.map(cat => (
+                {categories.map((cat, index) => (
                     <div key={cat.id} className="bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group">
-                        <div>
-                            <h3 className="text-3xl font-black text-brand-dark uppercase tracking-tighter leading-none">{cat.name}</h3>
-                            <p className="text-xs font-mono text-gray-400 mt-2">/{cat.slug}</p>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="text-3xl font-black text-brand-dark uppercase tracking-tighter leading-none">{cat.name}</h3>
+                                <p className="text-xs font-mono text-gray-400 mt-2">/{cat.slug}</p>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <button
+                                  onClick={() => moveCategory(cat.id, 'up')}
+                                  disabled={index === 0}
+                                  className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === 0 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
+                                >
+                                  ↑
+                                </button>
+                                <button
+                                  onClick={() => moveCategory(cat.id, 'down')}
+                                  disabled={index === categories.length - 1}
+                                  className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === categories.length - 1 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
+                                >
+                                  ↓
+                                </button>
+                            </div>
                         </div>
                         <div className="mt-8 flex gap-4">
                             <button onClick={() => { setCurrentCategory(cat); setIsCategoryModalOpen(true); }} className="flex-1 py-4 bg-gray-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Modifier</button>
-                            <button onClick={() => { setCurrentCategory(cat); setIsDeleteCategoryModalOpen(true); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
+                            <button onClick={() => { setCurrentCategory(cat); setTargetCategoryForReassign(''); setIsDeleteCategoryModalOpen(true); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
                         </div>
                     </div>
                 ))}
