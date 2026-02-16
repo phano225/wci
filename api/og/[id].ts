@@ -89,9 +89,21 @@ export default async function handler(req: any, res: any) {
     };
     const proxify = (u: string) => {
       if (!u) return u;
-      if (u.startsWith(origin)) return u;
-      if (u.includes('supabase.co')) return u;
-      return `${origin}/api/img?src=${encodeURIComponent(u)}`;
+      try {
+        const parsed = new URL(u);
+        if (parsed.hostname.includes('worldcanalinfo.com') && parsed.pathname.startsWith('/wp-content/')) {
+          const base = `${parsed.hostname}${parsed.pathname}${parsed.search}`;
+          const params = new URLSearchParams();
+          params.set('fit', 'cover');
+          params.set('w', '1200');
+          params.set('h', '630');
+          const query = params.toString();
+          return `https://images.weserv.nl/?url=${encodeURIComponent(base)}${query ? `&${query}` : ''}`;
+        }
+        return u;
+      } catch {
+        return u;
+      }
     };
     const pickImage = () => {
       const c: string = data.content || '';
