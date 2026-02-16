@@ -342,7 +342,16 @@ export const saveCategory = async (category: Category): Promise<void> => {
     }
     try {
         const { error } = await supabase.from('categories').upsert(category);
-        if (error) throw error;
+        if (error) {
+            const msg = (error as any).message || '';
+            if (typeof msg === 'string' && msg.toLowerCase().includes('position') && msg.toLowerCase().includes('column')) {
+                const { position, ...rest } = category as any;
+                const retry = await supabase.from('categories').upsert(rest);
+                if (retry.error) throw retry.error;
+            } else {
+                throw error;
+            }
+        }
         clearCache('categories');
     } catch (e) {
         console.error('Error saving category:', e);

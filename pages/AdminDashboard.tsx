@@ -96,6 +96,7 @@ export const AdminDashboard = () => {
   const [currentSocialLink, setCurrentSocialLink] = useState<Partial<SocialLink>>({});
   const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
   const [bulkCategoryTarget, setBulkCategoryTarget] = useState<string>('');
+  const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const featuredImageRef = useRef<HTMLInputElement>(null);
@@ -541,18 +542,9 @@ export const AdminDashboard = () => {
     }
   };
 
-  const moveCategory = async (id: string, direction: 'up' | 'down') => {
-    if (categories.length < 2) return;
-    const ordered = sortCategoriesForDisplay(categories);
-    const index = ordered.findIndex(c => c.id === id);
-    if (index === -1) return;
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= ordered.length) return;
-    const list = [...ordered];
-    const temp = list[index];
-    list[index] = list[targetIndex];
-    list[targetIndex] = temp;
-    const withPositions = list.map((c, idx) => ({ ...c, position: idx }));
+  const persistCategoryOrder = async (ordered: Category[]) => {
+    if (ordered.length < 2) return;
+    const withPositions = ordered.map((c, idx) => ({ ...c, position: idx }));
     setIsProcessing(true);
     try {
       for (const cat of withPositions) {
@@ -565,6 +557,44 @@ export const AdminDashboard = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const moveCategory = async (id: string, direction: 'up' | 'down') => {
+    if (categories.length < 2) return;
+    const list = [...categories];
+    const index = list.findIndex(c => c.id === id);
+    if (index === -1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const temp = list[index];
+    list[index] = list[targetIndex];
+    list[targetIndex] = temp;
+    setCategories(list);
+    await persistCategoryOrder(list);
+  };
+
+  const handleCategoryDragStart = (id: string) => {
+    setDraggingCategoryId(id);
+  };
+
+  const handleCategoryDragOver = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+    e.preventDefault();
+    if (!draggingCategoryId || draggingCategoryId === id) return;
+    setCategories(prev => {
+      const list = [...prev];
+      const fromIndex = list.findIndex(c => c.id === draggingCategoryId);
+      const toIndex = list.findIndex(c => c.id === id);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      const [moved] = list.splice(fromIndex, 1);
+      list.splice(toIndex, 0, moved);
+      return list;
+    });
+  };
+
+  const handleCategoryDragEnd = async () => {
+    if (!draggingCategoryId) return;
+    setDraggingCategoryId(null);
+    await persistCategoryOrder(categories);
   };
 
   const handleSaveUser = async () => {
@@ -1034,7 +1064,16 @@ export const AdminDashboard = () => {
         {activeTab === 'categories' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {categories.map((cat, index) => (
-                    <div key={cat.id} className="bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group">
+                    <div
+                      key={cat.id}
+                      draggable
+                      onDragStart={() => handleCategoryDragStart(cat.id)}
+                      onDragOver={(e) => handleCategoryDragOver(e, cat.id)}
+                      onDragEnd={handleCategoryDragEnd}
+                      className={`bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group cursor-move ${
+                        draggingCategoryId === cat.id ? 'opacity-60 ring-2 ring-brand-blue' : ''
+                      }`}
+                    >
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <h3 className="text-3xl font-black text-brand-dark uppercase tracking-tighter leading-none">{cat.name}</h3>
