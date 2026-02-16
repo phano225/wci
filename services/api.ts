@@ -292,6 +292,70 @@ export const deleteUser = async (id: string): Promise<void> => {
     }
 };
 
+const CATEGORY_ORDER_STORAGE_KEY = 'wci_category_order_ids';
+
+const parseCategoryOrder = (raw: any): string[] => {
+  if (!raw) return [];
+  try {
+    const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (Array.isArray(value)) {
+      return value.filter((v) => typeof v === 'string');
+    }
+    if (Array.isArray(value.ids)) {
+      return value.ids.filter((v) => typeof v === 'string');
+    }
+    return [];
+  } catch {
+    return [];
+  }
+};
+
+export const getCategoryOrder = async (): Promise<string[]> => {
+  if (IS_OFFLINE_MODE) {
+    const raw = localStorage.getItem(CATEGORY_ORDER_STORAGE_KEY);
+    return parseCategoryOrder(raw);
+  }
+  try {
+    const { data, error } = await supabase
+      .from('ads')
+      .select('content')
+      .eq('id', 'category_order_config')
+      .maybeSingle();
+    if (error) {
+      if (!isNetworkError(error)) console.error('Supabase error in getCategoryOrder:', error);
+      return [];
+    }
+    return parseCategoryOrder(data?.content);
+  } catch (e) {
+    if (isNetworkError(e)) return [];
+    console.error('Network/Fetch error in getCategoryOrder:', e);
+    return [];
+  }
+};
+
+export const saveCategoryOrder = async (ids: string[]): Promise<void> => {
+  if (IS_OFFLINE_MODE) {
+    saveToStorage(CATEGORY_ORDER_STORAGE_KEY, ids);
+    return;
+  }
+  try {
+    const payload: Ad = {
+      id: 'category_order_config',
+      title: 'category_order_config',
+      location: AdLocation.HEADER_LEADERBOARD,
+      type: AdType.SCRIPT,
+      content: JSON.stringify({ ids }),
+      isActive: false,
+      active: false,
+    };
+    const { error } = await supabase.from('ads').upsert(payload);
+    if (error) throw error;
+  } catch (e) {
+    console.error('Error saving category order:', e);
+    throw e;
+  }
+};
+
 export const getCategories = async (): Promise<Category[]> => {
   if (IS_OFFLINE_MODE) return MOCK_CATEGORIES;
 
@@ -321,7 +385,20 @@ export const getCategories = async (): Promise<Category[]> => {
           }
         }
       }
-      const categories = Array.from(map.values());
+      let categories = Array.from(map.values());
+
+      const orderIds = await getCategoryOrder();
+      if (orderIds.length > 0) {
+        categories = [...categories].sort((a, b) => {
+          const ia = orderIds.indexOf(a.id);
+          const ib = orderIds.indexOf(b.id);
+          if (ia === -1 && ib === -1) return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+          if (ia === -1) return 1;
+          if (ib === -1) return -1;
+          return ia - ib;
+        });
+      }
+
       setCache('categories', categories);
       return categories;
   } catch (e: any) {

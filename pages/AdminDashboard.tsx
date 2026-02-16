@@ -22,7 +22,9 @@ import {
     saveSocialLink,
     deleteSocialLink,
     uploadImage,
-    getArticleById
+    getArticleById,
+    getCategoryOrder,
+    saveCategoryOrder
 } from '../services/api';
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
@@ -146,14 +148,15 @@ export const AdminDashboard = () => {
     }, 15000);
 
     try {
-        const [arts, cats, adsList, userList, msgList, videoList, socialList] = await Promise.all([
+        const [arts, cats, adsList, userList, msgList, videoList, socialList, orderIds] = await Promise.all([
             getArticles(),
             getCategories(),
             getAds(),
             getUsers(),
             getMessages(),
             getVideos(),
-            getSocialLinks()
+            getSocialLinks(),
+            getCategoryOrder()
         ]);
 
         // Check for visitor counter config
@@ -177,7 +180,19 @@ export const AdminDashboard = () => {
         }
         
         setArticles(filteredArticles);
-        const sortedCats = sortCategoriesForDisplay(cats);
+
+        let sortedCats = sortCategoriesForDisplay(cats);
+        if (orderIds && orderIds.length > 0) {
+          sortedCats = [...cats].sort((a, b) => {
+            const ia = orderIds.indexOf(a.id);
+            const ib = orderIds.indexOf(b.id);
+            if (ia === -1 && ib === -1) return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+            if (ia === -1) return 1;
+            if (ib === -1) return -1;
+            return ia - ib;
+          });
+        }
+
         setCategories(sortedCats);
         const orderMap: Record<string, number> = {};
         sortedCats.forEach((c, idx) => {
@@ -549,13 +564,10 @@ export const AdminDashboard = () => {
   };
 
   const persistCategoryOrder = async (ordered: Category[]) => {
-    if (ordered.length < 2) return;
-    const withPositions = ordered.map((c, idx) => ({ ...c, position: idx }));
     setIsProcessing(true);
     try {
-      for (const cat of withPositions) {
-        await saveCategory(cat);
-      }
+      const ids = ordered.map(c => c.id);
+      await saveCategoryOrder(ids);
       await loadData();
     } catch (error) {
       console.error('Erreur lors du réordonnancement des rubriques:', error);

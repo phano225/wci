@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, AdLocation, Article, ArticleStatus, SocialLink } from '../types';
-import { getCategories, getArticles, getSocialLinks } from '../services/api';
+import { getCategories, getArticles, getSocialLinks, getCategoryOrder } from '../services/api';
 import { AdDisplay } from './AdDisplay';
 import { VisitorCounter } from './VisitorCounter';
 
@@ -16,17 +16,30 @@ export const Navbar = () => {
 
   useEffect(() => {
     const loadData = async () => {
-        const [cats, articles, socials] = await Promise.all([
+        const [cats, articles, socials, orderIds] = await Promise.all([
             getCategories(),
             getArticles(),
-            getSocialLinks()
+            getSocialLinks(),
+            getCategoryOrder()
         ]);
-        const sortedCats = [...cats].sort((a, b) => {
-          const pa = typeof a.position === 'number' ? a.position : 9999;
-          const pb = typeof b.position === 'number' ? b.position : 9999;
-          if (pa !== pb) return pa - pb;
-          return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
-        });
+        let sortedCats = [...cats];
+        if (orderIds && orderIds.length > 0) {
+          sortedCats = [...cats].sort((a, b) => {
+            const ia = orderIds.indexOf(a.id);
+            const ib = orderIds.indexOf(b.id);
+            if (ia === -1 && ib === -1) return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+            if (ia === -1) return 1;
+            if (ib === -1) return -1;
+            return ia - ib;
+          });
+        } else {
+          sortedCats = [...cats].sort((a, b) => {
+            const pa = typeof a.position === 'number' ? a.position : 9999;
+            const pb = typeof b.position === 'number' ? b.position : 9999;
+            if (pa !== pb) return pa - pb;
+            return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+          });
+        }
         setCategories(sortedCats.map(c => c.name));
         setSocialLinks(socials);
 
