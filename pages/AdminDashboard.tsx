@@ -573,28 +573,32 @@ export const AdminDashboard = () => {
     await persistCategoryOrder(list);
   };
 
-  const handleCategoryDragStart = (id: string) => {
+  const handleCategoryDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
     setDraggingCategoryId(id);
   };
 
-  const handleCategoryDragOver = (e: React.DragEvent<HTMLDivElement>, id: string) => {
+  const handleCategoryDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (!draggingCategoryId || draggingCategoryId === id) return;
-    setCategories(prev => {
-      const list = [...prev];
-      const fromIndex = list.findIndex(c => c.id === draggingCategoryId);
-      const toIndex = list.findIndex(c => c.id === id);
-      if (fromIndex === -1 || toIndex === -1) return prev;
-      const [moved] = list.splice(fromIndex, 1);
-      list.splice(toIndex, 0, moved);
-      return list;
-    });
   };
 
-  const handleCategoryDragEnd = async () => {
-    if (!draggingCategoryId) return;
+  const handleCategoryDrop = async (e: React.DragEvent<HTMLDivElement>, targetId: string) => {
+    e.preventDefault();
+    const sourceId = draggingCategoryId || e.dataTransfer.getData('text/plain');
+    if (!sourceId || sourceId === targetId) {
+      setDraggingCategoryId(null);
+      return;
+    }
     setDraggingCategoryId(null);
-    await persistCategoryOrder(categories);
+    const list = [...categories];
+    const fromIndex = list.findIndex(c => c.id === sourceId);
+    const toIndex = list.findIndex(c => c.id === targetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+    const [moved] = list.splice(fromIndex, 1);
+    list.splice(toIndex, 0, moved);
+    setCategories(list);
+    await persistCategoryOrder(list);
   };
 
   const handleSaveUser = async () => {
@@ -1067,9 +1071,9 @@ export const AdminDashboard = () => {
                     <div
                       key={cat.id}
                       draggable
-                      onDragStart={() => handleCategoryDragStart(cat.id)}
-                      onDragOver={(e) => handleCategoryDragOver(e, cat.id)}
-                      onDragEnd={handleCategoryDragEnd}
+                      onDragStart={(e) => handleCategoryDragStart(e, cat.id)}
+                      onDragOver={handleCategoryDragOver}
+                      onDrop={(e) => handleCategoryDrop(e, cat.id)}
                       className={`bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group cursor-move ${
                         draggingCategoryId === cat.id ? 'opacity-60 ring-2 ring-brand-blue' : ''
                       }`}
