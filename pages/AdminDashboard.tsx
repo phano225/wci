@@ -96,7 +96,7 @@ export const AdminDashboard = () => {
   const [currentSocialLink, setCurrentSocialLink] = useState<Partial<SocialLink>>({});
   const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
   const [bulkCategoryTarget, setBulkCategoryTarget] = useState<string>('');
-  const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null);
+  const [categoryOrderEdits, setCategoryOrderEdits] = useState<Record<string, number>>({});
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const featuredImageRef = useRef<HTMLInputElement>(null);
@@ -177,7 +177,13 @@ export const AdminDashboard = () => {
         }
         
         setArticles(filteredArticles);
-        setCategories(sortCategoriesForDisplay(cats));
+        const sortedCats = sortCategoriesForDisplay(cats);
+        setCategories(sortedCats);
+        const orderMap: Record<string, number> = {};
+        sortedCats.forEach((c, idx) => {
+          orderMap[c.id] = idx + 1;
+        });
+        setCategoryOrderEdits(orderMap);
         setAds(adsList);
         setStaff(userList);
         setMessages(msgList);
@@ -573,32 +579,25 @@ export const AdminDashboard = () => {
     await persistCategoryOrder(list);
   };
 
-  const handleCategoryDragStart = (e: React.DragEvent<HTMLDivElement>, id: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', id);
-    setDraggingCategoryId(id);
+  const handleCategoryOrderChange = (id: string, value: number) => {
+    if (!Number.isFinite(value)) return;
+    setCategoryOrderEdits(prev => ({
+      ...prev,
+      [id]: value,
+    }));
   };
 
-  const handleCategoryDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleCategoryDrop = async (e: React.DragEvent<HTMLDivElement>, targetId: string) => {
-    e.preventDefault();
-    const sourceId = draggingCategoryId || e.dataTransfer.getData('text/plain');
-    if (!sourceId || sourceId === targetId) {
-      setDraggingCategoryId(null);
-      return;
-    }
-    setDraggingCategoryId(null);
-    const list = [...categories];
-    const fromIndex = list.findIndex(c => c.id === sourceId);
-    const toIndex = list.findIndex(c => c.id === targetId);
-    if (fromIndex === -1 || toIndex === -1) return;
-    const [moved] = list.splice(fromIndex, 1);
-    list.splice(toIndex, 0, moved);
+  const applyCategoryOrder = async () => {
+    if (categories.length < 2) return;
+    const list = [...categories].sort((a, b) => {
+      const va = categoryOrderEdits[a.id] ?? 9999;
+      const vb = categoryOrderEdits[b.id] ?? 9999;
+      if (va !== vb) return va - vb;
+      return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+    });
     setCategories(list);
     await persistCategoryOrder(list);
+    alert('Ordre des rubriques mis à jour.');
   };
 
   const handleSaveUser = async () => {
@@ -1066,46 +1065,78 @@ export const AdminDashboard = () => {
 
         {/* --- RUBRIQUES --- */}
         {activeTab === 'categories' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categories.map((cat, index) => (
-                    <div
-                      key={cat.id}
-                      draggable
-                      onDragStart={(e) => handleCategoryDragStart(e, cat.id)}
-                      onDragOver={handleCategoryDragOver}
-                      onDrop={(e) => handleCategoryDrop(e, cat.id)}
-                      className={`bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group cursor-move ${
-                        draggingCategoryId === cat.id ? 'opacity-60 ring-2 ring-brand-blue' : ''
-                      }`}
-                    >
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h3 className="text-3xl font-black text-brand-dark uppercase tracking-tighter leading-none">{cat.name}</h3>
-                                <p className="text-xs font-mono text-gray-400 mt-2">/{cat.slug}</p>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <button
-                                  onClick={() => moveCategory(cat.id, 'up')}
-                                  disabled={index === 0}
-                                  className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === 0 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
-                                >
-                                  ↑
-                                </button>
-                                <button
-                                  onClick={() => moveCategory(cat.id, 'down')}
-                                  disabled={index === categories.length - 1}
-                                  className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === categories.length - 1 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
-                                >
-                                  ↓
-                                </button>
-                            </div>
+            <div className="space-y-8">
+                <div className="bg-white rounded-[30px] border border-gray-100 p-6 md:p-8 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                        <div>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-500">Ordre des rubriques</h3>
+                            <p className="text-xs text-gray-400 mt-1">Choisissez la position (1, 2, 3, ...) de chaque rubrique puis validez.</p>
                         </div>
-                        <div className="mt-8 flex gap-4">
-                            <button onClick={() => { setCurrentCategory(cat); setIsCategoryModalOpen(true); }} className="flex-1 py-4 bg-gray-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Modifier</button>
-                            <button onClick={() => { setCurrentCategory(cat); setTargetCategoryForReassign(''); setIsDeleteCategoryModalOpen(true); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
-                        </div>
+                        <button
+                          onClick={applyCategoryOrder}
+                          className="px-6 py-3 bg-brand-blue text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-dark transition-all"
+                          disabled={categories.length === 0}
+                        >
+                          Valider l&apos;ordre
+                        </button>
                     </div>
-                ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {categories.map((cat, idx) => (
+                            <div key={cat.id} className="flex items-center justify-between gap-3 bg-gray-50/60 rounded-2xl px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-full bg-white border border-gray-200 text-[11px] font-black flex items-center justify-center">
+                                        {categoryOrderEdits[cat.id] ?? (idx + 1)}
+                                    </span>
+                                    <span className="text-xs font-semibold text-gray-800 uppercase tracking-widest truncate max-w-[140px]">{cat.name}</span>
+                                </div>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={categories.length}
+                                  value={categoryOrderEdits[cat.id] ?? (idx + 1)}
+                                  onChange={(e) => handleCategoryOrderChange(cat.id, parseInt(e.target.value, 10))}
+                                  className="w-16 px-2 py-1 text-xs text-center border border-gray-200 rounded-xl font-semibold"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {categories.map((cat, index) => (
+                        <div
+                          key={cat.id}
+                          className="bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group"
+                        >
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 className="text-3xl font-black text-brand-dark uppercase tracking-tighter leading-none">{cat.name}</h3>
+                                    <p className="text-xs font-mono text-gray-400 mt-2">/{cat.slug}</p>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                      onClick={() => moveCategory(cat.id, 'up')}
+                                      disabled={index === 0}
+                                      className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === 0 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
+                                    >
+                                      ↑
+                                    </button>
+                                    <button
+                                      onClick={() => moveCategory(cat.id, 'down')}
+                                      disabled={index === categories.length - 1}
+                                      className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === categories.length - 1 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
+                                    >
+                                      ↓
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="mt-8 flex gap-4">
+                                <button onClick={() => { setCurrentCategory(cat); setIsCategoryModalOpen(true); }} className="flex-1 py-4 bg-gray-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Modifier</button>
+                                <button onClick={() => { setCurrentCategory(cat); setTargetCategoryForReassign(''); setIsDeleteCategoryModalOpen(true); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         )}
 

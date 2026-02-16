@@ -244,7 +244,7 @@ export const HomePage = () => {
                             <span className="bg-brand-red text-white text-xs font-bold uppercase px-3 py-1 mb-3 inline-block shadow-sm">
                                 {featured.category}
                             </span>
-                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-white leading-tight mb-3 drop-shadow-md">
+                            <h1 className="text-xl md:text-2xl lg:text-3xl font-serif font-bold text-white leading-tight mb-3 drop-shadow-md">
                                 {featured.title}
                             </h1>
                             <div className="flex items-center text-gray-300 text-xs font-bold uppercase tracking-widest gap-2">
