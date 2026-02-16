@@ -305,7 +305,23 @@ export const getCategories = async (): Promise<Category[]> => {
           if (!isNetworkError(error)) console.error('Supabase error:', error); 
           return []; 
       }
-      const categories = data || [];
+      const raw = (data || []) as Category[];
+      const map = new Map<string, Category>();
+      for (const c of raw) {
+        const key = (c.name || '').trim().toLowerCase();
+        if (!key) continue;
+        const existing = map.get(key);
+        if (!existing) {
+          map.set(key, c);
+        } else {
+          const ea = typeof existing.position === 'number';
+          const eb = typeof c.position === 'number';
+          if (!ea && eb) {
+            map.set(key, c);
+          }
+        }
+      }
+      const categories = Array.from(map.values());
       setCache('categories', categories);
       return categories;
   } catch (e: any) {
