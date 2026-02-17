@@ -43,12 +43,11 @@ export const Navbar = () => {
         setCategories(sortedCats.map(c => c.name));
         setSocialLinks(socials);
 
-        // Filter published articles and sort by newest first
+        // Articles publiés pour le Flash Info (on en prend davantage que 3)
         const published = articles
-            .filter(a => a.status === ArticleStatus.PUBLISHED)
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 3); // Limit to top 3 for flash info
-            
+          .filter(a => a.status === ArticleStatus.PUBLISHED)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 20);
         setFlashArticles(published);
     };
     loadData();
