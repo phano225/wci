@@ -25,47 +25,18 @@ const saveToStorage = (key: string, data: any) => {
 };
 
 // --- CACHE HELPERS ---
-const CACHE_PREFIX = 'wci_cache_';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
-
-interface CacheItem<T> {
-  data: T;
-  timestamp: number;
-}
-
-const getFromCache = <T>(key: string): T | null => {
-  const itemStr = localStorage.getItem(CACHE_PREFIX + key);
-  if (!itemStr) return null;
-  
-  try {
-    const item: CacheItem<T> = JSON.parse(itemStr);
-    const now = Date.now();
-    if (now - item.timestamp > CACHE_EXPIRY) {
-      localStorage.removeItem(CACHE_PREFIX + key);
-      return null;
-    }
-    return item.data;
-  } catch {
-    return null;
-  }
-};
-
-const setCache = <T>(key: string, data: T) => {
-  const item: CacheItem<T> = {
-    data,
-    timestamp: Date.now()
-  };
-  localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(item));
-};
-
+// Cache system removed to prevent stale data and slow refresh issues.
 export const clearCache = (key?: string) => {
-    if (key) {
-        localStorage.removeItem(CACHE_PREFIX + key);
-    } else {
-        Object.keys(localStorage).forEach(k => {
-            if (k.startsWith(CACHE_PREFIX)) localStorage.removeItem(k);
-        });
-    }
+    // Kept for backward compatibility if called from other components
+    try {
+        if (key) {
+            localStorage.removeItem('wci_cache_' + key);
+        } else {
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('wci_cache_')) localStorage.removeItem(k);
+            });
+        }
+    } catch {}
 };
 
 // --- DONNÉES DE FALLBACK (MODE HORS LIGNE / DÉMO) ---
@@ -457,10 +428,6 @@ export const deleteCategory = async (id: string): Promise<void> => {
 export const getArticles = async (): Promise<Article[]> => {
   if (IS_OFFLINE_MODE) return MOCK_ARTICLES;
 
-  // Check cache first
-  const cached = getFromCache<Article[]>('articles');
-  if (cached) return cached;
-
   try {
       // Select all fields EXCEPT content to reduce payload size
       const { data, error } = await supabase
@@ -472,7 +439,6 @@ export const getArticles = async (): Promise<Article[]> => {
         throw error;
       }
       const articles = (data || []).map(item => ({ ...item, content: '' })) as Article[];
-      setCache('articles', articles);
       return articles;
   } catch (e: any) {
       if (isNetworkError(e)) return [];
