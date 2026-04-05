@@ -330,10 +330,6 @@ export const saveCategoryOrder = async (ids: string[]): Promise<void> => {
 export const getCategories = async (): Promise<Category[]> => {
   if (IS_OFFLINE_MODE) return MOCK_CATEGORIES;
 
-  // Check cache first
-  const cached = getFromCache<Category[]>('categories');
-  if (cached) return cached;
-
   try {
       const { data, error } = await supabase.from('categories').select('*');
       if (error) { 
@@ -370,7 +366,6 @@ export const getCategories = async (): Promise<Category[]> => {
         });
       }
 
-      setCache('categories', categories);
       return categories;
   } catch (e: any) {
       if (isNetworkError(e)) return [];
