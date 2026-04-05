@@ -808,11 +808,25 @@ export const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <div className="md:hidden bg-brand-dark text-white p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
-          <h2 className="text-xl font-serif font-black text-brand-yellow tracking-tighter">WCI Admin</h2>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-4">
-              {isMobileMenuOpen ? '✕' : '☰'}
-          </button>
+      <div className="md:hidden bg-white text-brand-dark p-3 px-4 flex justify-between items-center sticky top-0 z-50 shadow-sm border-b border-gray-100">
+          <div className="flex items-center gap-3">
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-xl text-brand-dark focus:outline-none">
+                  <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
+              </button>
+              <h2 className="text-xl font-serif font-black text-brand-blue tracking-tighter">WCI Admin</h2>
+          </div>
+          {['articles', 'categories', 'users', 'ads', 'videos', 'social'].includes(activeTab) && (
+              <button onClick={() => { 
+                  if(activeTab === 'articles') { setCurrentArticle({}); setIsEditorOpen(true); } 
+                  else if(activeTab === 'categories') { setCurrentCategory({}); setIsCategoryModalOpen(true); } 
+                  else if(activeTab === 'users') { setCurrentEditUser({}); setIsUserModalOpen(true); }
+                  else if(activeTab === 'ads') { setCurrentAd({ location: AdLocation.HEADER_LEADERBOARD, type: AdType.IMAGE, active: true }); setIsAdModalOpen(true); }
+                  else if(activeTab === 'videos') { setCurrentVideo({}); setIsVideoModalOpen(true); }
+                  else if(activeTab === 'social') { setCurrentSocialLink({}); setIsSocialModalOpen(true); }
+              }} className="w-10 h-10 bg-brand-blue text-white rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform">
+                  <i className="fas fa-plus"></i>
+              </button>
+          )}
       </div>
 
       {/* Mobile Overlay */}
@@ -835,46 +849,53 @@ export const AdminDashboard = () => {
             </Link>
         </div>
 
-        <nav className="flex-1 p-6 space-y-2">
-            <button onClick={() => setActiveTab('articles')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'articles' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>📄 Articles</button>
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+            <button onClick={() => { setActiveTab('articles'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'articles' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-file-alt w-5 text-center"></i> Articles
+            </button>
             
             {PERMISSIONS.canReviewSubmissions(user?.role!) && (
-                <button onClick={() => setActiveTab('submissions')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'submissions' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
-                    📝 Soumissions
+                <button onClick={() => { setActiveTab('submissions'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-bold transition-all ${activeTab === 'submissions' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                    <div className="flex items-center gap-3"><i className="fas fa-tasks w-5 text-center"></i> Soumissions</div>
                     {articles.filter(a => a.status === ArticleStatus.SUBMITTED).length > 0 && (
-                        <span className="bg-red-500 text-white text-[10px] px-2 rounded-full">{articles.filter(a => a.status === ArticleStatus.SUBMITTED).length}</span>
+                        <span className="bg-brand-red text-white text-[10px] px-2 py-0.5 rounded-full">{articles.filter(a => a.status === ArticleStatus.SUBMITTED).length}</span>
                     )}
                 </button>
             )}
             
-            {PERMISSIONS.canManageCategories(user?.role!) && <button onClick={() => setActiveTab('categories')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'categories' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>🏷️ Rubriques</button>}
+            {PERMISSIONS.canManageCategories(user?.role!) && <button onClick={() => { setActiveTab('categories'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'categories' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-tags w-5 text-center"></i> Rubriques
+            </button>}
             
-            {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => setActiveTab('ads')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'ads' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>📢 Publicités</button>}
+            {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => { setActiveTab('ads'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'ads' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-ad w-5 text-center"></i> Publicités
+            </button>}
             
-            {/* Vidéos - Accessible by everyone who can edit articles or specifically configured */}
-            <button onClick={() => setActiveTab('videos')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'videos' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
-                🎥 Vidéos
+            <button onClick={() => { setActiveTab('videos'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'videos' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-video w-5 text-center"></i> Vidéos
             </button>
 
-            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('users')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'users' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>👥 Équipe</button>}
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('users'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-users w-5 text-center"></i> Équipe
+            </button>}
             
-            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('messages')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'messages' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
-                📩 Messages
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('messages'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between text-sm font-bold transition-all ${activeTab === 'messages' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <div className="flex items-center gap-3"><i className="fas fa-envelope w-5 text-center"></i> Messages</div>
                 {messages.filter(m => m.status === 'UNREAD').length > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] px-2 rounded-full">{messages.filter(m => m.status === 'UNREAD').length}</span>
+                    <span className="bg-brand-red text-white text-[10px] px-2 py-0.5 rounded-full">{messages.filter(m => m.status === 'UNREAD').length}</span>
                 )}
             </button>}
 
-            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => setActiveTab('social')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'social' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
-                🌐 Réseaux Sociaux
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('social'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'social' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-share-alt w-5 text-center"></i> Réseaux Sociaux
             </button>}
 
-            {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => setActiveTab('settings')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'settings' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
-                ⚙️ Paramètres
+            {PERMISSIONS.canManageAds(user?.role!) && <button onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'settings' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-cog w-5 text-center"></i> Paramètres
             </button>}
 
-            <button onClick={() => setActiveTab('permissions')} className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 ${activeTab === 'permissions' ? 'bg-brand-blue shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
-                🛡️ Permissions
+            <button onClick={() => { setActiveTab('permissions'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'permissions' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-shield-alt w-5 text-center"></i> Permissions
             </button>
         </nav>
         
@@ -890,11 +911,12 @@ export const AdminDashboard = () => {
         </div>
       </aside>
 
-      <main className="flex-1 p-4 md:p-12 overflow-y-auto w-full">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-16 gap-6 md:gap-0">
-            <h1 className="text-3xl md:text-5xl font-serif font-black text-brand-dark uppercase tracking-tighter">
+      <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto w-full">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4 md:gap-0">
+            <h1 className="text-2xl md:text-4xl font-serif font-black text-brand-dark uppercase tracking-tighter">
                 {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : activeTab === 'videos' ? 'Vidéos' : activeTab === 'social' ? 'Réseaux Sociaux' : activeTab === 'permissions' ? 'Permissions' : activeTab === 'settings' ? 'Paramètres' : 'Équipe'}
             </h1>
+            
             <button onClick={() => { 
                 if(activeTab === 'articles') { setCurrentArticle({}); setIsEditorOpen(true); } 
                 else if(activeTab === 'categories' && PERMISSIONS.canManageCategories(user?.role!)) { setCurrentCategory({}); setIsCategoryModalOpen(true); }
@@ -902,13 +924,17 @@ export const AdminDashboard = () => {
                 else if(activeTab === 'users' && PERMISSIONS.canManageUsers(user?.role!)) { setCurrentEditUser({}); setIsUserModalOpen(true); }
                 else if(activeTab === 'videos') { setCurrentVideo({}); setIsVideoModalOpen(true); }
                 else if(activeTab === 'social') { setCurrentSocialLink({}); setIsSocialModalOpen(true); }
-            }} className={`w-full md:w-auto bg-brand-blue text-white px-6 md:px-10 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-all text-xs tracking-widest uppercase ${(
+            }} className={`hidden md:flex px-6 py-3 bg-brand-blue text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg hover:bg-blue-700 active:scale-95 transition-all items-center justify-center gap-2 ${(
                 (activeTab === 'categories' && !PERMISSIONS.canManageCategories(user?.role!)) ||
                 (activeTab === 'ads' && !PERMISSIONS.canManageAds(user?.role!)) ||
                 (activeTab === 'users' && !PERMISSIONS.canManageUsers(user?.role!)) ||
                 (activeTab === 'submissions') ||
-                (activeTab === 'messages') // Cannot add messages manually
-            ) ? 'hidden' : ''}`}>+ AJOUTER</button>
+                (activeTab === 'messages') ||
+                (activeTab === 'permissions') ||
+                (activeTab === 'settings')
+            ) ? '!hidden' : ''}`}>
+                <i className="fas fa-plus"></i> Ajouter
+            </button>
         </header>
 
         {/* --- SETTINGS --- */}
@@ -986,7 +1012,7 @@ export const AdminDashboard = () => {
                   </div>
                 )}
                 {articles.map(art => (
-                    <div key={art.id} className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col md:flex-row items-center gap-4 hover:shadow-lg transition-all group relative overflow-hidden">
+                    <div key={art.id} className="bg-white p-3 md:p-5 rounded-2xl border border-gray-100 flex flex-row items-center gap-3 md:gap-5 hover:shadow-md transition-all group relative overflow-hidden">
                         {/* Status Strip */}
                         <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
                             art.status === ArticleStatus.PUBLISHED ? 'bg-green-500' : 
@@ -995,41 +1021,42 @@ export const AdminDashboard = () => {
                         
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-brand-blue border-gray-300 rounded self-start mt-2 md:mt-0"
+                          className="w-5 h-5 text-brand-blue border-gray-300 rounded shrink-0 cursor-pointer ml-1"
                           checked={selectedArticleIds.includes(art.id)}
                           onChange={() => toggleArticleSelection(art.id)}
                         />
                         
-                        <img src={art.imageUrl} className="w-full md:w-24 h-48 md:h-24 rounded-xl object-cover shadow-sm bg-gray-50" alt="" />
+                        <img src={art.imageUrl} className="w-16 h-16 md:w-28 md:h-24 rounded-xl object-cover shadow-sm bg-gray-50 shrink-0 hidden sm:block" alt="" />
                         
-                        <div className="flex-1 min-w-0 w-full">
-                            <div className="flex items-center gap-2 mb-2">
-                                 <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
-                                    art.status === ArticleStatus.PUBLISHED ? 'bg-green-100 text-green-700' : 
-                                    art.status === ArticleStatus.SUBMITTED ? 'bg-yellow-100 text-yellow-700' : 
-                                    'bg-gray-100 text-gray-600'
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                 <span className={`px-2 py-0.5 rounded text-[9px] md:text-[10px] font-black uppercase tracking-widest ${
+                                    art.status === ArticleStatus.PUBLISHED ? 'bg-green-50 text-green-600 border border-green-100' : 
+                                    art.status === ArticleStatus.SUBMITTED ? 'bg-yellow-50 text-yellow-600 border border-yellow-100' : 
+                                    'bg-gray-50 text-gray-500 border border-gray-200'
                                 }`}>
                                     {art.status === ArticleStatus.SUBMITTED ? 'EN ATTENTE' : art.status === 'PUBLISHED' ? 'PUBLIÉ' : 'BROUILLON'}
                                 </span>
-                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-gray-50 px-2 py-1 rounded-md">{art.category}</span>
+                                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-wider">{art.category}</span>
                             </div>
-                            <h3 className="font-bold text-lg md:text-xl text-gray-900 truncate group-hover:text-brand-blue transition-colors font-serif">{art.title}</h3>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-400 font-medium uppercase tracking-wide">
-                                <span className="flex items-center gap-1" title="Vues">👁️ {art.views || 0}</span>
-                                <span className="flex items-center gap-1" title="Date de modification">📅 {new Date(art.updatedAt || art.createdAt).toLocaleDateString()}</span>
-                                {art.authorName && <span className="flex items-center gap-1" title="Auteur">👤 {art.authorName}</span>}
+                            <h3 className="font-bold text-sm md:text-lg text-gray-900 line-clamp-2 group-hover:text-brand-blue transition-colors font-serif leading-tight">{art.title}</h3>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[10px] md:text-xs text-gray-400 font-medium uppercase tracking-wide">
+                                <span className="flex items-center gap-1" title="Vues"><i className="fas fa-eye"></i> {art.views || 0}</span>
+                                <span className="flex items-center gap-1" title="Date de modification"><i className="far fa-calendar-alt"></i> {new Date(art.updatedAt || art.createdAt).toLocaleDateString()}</span>
+                                {art.authorName && <span className="flex items-center gap-1 truncate max-w-[100px] md:max-w-none" title="Auteur"><i className="far fa-user"></i> {art.authorName}</span>}
                             </div>
                             {art.reviewComments && (
-                                <p className="text-red-500 text-xs mt-2 bg-red-50 p-2 rounded-lg border border-red-100">💬 Note: {art.reviewComments}</p>
+                                <p className="text-red-500 text-[10px] md:text-xs mt-2 bg-red-50 p-2 rounded-lg border border-red-100">💬 Note: {art.reviewComments}</p>
                             )}
                         </div>
 
-                        <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0 border-t md:border-t-0 pt-4 md:pt-0 border-gray-100">
-                            <button onClick={() => handleEditArticle(art)} className="flex-1 md:flex-none px-6 py-3 bg-gray-50 text-brand-blue rounded-xl font-bold text-xs uppercase hover:bg-brand-blue hover:text-white transition-all shadow-sm hover:shadow-md">
-                                Éditer
+                        <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+                            <button onClick={() => handleEditArticle(art)} className="w-8 h-8 sm:w-auto sm:h-auto sm:px-4 sm:py-2 bg-blue-50 text-brand-blue rounded-lg font-bold text-[10px] sm:text-xs uppercase hover:bg-brand-blue hover:text-white transition-all flex items-center justify-center">
+                                <i className="fas fa-pen sm:hidden"></i>
+                                <span className="hidden sm:inline">Éditer</span>
                             </button>
-                            <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(loadData); }} className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-brand-red hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100">
-                                🗑️
+                            <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(loadData); }} className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                                <i className="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>
@@ -1561,8 +1588,8 @@ export const AdminDashboard = () => {
                                 .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', serif; font-size: 18px; background-color: #0a0a0a; }
                                 
                                 .ql-editor { 
-                                    min-height: 500px; 
-                                    padding: 30px !important; 
+                                    min-height: 300px; 
+                                    padding: 15px !important; 
                                     color: #e5e5e5; 
                                     line-height: 1.8;
                                 }
