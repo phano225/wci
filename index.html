@@ -25,46 +25,8 @@
     </script>
 
     <title>WCI | L'actualité en continu</title>
-    <script src="https://cdn.tailwindcss.com" onerror="this.onerror=null; this.src='https://unpkg.com/tailwindcss-jit-cdn'"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <script>
-      window.onload = function() {
-        if (window.tailwind) {
-            window.tailwind.config = {
-                theme: {
-                  extend: {
-                    colors: {
-                      'brand-blue': '#0055a4',
-                      'brand-red': '#e3001b',
-                      'brand-dark': '#1a1a1a',
-                      'brand-gray': '#f4f4f4',
-                      'brand-yellow': '#facc15',
-                    },
-                    fontFamily: {
-                      sans: ['Roboto', 'sans-serif'],
-                      serif: ['Playfair Display', 'serif'],
-                    }
-                  }
-                }
-            }
-        } else {
-            console.warn('Tailwind failed to load. Check internet connection.');
-        }
-      }
-    </script>
-    <style>
-      body { font-family: 'Roboto', sans-serif; background-color: #f8f9fa; color: #333; }
-      h1, h2, h3, .brand-font { font-family: 'Playfair Display', serif; }
-      .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-      .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-      .animate-marquee { display: inline-block; will-change: transform; animation: marquee 80s linear infinite; }
-      .animate-marquee-slow { display: inline-block; will-change: transform; animation: marquee 80s linear infinite; animation-delay: 40s; }
-      @keyframes marquee { 
-        0% { transform: translateX(0); } 
-        100% { transform: translateX(-100%); } 
-      }
-    </style>
   </head>
   <body>
     <div id="root"></div>
