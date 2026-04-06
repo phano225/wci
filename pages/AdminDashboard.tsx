@@ -1818,13 +1818,18 @@ export const AdminDashboard = () => {
 
       {/* --- MODAL UTILISATEUR / PROFIL --- */}
       {isUserModalOpen && (
-          <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-6">
-              <div className="bg-white w-full max-w-lg rounded-[65px] p-16 shadow-2xl relative">
-                  <button onClick={() => setIsUserModalOpen(false)} className="absolute top-12 right-12 text-gray-300 text-2xl">✕</button>
-                  <h2 className="text-4xl font-serif font-black mb-12 text-brand-dark uppercase tracking-tighter">Profil Staff</h2>
-                  <div className="space-y-8">
+          <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+              <div className="bg-white w-full max-w-lg rounded-3xl p-6 md:p-10 shadow-2xl relative max-h-[90vh] flex flex-col">
+                  <div className="flex justify-between items-center mb-6 shrink-0">
+                      <h2 className="text-2xl md:text-3xl font-serif font-black text-brand-dark uppercase tracking-tighter">Profil Staff</h2>
+                      <button onClick={() => setIsUserModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-brand-red transition-colors">
+                          <i className="fas fa-times text-xl"></i>
+                      </button>
+                  </div>
+                  
+                  <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-4">
                       {/* Avatar */}
-                      <div className="flex items-center gap-6">
+                      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                           <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
                               <img 
                                 src={currentEditUser.avatar || 'https://via.placeholder.com/80?text=Avatar'} 
@@ -1909,14 +1914,16 @@ export const AdminDashboard = () => {
 
       {/* --- MODAL RÉSEAUX SOCIAUX --- */}
       {isSocialModalOpen && (
-        <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-6">
-            <div className="bg-white w-full max-w-lg rounded-[65px] p-16 shadow-2xl relative">
-                <button onClick={() => setIsSocialModalOpen(false)} className="absolute top-12 right-12 text-gray-300 text-2xl">✕</button>
-                <h2 className="text-4xl font-serif font-black mb-12 text-brand-dark uppercase tracking-tighter">Ajouter un Réseau</h2>
-                <form onSubmit={handleSaveSocialLink} className="space-y-8">
+        <div className="fixed inset-0 bg-brand-dark/95 backdrop-blur-sm z-[200] flex items-center justify-center p-4 sm:p-6">
+            <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-10 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                <button onClick={() => setIsSocialModalOpen(false)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors z-10">
+                  <i className="fas fa-times"></i>
+                </button>
+                <h2 className="text-2xl sm:text-3xl font-serif font-black mb-6 sm:mb-8 text-brand-dark uppercase tracking-tighter mt-4 sm:mt-0">Ajouter un Réseau</h2>
+                <form onSubmit={handleSaveSocialLink} className="space-y-5 sm:space-y-6">
                     <input 
                         type="text" 
-                        className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        className="w-full p-4 sm:p-5 bg-gray-50 rounded-2xl text-sm sm:text-base font-bold outline-none border-2 border-transparent focus:border-brand-blue/30 transition-all" 
                         placeholder="Plateforme (ex: Facebook)..." 
                         value={currentSocialLink.platform || ''} 
                         onChange={e => setCurrentSocialLink({...currentSocialLink, platform: e.target.value})} 
@@ -1924,15 +1931,15 @@ export const AdminDashboard = () => {
                     />
                     <input 
                         type="url" 
-                        className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
+                        className="w-full p-4 sm:p-5 bg-gray-50 rounded-2xl text-sm sm:text-base font-bold outline-none border-2 border-transparent focus:border-brand-blue/30 transition-all" 
                         placeholder="URL du profil..." 
                         value={currentSocialLink.url || ''} 
                         onChange={e => setCurrentSocialLink({...currentSocialLink, url: e.target.value})} 
                         required
                     />
-                    <div className="space-y-4">
-                        <label className="text-xs font-bold text-gray-400 uppercase ml-4">Choisir une icône</label>
-                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                    <div className="space-y-3 sm:space-y-4">
+                        <label className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase ml-2 sm:ml-4">Choisir une icône</label>
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
                             {[
                                 { name: 'Facebook', class: 'fab fa-facebook-f', color: 'bg-blue-600' },
                                 { name: 'Twitter/X', class: 'fab fa-x-twitter', color: 'bg-black' },
@@ -1953,10 +1960,10 @@ export const AdminDashboard = () => {
                                         iconClass: icon.class,
                                         bgColor: icon.color
                                     })}
-                                    className={`p-3 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${currentSocialLink.iconClass === icon.class ? 'border-brand-blue bg-blue-50 text-brand-blue' : 'border-transparent bg-gray-50 hover:bg-gray-100 text-gray-500'}`}
+                                    className={`p-2 sm:p-3 rounded-xl flex flex-col items-center gap-1 sm:gap-2 transition-all border-2 ${currentSocialLink.iconClass === icon.class ? 'border-brand-blue bg-blue-50 text-brand-blue' : 'border-transparent bg-gray-50 hover:bg-gray-100 text-gray-500'}`}
                                 >
-                                    <i className={`${icon.class} text-xl`}></i>
-                                    <span className="text-[9px] font-bold uppercase truncate w-full text-center">{icon.name}</span>
+                                    <i className={`${icon.class} text-lg sm:text-xl`}></i>
+                                    <span className="text-[8px] sm:text-[9px] font-bold uppercase truncate w-full text-center">{icon.name}</span>
                                 </button>
                             ))}
                         </div>
@@ -1964,35 +1971,35 @@ export const AdminDashboard = () => {
 
                     <input 
                         type="text" 
-                        className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
-                        placeholder="Ou saisissez une classe (ex: fab fa-facebook-f)..." 
+                        className="w-full p-4 sm:p-5 bg-gray-50 rounded-2xl text-sm sm:text-base font-bold outline-none border-2 border-transparent focus:border-brand-blue/30 transition-all" 
+                        placeholder="Ou saisissez une classe..." 
                         value={currentSocialLink.iconClass || ''} 
                         onChange={e => setCurrentSocialLink({...currentSocialLink, iconClass: e.target.value})} 
                         required
                     />
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
                         <input 
                             type="text" 
-                            className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
-                            placeholder="Bg Color (ex: bg-blue-600)..." 
+                            className="w-full p-4 sm:p-5 bg-gray-50 rounded-2xl text-xs sm:text-sm font-bold outline-none border-2 border-transparent focus:border-brand-blue/30 transition-all" 
+                            placeholder="Bg Color..." 
                             value={currentSocialLink.bgColor || ''} 
                             onChange={e => setCurrentSocialLink({...currentSocialLink, bgColor: e.target.value})} 
                         />
                         <input 
                             type="text" 
-                            className="w-full p-7 bg-gray-50 rounded-[35px] font-bold outline-none border-2 border-transparent focus:border-brand-blue/10 transition-all" 
-                            placeholder="Text Color (ex: text-white)..." 
+                            className="w-full p-4 sm:p-5 bg-gray-50 rounded-2xl text-xs sm:text-sm font-bold outline-none border-2 border-transparent focus:border-brand-blue/30 transition-all" 
+                            placeholder="Text Color..." 
                             value={currentSocialLink.textColor || ''} 
                             onChange={e => setCurrentSocialLink({...currentSocialLink, textColor: e.target.value})} 
                         />
                     </div>
-                    <div className="flex items-center gap-4 justify-center p-4 bg-gray-50 rounded-2xl">
-                        <span className="text-xs font-bold text-gray-400 uppercase">Aperçu :</span>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentSocialLink.bgColor || 'bg-gray-400'} ${currentSocialLink.textColor || 'text-white'}`}>
+                    <div className="flex items-center gap-4 justify-center p-3 sm:p-4 bg-gray-50 rounded-2xl">
+                        <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase">Aperçu :</span>
+                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${currentSocialLink.bgColor || 'bg-gray-400'} ${currentSocialLink.textColor || 'text-white'}`}>
                             <i className={currentSocialLink.iconClass || 'fas fa-question'}></i>
                         </div>
                     </div>
-                    <button type="submit" className="w-full py-7 bg-brand-blue text-white rounded-[40px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-all">
+                    <button type="submit" className="w-full py-4 sm:py-5 bg-brand-blue text-white rounded-2xl text-sm sm:text-base font-black uppercase tracking-widest shadow-lg hover:bg-blue-700 transition-all">
                         Enregistrer
                     </button>
                 </form>
