@@ -53,16 +53,15 @@ export const ArticlePage = () => {
             setArticle(found);
             
             if (found) {
-                const all = await getArticles();
+                const all = await getArticles({ status: ArticleStatus.PUBLISHED, limit: 100 });
                 const rel = all.filter(a => 
-                    a.status === ArticleStatus.PUBLISHED && 
                     a.category === found.category && 
                     a.id !== found.id
                 ).slice(0, 3);
                 setRelated(rel);
-                const others = all.filter(a => a.status === ArticleStatus.PUBLISHED && a.id !== found.id && a.category !== found.category).slice(0, 3);
+                const others = all.filter(a => a.id !== found.id && a.category !== found.category).slice(0, 3);
                 setAlso(rel.length > 0 ? rel : others);
-                setCarouselItems(all.filter(a => a.status === ArticleStatus.PUBLISHED && a.id !== found.id).slice(0, 10));
+                setCarouselItems(all.filter(a => a.id !== found.id).slice(0, 10));
                 const vids = await getVideos();
                 setVideos(vids.slice(0, 4));
                 const socials = await getSocialLinks();

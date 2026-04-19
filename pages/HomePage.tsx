@@ -38,23 +38,16 @@ export const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
         setLoading(true);
-        const [allArticles, allVideos] = await Promise.all([
-            getArticles(),
+        const [publishedArticles, allVideos] = await Promise.all([
+            getArticles({ status: ArticleStatus.PUBLISHED, limit: 200 }),
             getVideos()
         ]);
         
-        const published = allArticles.filter(a => a.status === ArticleStatus.PUBLISHED);
-        published.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        
         // Find the latest Edito
-        const edito = published.find(a => a.category === 'Edito' || a.category === 'Édito');
+        const edito = publishedArticles.find(a => a.category === 'Edito' || a.category === 'Édito');
         setEditoArticle(edito || null);
         
-        // Filter out Edito from main lists if desired, or keep it. Usually Edito is separate.
-        // Let's keep it in the main list too unless we want to hide it. 
-        // For now, we just select it.
-        
-        setArticles(published);
+        setArticles(publishedArticles);
         setVideos(allVideos);
         setLoading(false);
     };

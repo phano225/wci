@@ -420,15 +420,35 @@ export const deleteCategory = async (id: string): Promise<void> => {
     }
 };
 
-export const getArticles = async (): Promise<Article[]> => {
-  if (IS_OFFLINE_MODE) return MOCK_ARTICLES;
+export interface GetArticlesOptions {
+  limit?: number;
+  status?: ArticleStatus;
+  category?: string;
+  authorId?: string;
+}
+
+export const getArticles = async (options: GetArticlesOptions = {}): Promise<Article[]> => {
+  if (IS_OFFLINE_MODE) {
+      let filtered = [...MOCK_ARTICLES];
+      if (options.status) filtered = filtered.filter(a => a.status === options.status);
+      if (options.category) filtered = filtered.filter(a => a.category === options.category);
+      if (options.authorId) filtered = filtered.filter(a => a.authorId === options.authorId);
+      if (options.limit) filtered = filtered.slice(0, options.limit);
+      return filtered;
+  }
 
   try {
-      // Select all fields EXCEPT content to reduce payload size
-      const { data, error } = await supabase
+      let query = supabase
         .from('articles')
         .select('id, title, excerpt, category, imageUrl, videoUrl, authorId, authorName, authorAvatar, status, views, createdAt, updatedAt, submittedBy, submittedAt, reviewedBy, reviewedAt, reviewComments, submissionStatus')
         .order('createdAt', { ascending: false });
+
+      if (options.status) query = query.eq('status', options.status);
+      if (options.category) query = query.eq('category', options.category);
+      if (options.authorId) query = query.eq('authorid', options.authorId);
+      if (options.limit) query = query.limit(options.limit);
+
+      const { data, error } = await query;
       if (error) {
         if (!isNetworkError(error)) console.error('Supabase error in getArticles:', error);
         throw error;

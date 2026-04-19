@@ -149,7 +149,7 @@ export const AdminDashboard = () => {
 
     try {
         const [arts, cats, adsList, userList, msgList, videoList, socialList, orderIds] = await Promise.all([
-            getArticles(),
+            getArticles(user?.role === UserRole.CONTRIBUTOR ? { authorId: user.id, limit: 500 } : { limit: 500 }),
             getCategories(),
             getAds(),
             getUsers(),
@@ -172,14 +172,7 @@ export const AdminDashboard = () => {
         
         clearTimeout(timeoutId); // Clear timeout if successful
 
-        // Filter articles based on role
-        let filteredArticles = arts;
-        if (user?.role === UserRole.CONTRIBUTOR) {
-            // Contributors see their own articles
-            filteredArticles = arts.filter(a => a.authorId === user.id);
-        }
-        
-        setArticles(filteredArticles);
+        setArticles(arts);
 
         let sortedCats = sortCategoriesForDisplay(cats);
         if (orderIds && orderIds.length > 0) {
@@ -403,7 +396,7 @@ export const AdminDashboard = () => {
       
       // OPTIMIZATION: Only reload articles, not everything
       // And we use the lightweight getArticles() which excludes content
-      const updatedArticles = await getArticles();
+      const updatedArticles = await getArticles(user?.role === UserRole.CONTRIBUTOR ? { authorId: user.id, limit: 500 } : { limit: 500 });
       setArticles(updatedArticles);
       
       clearTimeout(timeoutId);

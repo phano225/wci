@@ -16,9 +16,9 @@ export const Navbar = () => {
 
   useEffect(() => {
     const loadData = async () => {
-        const [cats, articles, socials, orderIds] = await Promise.all([
+        const [cats, publishedArticles, socials, orderIds] = await Promise.all([
             getCategories(),
-            getArticles(),
+            getArticles({ status: ArticleStatus.PUBLISHED, limit: 30 }),
             getSocialLinks(),
             getCategoryOrder()
         ]);
@@ -43,12 +43,8 @@ export const Navbar = () => {
         setCategories(sortedCats.map(c => c.name));
         setSocialLinks(socials);
 
-        // Articles publiés pour le Flash Info (on en prend davantage que 3)
-        const published = articles
-          .filter(a => a.status === ArticleStatus.PUBLISHED)
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 20);
-        setFlashArticles(published);
+        // Articles publiés pour le Flash Info (on en prend jusqu'à 20)
+        setFlashArticles(publishedArticles.slice(0, 20));
     };
     loadData();
   }, []);
