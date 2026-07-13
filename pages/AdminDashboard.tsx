@@ -1737,8 +1737,8 @@ export const AdminDashboard = () => {
 
       {/* --- STUDIO RÉDACTION WYSIWYG MODERNE --- */}
       {isEditorOpen && (
-        <div className="fixed inset-0 bg-[#0a0a0a] z-[100] flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden">
-            <header className="px-4 py-3 md:px-12 md:py-6 border-b border-gray-800 flex flex-row justify-between items-center bg-[#0a0a0a] z-10 shadow-sm gap-4">
+        <div className="fixed inset-0 bg-[#121212] z-[100] flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden">
+            <header className="px-4 py-3 md:px-12 md:py-6 border-b border-gray-800 flex flex-row justify-between items-center bg-[#181818] z-10 shadow-sm gap-4">
                 <div className="flex items-center gap-4">
                     <button onClick={() => setIsEditorOpen(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full hover:bg-gray-800 text-white flex items-center justify-center text-xl md:text-3xl transition-all">✕</button>
                     <div>
@@ -1751,14 +1751,14 @@ export const AdminDashboard = () => {
                 
                 {/* Desktop Actions */}
                 <div className="hidden md:flex gap-2">
-                    <button onClick={() => setConfirmSaveStatus(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-700 text-gray-300 rounded-2xl font-black text-xs uppercase hover:bg-gray-800 whitespace-nowrap">Brouillon</button>
+                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-700 text-gray-300 rounded-2xl font-black text-xs uppercase hover:bg-gray-800 whitespace-nowrap">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-[#fbbf24] text-black rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-[#fbbf24] text-black rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.SUBMITTED)} className="px-12 py-4 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">SOUMETTRE</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="px-12 py-4 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">SOUMETTRE</button>
                     )}
                 </div>
 
@@ -1876,15 +1876,15 @@ export const AdminDashboard = () => {
                 </div>
 
                 {/* Mobile Bottom Action Bar */}
-                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-gray-800 p-3 z-40 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
-                    <button onClick={() => setConfirmSaveStatus(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-700 bg-transparent rounded-xl font-black text-[10px] uppercase text-gray-300">Brouillon</button>
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#121212] border-t border-gray-800 p-3 z-40 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
+                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-700 bg-transparent rounded-xl font-black text-[10px] uppercase text-gray-300">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-[#fbbf24] text-black rounded-xl font-black text-xs uppercase shadow-lg">ENREGISTRER</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-[#fbbf24] text-black rounded-xl font-black text-xs uppercase shadow-lg">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.SUBMITTED)} className="flex-[2] py-3 bg-brand-yellow text-brand-dark rounded-xl font-black text-xs uppercase shadow-lg">SOUMETTRE</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="flex-[2] py-3 bg-brand-yellow text-brand-dark rounded-xl font-black text-xs uppercase shadow-lg">SOUMETTRE</button>
                     )}
                 </div>
 
