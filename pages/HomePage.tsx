@@ -111,19 +111,19 @@ export const HomePage = () => {
       return (
         <section className="mb-12 border-b border-gray-100 pb-8 last:border-0">
             <div className="flex items-center mb-6">
-                <h2 className="text-sm font-bold uppercase text-white bg-brand-red px-4 py-2 shadow-sm">{title}</h2>
-                <div className="h-0.5 flex-1 bg-gray-200"></div>
-                <Link to={`/?cat=${title}`} className="text-xs font-bold text-brand-red uppercase ml-2 hover:underline">Voir plus de {title} &rarr;</Link>
+                <h2 className={`text-sm font-bold uppercase text-white px-5 py-2.5 rounded-r-lg shadow-md ${color === 'green' ? 'bg-gradient-to-r from-[var(--secondary)] to-[#007a2e]' : 'bg-gradient-to-r from-[var(--primary)] to-[#e55314]'}`}>{title}</h2>
+                <div className="h-px flex-1 bg-gradient-to-r from-gray-300 to-transparent ml-4"></div>
+                <Link to={`/?cat=${title}`} className="text-xs font-bold text-[var(--primary)] uppercase ml-2 hover:underline tracking-wide">Voir plus &rarr;</Link>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {items.map(article => (
-                    <Link to={`/article/${article.id}`} key={article.id} className="group block h-full flex flex-col">
-                        <div className="relative h-48 overflow-hidden mb-3">
+                    <Link to={`/article/${article.id}`} key={article.id} className="glass-card group block h-full flex flex-col overflow-hidden">
+                        <div className="relative h-48 img-reveal border-b border-[var(--glass-border)]">
                             <img 
                               src={resolveImage(article.imageUrl, { w: 800, h: 450 })} 
                               alt={article.title} 
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              className="w-full h-full object-cover"
                               referrerPolicy="no-referrer"
                               crossOrigin="anonymous"
                               onError={(e) => { 
@@ -132,16 +132,18 @@ export const HomePage = () => {
                                 img.src = 'https://via.placeholder.com/800x450?text=Image+indisponible'; 
                               }} 
                             />
-                            <div className="absolute top-0 left-0">
-                                <span className="bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-1 shadow-md">{article.category}</span>
+                            <div className="absolute top-3 left-3">
+                                <span className={`badge-category ${color === 'green' ? 'green' : ''}`}>{article.category}</span>
                             </div>
                         </div>
-                        <h3 className="text-base font-serif font-bold text-gray-900 group-hover:text-brand-red leading-tight mb-2 line-clamp-2">
-                            {article.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2 flex-1">{article.excerpt}</p>
-                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            {new Date(article.createdAt).toLocaleDateString()}
+                        <div className="p-4 flex flex-col flex-1">
+                            <h3 className="text-[1.1rem] font-serif font-bold text-gray-900 group-hover:text-[var(--primary)] leading-snug mb-2 line-clamp-2 transition-colors">
+                                {article.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">{article.excerpt}</p>
+                            <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                <i className="far fa-clock"></i> {new Date(article.createdAt).toLocaleDateString()}
+                            </div>
                         </div>
                     </Link>
                 ))}
@@ -219,11 +221,11 @@ export const HomePage = () => {
             {/* BIG FEATURED ARTICLE */}
             <div className="mb-8 relative group">
                 {featured && (
-                    <Link to={`/article/${featured.id}`} className="block h-[450px] md:h-[550px] relative overflow-hidden">
+                    <Link to={`/article/${featured.id}`} className="block h-[450px] md:h-[550px] relative img-reveal shadow-md" style={{ borderRadius: 'var(--radius-lg)' }}>
                         <img 
                           src={resolveImage(featured.imageUrl, { w: 1200, h: 600 })} 
                           alt={featured.title} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                          className="w-full h-full object-cover" 
                           referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
                           onError={(e) => { 
@@ -232,16 +234,16 @@ export const HomePage = () => {
                             img.src = 'https://via.placeholder.com/1200x600?text=Image+indisponible'; 
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/40 to-transparent opacity-90"></div>
                         <div className="absolute bottom-0 left-0 p-6 md:p-10 w-full">
-                            <span className="bg-brand-red text-white text-xs font-bold uppercase px-3 py-1 mb-3 inline-block shadow-sm">
+                            <span className="badge-category mb-4 inline-block">
                                 {featured.category}
                             </span>
-                            <h1 className="text-xl md:text-2xl lg:text-3xl font-serif font-bold text-white leading-tight mb-3 drop-shadow-md">
+                            <h1 className="text-2xl md:text-4xl font-serif font-bold text-white leading-tight mb-4 drop-shadow-lg" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
                                 {featured.title}
                             </h1>
-                            <div className="flex items-center text-gray-300 text-xs font-bold uppercase tracking-widest gap-2">
-                                <span className="text-brand-red">●</span>
+                            <div className="flex items-center text-gray-300 text-sm font-bold uppercase tracking-widest gap-3">
+                                <span style={{ color: 'var(--primary)' }}>●</span>
                                 <span>{new Date(featured.createdAt).toLocaleDateString()}</span>
                             </div>
                         </div>
@@ -252,12 +254,12 @@ export const HomePage = () => {
             {/* GRID OF RECENT ARTICLES (3x2) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {recentGrid.map(article => (
-                    <Link to={`/article/${article.id}`} key={article.id} className="group block">
-                        <div className="h-40 overflow-hidden mb-3 relative">
+                    <Link to={`/article/${article.id}`} key={article.id} className="glass-card group block h-full flex flex-col overflow-hidden">
+                        <div className="relative h-40 img-reveal border-b border-[var(--glass-border)]">
                             <img 
                               src={resolveImage(article.imageUrl, { w: 600, h: 400 })} 
                               alt={article.title} 
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                              className="w-full h-full object-cover" 
                               referrerPolicy="no-referrer"
                               crossOrigin="anonymous"
                               onError={(e) => { 
@@ -266,13 +268,20 @@ export const HomePage = () => {
                                 img.src = 'https://via.placeholder.com/600x400?text=Image+indisponible'; 
                               }}
                             />
-                            <span className="absolute top-0 left-0 bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-0.5">
-                                {article.category}
-                            </span>
+                            <div className="absolute top-2 left-2">
+                                <span className="badge-category" style={{ padding: '2px 8px', fontSize: '0.65rem' }}>
+                                    {article.category}
+                                </span>
+                            </div>
                         </div>
-                        <h3 className="text-base font-bold text-gray-900 group-hover:text-brand-red leading-tight line-clamp-3">
-                            {article.title}
-                        </h3>
+                        <div className="p-4 flex flex-col flex-1">
+                            <h3 className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] leading-tight line-clamp-3 transition-colors">
+                                {article.title}
+                            </h3>
+                            <div className="mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                <i className="far fa-clock"></i> {new Date(article.createdAt).toLocaleDateString()}
+                            </div>
+                        </div>
                     </Link>
                 ))}
             </div>
@@ -318,12 +327,12 @@ export const HomePage = () => {
         <div className="lg:col-span-4 space-y-8">
             {/* Zone mise en avant (remplace l'ancien Édito si dispo) */}
             {carouselItems.length > 0 ? (
-              <div className="bg-white border border-gray-200 shadow-sm relative overflow-hidden">
-                <div className="bg-brand-red text-white text-sm font-bold uppercase px-4 py-2 flex items-center justify-between">
+              <div className="glass-card relative overflow-hidden">
+                <div className="bg-gradient-to-r from-[var(--primary)] to-[#e55314] text-white text-sm font-bold uppercase px-5 py-3 flex items-center justify-between shadow-md">
                   <span>À la une</span>
-                  <span className="text-[10px] tracking-widest">Derniers articles</span>
+                  <span className="text-[10px] tracking-widest bg-white/20 px-2 py-1 rounded">Derniers articles</span>
                 </div>
-                <div className="relative h-72">
+                <div className="relative h-72 img-reveal">
                   <Link to={`/article/${carouselItems[carouselIndex].id}`} className="block h-full">
                     <img 
                       src={resolveImage(carouselItems[carouselIndex].imageUrl, { w: 800, h: 450 })} 
@@ -337,10 +346,12 @@ export const HomePage = () => {
                         img.src = 'https://via.placeholder.com/800x450?text=Image+indisponible'; 
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                    <span className="absolute top-2 left-2 bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-1 shadow">
-                      {carouselItems[carouselIndex].category}
-                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/90 via-[#1a1a1a]/30 to-transparent"></div>
+                    <div className="absolute top-3 left-3">
+                        <span className="badge-category">
+                          {carouselItems[carouselIndex].category}
+                        </span>
+                    </div>
                     {isNew(carouselItems[carouselIndex].createdAt) && (
                       <span className="absolute top-2 right-2 flex items-center gap-1 bg-yellow-400 text-black text-[10px] font-extrabold uppercase px-2 py-1 shadow animate-pulse">
                         <span className="w-2 h-2 bg-red-600 rounded-full"></span>
@@ -417,18 +428,23 @@ export const HomePage = () => {
             )}
 
             {/* LES TOPS DE LA SEMAINE */}
-            <div>
-                 <div className="flex items-center mb-4 border-b-2 border-brand-red pb-1">
-                    <span className="text-brand-red font-bold uppercase text-sm mr-2"><i className="fas fa-chart-line"></i></span>
-                    <h3 className="text-brand-red font-bold uppercase text-sm">Les Tops de la semaine</h3>
+            <div className="glass-card p-6">
+                 <div className="flex items-center mb-6 border-b border-gray-200 pb-3">
+                    <span className="text-[var(--primary)] font-bold uppercase text-lg mr-3"><i className="fas fa-chart-line"></i></span>
+                    <h3 className="text-gray-900 font-bold uppercase text-sm tracking-wide">Les Tops de la semaine</h3>
                  </div>
                  <div className="space-y-4">
                     {articles.slice(8, 13).map((article, idx) => (
-                        <Link to={`/article/${article.id}`} key={article.id} className="block group border-b border-gray-100 pb-3 last:border-0">
-                            <span className="bg-brand-red text-white text-[10px] font-bold px-1 mb-1 inline-block uppercase">{article.category}</span>
-                            <h4 className="text-sm font-medium text-gray-800 group-hover:text-brand-red leading-snug">
-                                {article.title}
-                            </h4>
+                        <Link to={`/article/${article.id}`} key={article.id} className="group flex gap-4 border-b border-gray-100 pb-4 last:border-0 hover:bg-gray-50/50 p-2 -mx-2 rounded transition-colors">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center font-bold text-sm">
+                                {idx + 1}
+                            </div>
+                            <div>
+                                <span className="text-[var(--primary)] text-[10px] font-bold uppercase tracking-wider mb-1 block">{article.category}</span>
+                                <h4 className="text-sm font-medium text-gray-800 group-hover:text-[var(--primary)] leading-snug transition-colors">
+                                    {article.title}
+                                </h4>
+                            </div>
                         </Link>
                     ))}
                  </div>

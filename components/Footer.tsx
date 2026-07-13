@@ -4,7 +4,7 @@ import { VisitorCounter } from './VisitorCounter';
 
 export const Footer = () => {
     return (
-        <footer className="bg-black text-white pt-12 pb-8 border-t-4 border-brand-red">
+        <footer className="bg-[#1a1a1a] text-white pt-12 pb-8 border-t-[6px] border-[var(--primary)]">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
                     

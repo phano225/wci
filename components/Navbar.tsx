@@ -111,7 +111,7 @@ export const Navbar = () => {
       </div>
 
       {/* Navigation Links - RED BAR */}
-      <nav className="bg-[#E50914] sticky top-0 z-40 shadow-md border-t-4 border-black">
+      <nav className="sticky top-0 z-40 shadow-lg border-b border-[var(--primary)] bg-gradient-to-r from-[var(--primary)] to-[#e55314]">
         <div className="container mx-auto px-0 md:px-4">
             <div className="flex items-center justify-between gap-2">
                 
@@ -123,8 +123,8 @@ export const Navbar = () => {
                 </button>
 
                 {/* Desktop Nav (scrollable if overflow) */}
-                <div className="flex-1 overflow-x-auto">
-                  <ul className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row md:flex-nowrap absolute md:relative top-full left-0 w-full md:w-auto bg-[#E50914] md:bg-transparent shadow-lg md:shadow-none text-white text-[13px] font-bold uppercase tracking-wider whitespace-nowrap`}>
+                <div className="flex-1 overflow-x-auto scrollbar-hide">
+                  <ul className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row md:flex-nowrap absolute md:relative top-full left-0 w-full md:w-auto bg-[var(--primary)] md:bg-transparent shadow-lg md:shadow-none text-white text-[13px] font-bold uppercase tracking-wider whitespace-nowrap`}>
                       <li className="border-b md:border-b-0 border-red-700">
                           <Link to="/" className="block py-4 px-4 bg-black bg-opacity-20 hover:bg-black hover:bg-opacity-40 transition-colors">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -157,9 +157,9 @@ export const Navbar = () => {
 
       {/* Ticker / Flash Info */}
       {flashArticles.length > 0 && (
-        <div className="bg-gray-100 border-b border-gray-300 py-2">
+        <div className="bg-white border-b border-gray-200 py-2 shadow-sm">
             <div className="container mx-auto px-4 flex items-center">
-                <div className="bg-[#E50914] text-white text-[10px] font-bold uppercase px-3 py-1 mr-0 relative after:content-[''] after:absolute after:right-[-10px] after:top-0 after:border-l-[10px] after:border-l-[#E50914] after:border-t-[10px] after:border-t-transparent after:border-b-[10px] after:border-b-transparent z-10 whitespace-nowrap">
+                <div className="bg-[var(--primary)] text-white text-[10px] font-bold uppercase px-3 py-1 mr-0 relative after:content-[''] after:absolute after:right-[-10px] after:top-0 after:border-l-[10px] after:border-l-[var(--primary)] after:border-t-[10px] after:border-t-transparent after:border-b-[10px] after:border-b-transparent z-10 whitespace-nowrap shadow-sm">
                     Flash Info
                 </div>
                 <div className="flex-1 overflow-hidden relative h-5 ml-6">
@@ -167,8 +167,8 @@ export const Navbar = () => {
                     <div className="inline-block animate-marquee">
                       {flashArticles.map((article) => (
                         <span key={article.id} className="mx-8">
-                          <span className="text-red-600 mr-2">●</span>
-                          <Link to={`/article/${article.id}`} className="hover:text-[#E50914] transition-colors">
+                          <span className="text-[var(--primary)] mr-2">●</span>
+                          <Link to={`/article/${article.id}`} className="hover:text-[var(--primary)] transition-colors">
                             {article.title}
                           </Link>
                         </span>
@@ -177,8 +177,8 @@ export const Navbar = () => {
                     <div className="inline-block animate-marquee-slow">
                       {flashArticles.map((article) => (
                         <span key={`${article.id}-dup`} className="mx-8">
-                          <span className="text-red-600 mr-2">●</span>
-                          <Link to={`/article/${article.id}`} className="hover:text-[#E50914] transition-colors">
+                          <span className="text-[var(--primary)] mr-2">●</span>
+                          <Link to={`/article/${article.id}`} className="hover:text-[var(--primary)] transition-colors">
                             {article.title}
                           </Link>
                         </span>

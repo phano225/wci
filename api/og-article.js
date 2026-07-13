@@ -47,7 +47,8 @@ export default async function handler(req, res) {
     imageUrl = `${SITE_URL}/logo.png`;
   }
 
-  const url = `${SITE_URL}/article/${id}`;
+  const url = escapeHtml(`${SITE_URL}/article/${id}`);
+  imageUrl = escapeHtml(imageUrl);
 
   const html = `<!DOCTYPE html>
 <html lang="fr">

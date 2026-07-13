@@ -263,10 +263,10 @@ export const ArticlePage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <div className="lg:col-span-8">
-            <div className="mb-6 flex justify-between items-center border-b border-gray-100 pb-4">
-                <span className="bg-brand-red text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider shadow-sm">{article.category}</span>
-                <div className="flex items-center gap-2 text-gray-400 bg-gray-50 px-3 py-1 rounded-full" title="Nombre de lecteurs">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-brand-blue">
+            <div className="mb-6 flex justify-between items-center border-b border-[var(--glass-border)] pb-4">
+                <span className="badge-category">{article.category}</span>
+                <div className="flex items-center gap-2 text-gray-500 bg-gray-100 px-3 py-1 rounded-full" title="Nombre de lecteurs">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-[var(--primary)]">
                       <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
                       <path fillRule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clipRule="evenodd" />
                     </svg>
@@ -301,7 +301,7 @@ export const ArticlePage = () => {
                     {article.authorAvatar && (
                         <img src={article.authorAvatar} alt={article.authorName} className="w-10 h-10 rounded-full border border-gray-200 object-cover" />
                     )}
-                    <div className="font-bold text-brand-dark">Par {article.authorName}</div>
+                    <div className="font-bold text-gray-900">Par {article.authorName}</div>
                 </div>
                 <div className="hidden sm:block">•</div>
                 <div>{new Date(article.createdAt).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
@@ -309,16 +309,16 @@ export const ArticlePage = () => {
 
             {/* --- À LIRE AUSSI (suggestions au-dessus du contenu) --- */}
             {also.length > 0 && (
-              <div className="mb-8 border border-gray-100 rounded-xl p-4">
-                <h3 className="font-bold uppercase text-sm text-gray-600 mb-4">À LIRE AUSSI</h3>
+              <div className="mb-8 glass-card p-4 border border-[var(--glass-border)]">
+                <h3 className="font-bold uppercase text-sm text-[var(--primary)] mb-4">À LIRE AUSSI</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {also.map(a => (
                     <Link to={`/article/${a.id}`} key={a.id} className="group block">
-                      <div className="h-28 overflow-hidden rounded mb-2">
-                        <img src={a.imageUrl} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <div className="h-28 overflow-hidden rounded mb-2 img-reveal">
+                        <img src={a.imageUrl} alt={a.title} className="w-full h-full object-cover" />
                       </div>
-                      <div className="text-[10px] font-black uppercase text-brand-red tracking-widest">{a.category}</div>
-                      <div className="text-sm font-bold leading-snug text-gray-900 group-hover:text-brand-blue line-clamp-2">{a.title}</div>
+                      <div className="text-[10px] font-black uppercase text-[var(--primary)] tracking-widest">{a.category}</div>
+                      <div className="text-sm font-bold leading-snug text-gray-900 group-hover:text-[var(--primary)] transition-colors line-clamp-2">{a.title}</div>
                     </Link>
                   ))}
                 </div>
@@ -382,7 +382,7 @@ export const ArticlePage = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-500">Par</div>
-                <div className="font-serif text-xl font-bold text-brand-dark">{article.authorName}</div>
+                <div className="font-serif text-xl font-bold text-gray-900">{article.authorName}</div>
                 {authorProfile?.role && <div className="text-xs text-gray-400 mt-1">{authorProfile.role === 'EDITOR' ? 'Éditeur' : authorProfile.role === 'CONTRIBUTOR' ? 'Contributeur' : 'Rédaction'}</div>}
               </div>
             </div>
@@ -410,14 +410,14 @@ export const ArticlePage = () => {
             </div>
 
             {/* Carousel Articles */}
-            <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-              <div className="bg-gray-50 px-4 py-2 text-[11px] font-black uppercase text-gray-500 tracking-widest">Articles à la une</div>
+            <div className="glass-card overflow-hidden">
+              <div className="bg-gradient-to-r from-[var(--primary)] to-[#e55314] px-4 py-2 text-[11px] font-black uppercase text-white tracking-widest">Articles à la une</div>
               {carouselItems.length > 0 ? (
-                <div className="relative h-64">
+                <div className="relative h-64 img-reveal">
                   <Link to={`/article/${carouselItems[carouselIndex].id}`} className="block h-full">
                     <img src={carouselItems[carouselIndex].imageUrl} alt={carouselItems[carouselIndex].title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                    <span className="absolute top-2 left-2 bg-brand-red text-white text-[10px] font-black uppercase px-2 py-1">{carouselItems[carouselIndex].category}</span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/90 via-transparent to-transparent"></div>
+                    <span className="badge-category absolute top-2 left-2">{carouselItems[carouselIndex].category}</span>
                     <div className="absolute bottom-0 left-0 p-4">
                       <h4 className="text-white font-serif font-bold leading-tight line-clamp-3">{carouselItems[carouselIndex].title}</h4>
                     </div>
@@ -431,8 +431,8 @@ export const ArticlePage = () => {
             </div>
 
             {/* Bloc Vidéo (Carré) */}
-            <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-              <div className="bg-gray-50 px-4 py-2 text-[11px] font-black uppercase text-gray-500 tracking-widest">Vidéo</div>
+            <div className="glass-card overflow-hidden">
+              <div className="bg-gradient-to-r from-[var(--primary)] to-[#e55314] px-4 py-2 text-[11px] font-black uppercase text-white tracking-widest">Vidéo</div>
               {videos.length > 0 ? (
                 <div className="w-full aspect-square bg-black relative">
                   <iframe
@@ -450,11 +450,11 @@ export const ArticlePage = () => {
             </div>
 
             {/* Réseaux Sociaux */}
-            <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-              <div className="bg-gray-50 px-4 py-2 text-[11px] font-black uppercase text-gray-500 tracking-widest">Suivez-nous</div>
+            <div className="glass-card overflow-hidden">
+              <div className="bg-gradient-to-r from-[var(--primary)] to-[#e55314] px-4 py-2 text-[11px] font-black uppercase text-white tracking-widest">Suivez-nous</div>
               <div className="grid grid-cols-2 gap-3 p-4">
                 {socialLinks.map(s => (
-                  <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white font-bold ${s.bgColor || 'bg-gray-700'}`}>
+                  <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white font-bold transition-transform hover:scale-105 ${s.bgColor || 'bg-gray-700'}`}>
                     <i className={s.iconClass}></i>
                     <span className="text-xs uppercase">{s.platform}</span>
                   </a>

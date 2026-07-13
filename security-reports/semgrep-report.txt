@@ -1,0 +1,170 @@
+                    
+                    
+┌──────────────────┐
+│ 26 Code Findings │
+└──────────────────┘
+          
+    .npmrc
+    ❯❱ package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age
+          ❰❰ Blocking ❱❱
+          This .npmrc does not set a minimum release age or sets it too low. Newly published packages can be
+          malicious or unstable. Add `min-release-age = 7` to wait 7 days before resolving newly published  
+          package versions. Added in: v11.10 Reference: https://github.blog/changelog/2026-02-18-npm-bulk-  
+          trusted-publishing-config-and-script-security-now-generally-available/                            
+          Details: https://sg.run/GRo1z                                                                     
+                                                                                                            
+            1┆ legacy-peer-deps=true
+                     
+    api/og-article.js
+    ❯❱ javascript.express.security.injection.raw-html-format.raw-html-format
+          ❰❰ Blocking ❱❱
+          User data flows into the host portion of this manually-constructed HTML. This can introduce a Cross-
+          Site-Scripting (XSS) vulnerability if this comes from user-provided input. Consider using a         
+          sanitization library such as DOMPurify to sanitize the HTML within.                                 
+          Details: https://sg.run/5DO3                                                                        
+                                                                                                              
+           56┆ <title>${title}</title>
+           57┆ <meta name="description" content="${description}" />
+            ⋮┆----------------------------------------
+           57┆ <meta name="description" content="${description}" />
+           58┆
+            ⋮┆----------------------------------------
+           61┆ <meta property="og:url" content="${url}" />
+           62┆ <meta property="og:title" content="${title}" />
+            ⋮┆----------------------------------------
+           62┆ <meta property="og:title" content="${title}" />
+           63┆ <meta property="og:description" content="${description}" />
+            ⋮┆----------------------------------------
+           63┆ <meta property="og:description" content="${description}" />
+           64┆ <meta property="og:image" content="${imageUrl}" />
+            ⋮┆----------------------------------------
+           64┆ <meta property="og:image" content="${imageUrl}" />
+           65┆ <meta property="og:image:width" content="1200" />
+            ⋮┆----------------------------------------
+           71┆ <meta name="twitter:url" content="${url}" />
+           72┆ <meta name="twitter:title" content="${title}" />
+            ⋮┆----------------------------------------
+           72┆ <meta name="twitter:title" content="${title}" />
+           73┆ <meta name="twitter:description" content="${description}" />
+            ⋮┆----------------------------------------
+           73┆ <meta name="twitter:description" content="${description}" />
+           74┆ <meta name="twitter:image" content="${imageUrl}" />
+            ⋮┆----------------------------------------
+           74┆ <meta name="twitter:image" content="${imageUrl}" />
+           75┆
+            ⋮┆----------------------------------------
+           82┆ <h1>${title}</h1>
+           83┆ <img src="${imageUrl}" alt="${title}" style="max-width:100%; display:none;" />
+            ⋮┆----------------------------------------
+           83┆ <img src="${imageUrl}" alt="${title}" style="max-width:100%; display:none;" />
+           84┆ <p>${description}</p>
+            ⋮┆----------------------------------------
+           84┆   <p>${description}</p>
+           85┆ </body>
+                     
+    check-db-setup.js
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+           34┆ console.log(`⚠️ Erreur d'accès à ${table}:`, error.message);
+                           
+    import-wordpress-xml.js
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+          195┆ console.error(`⚠️ Échec batch ${i/batchSize + 1}:`, error.message);
+            ⋮┆----------------------------------------
+          202┆ console.error(`⚠️ Exception batch ${i/batchSize + 1}:`, e.message);
+              
+    index.html
+    ❯❱ html.security.audit.missing-integrity.missing-integrity
+          ❰❰ Blocking ❱❱
+          This tag is missing an 'integrity' subresource integrity attribute. The 'integrity' attribute allows
+          for the browser to verify that externally hosted files (for example from a CDN) are delivered       
+          without unexpected manipulation. Without this attribute, if an attacker can modify the externally   
+          hosted resource, this could lead to XSS and other types of attacks. To prevent this, include the    
+          base64-encoded cryptographic hash of the resource (file) you’re telling the browser to fetch in the 
+          'integrity' attribute for all externally hosted files.                                              
+          Details: https://sg.run/krXA                                                                        
+                                                                                                              
+           28┆ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-
+               awesome/6.4.0/css/all.min.css">                                          
+                                 
+    migrate-images-to-supabase.js
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `from` function argument, this might allow an attacker to cause a Regular    
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          130┆ const pattern = new RegExp(Object.keys(map).map(u => u.replace(/[.*+?^${}()|[\]\\]/g,
+               '\\$&')).join('|'), 'g');                                                            
+            ⋮┆----------------------------------------
+    ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+          ❰❰ Blocking ❱❱
+          RegExp() called with a `to` function argument, this might allow an attacker to cause a Regular      
+          Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+          this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+          controlled input, consider performing input validation or use a regex checking/sanitization library 
+          such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+          ReDoS.                                                                                              
+          Details: https://sg.run/gr65                                                                        
+                                                                                                              
+          130┆ const pattern = new RegExp(Object.keys(map).map(u => u.replace(/[.*+?^${}()|[\]\\]/g,
+               '\\$&')).join('|'), 'g');                                                            
+                          
+    register-auth-users.js
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+           39┆ if (updateError) console.error(`Erreur update ${user.email}:`, updateError);
+            ⋮┆----------------------------------------
+           51┆ console.error(`Erreur création ${user.email}:`, createError);
+                   
+    services/api.ts
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+           14┆ console.error(`Error loading ${key} from storage`, e);
+            ⋮┆----------------------------------------
+           23┆ console.error(`Error saving ${key} to storage`, e);
+                      
+    sync-categories.js
+     ❱ javascript.audit.detect-replaceall-sanitization.detect-replaceall-sanitization
+          ❰❰ Blocking ❱❱
+          Detected a call to `replace()` in an attempt to HTML escape the string `fromRaw`. Manually     
+          sanitizing input through a manually built list can be circumvented in many situations, and it's
+          better to use a well known sanitization library such as `sanitize-html` or `DOMPurify`.        
+          Details: https://sg.run/AzoB                                                                   
+                                                                                                         
+           84┆ const candidates = [fromRaw, fromRaw.replace('&', '&amp;')];
+   
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+           92┆ console.error(`⚠️ Erreur MAJ "${cand}" -> "${to}":`, error);
+
