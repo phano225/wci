@@ -10,6 +10,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: true,
     storageKey: 'wci_auth_token_v3',
     // Bypass Web Locks API which is causing browser hangs
-    lock: ((name: string, acquire: any) => acquire()) as any
+    lock: ((name: string, timeout: number, acquire: () => Promise<any>) => acquire()) as any
   }
 });
