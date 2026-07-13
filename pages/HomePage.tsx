@@ -118,7 +118,7 @@ export const HomePage = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {items.map(article => (
-                    <Link to={`/article/${article.id}`} key={article.id} className="glass-card group block h-full flex flex-col overflow-hidden">
+                    <Link to={`/article/${article.id}`} key={article.id} className="glass-card group h-full flex flex-col overflow-hidden">
                         <div className="relative h-48 img-reveal border-b border-[var(--glass-border)]">
                             <img 
                               src={resolveImage(article.imageUrl, { w: 800, h: 450 })} 
@@ -254,7 +254,7 @@ export const HomePage = () => {
             {/* GRID OF RECENT ARTICLES (3x2) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {recentGrid.map(article => (
-                    <Link to={`/article/${article.id}`} key={article.id} className="glass-card group block h-full flex flex-col overflow-hidden">
+                    <Link to={`/article/${article.id}`} key={article.id} className="glass-card group h-full flex flex-col overflow-hidden">
                         <div className="relative h-40 img-reveal border-b border-[var(--glass-border)]">
                             <img 
                               src={resolveImage(article.imageUrl, { w: 600, h: 400 })} 

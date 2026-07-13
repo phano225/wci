@@ -72,101 +72,22 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // --- MODE HORS LIGNE ---
     if (IS_OFFLINE_MODE) {
-        const demoUsers = [
-            { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
-            { email: 'admin@example.com', password: 'admin123', role: 'ADMIN', name: 'Administrateur' },
-            { email: 'editor@example.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
-            { email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
-        ];
-        const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-        if (demoUser) {
-            setUser({
-                id: 'demo-' + demoUser.role,
-                email: demoUser.email,
-                name: demoUser.name,
-                role: demoUser.role as any,
-                createdAt: new Date().toISOString(),
-                lastLogin: new Date().toISOString(),
-                active: true
-            });
-            return true;
-        }
         return false;
     }
 
-    
     try {
-      
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         console.error('Erreur de connexion Supabase:', error);
-        
-        // FALLBACK: Mode démo si Supabase échoue ou n'est pas configuré
-        // Ceci permet de tester l'interface sans backend fonctionnel
-        
-        
-        const demoUsers = [
-            { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
-            { email: 'admin@example.com', password: 'admin123', role: 'ADMIN', name: 'Administrateur' }, // Support both for transition
-            { email: 'editor@example.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
-            { email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
-        ];
-
-        
-
-        const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-        
-        if (demoUser) {
-            
-            const userProfile: User = {
-                id: 'demo-' + demoUser.role,
-                email: demoUser.email,
-                name: demoUser.name,
-                role: demoUser.role as any,
-                createdAt: new Date().toISOString(),
-                lastLogin: new Date().toISOString(),
-                active: true
-            };
-            setUser(userProfile);
-            return true;
-        } else {
-            
-        }
- 
         return false;
       }
       
-      // Clear app caches on successful login
       try { clearCache(); } catch {}
       return true;
     } catch (e) {
       console.error("Erreur lors de la connexion:", e);
-      // Fallback en cas d'erreur inattendue aussi
-        const demoUsers = [
-            { email: 'admin@example.com', password: 'admin', role: 'ADMIN', name: 'Administrateur' },
-            { email: 'editor@example.com', password: 'editor', role: 'EDITOR', name: 'Éditeur' },
-            { email: 'contrib@example.com', password: 'contrib', role: 'CONTRIBUTOR', name: 'Contributeur' }
-        ];
-
-        const demoUser = demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-        
-        if (demoUser) {
-            
-            const userProfile: User = {
-                id: 'demo-' + demoUser.role,
-                email: demoUser.email,
-                name: demoUser.name,
-                role: demoUser.role as any,
-                createdAt: new Date().toISOString(),
-                lastLogin: new Date().toISOString(),
-                active: true
-            };
-            setUser(userProfile);
-            return true;
-        }
       return false;
     }
   };

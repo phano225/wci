@@ -105,7 +105,7 @@ export const Navbar = () => {
         </div>
         
         {/* Ad Space Right (Leaderboard) */}
-        <div className="hidden md:block w-[728px] h-[90px] bg-gray-100 flex items-center justify-center border border-gray-200">
+        <div className="hidden md:flex w-[728px] h-[90px] bg-gray-100 items-center justify-center border border-gray-200">
             <AdDisplay location={AdLocation.HEADER_LEADERBOARD} />
         </div>
       </div>
@@ -133,7 +133,7 @@ export const Navbar = () => {
                           </Link>
                       </li>
                       {categories.map((cat) => (
-                          <li key={cat} className="border-b md:border-b-0 border-red-700 md:border-l border-red-600">
+                          <li key={cat} className="border-b md:border-b-0 border-red-700 md:border-l md:border-red-600">
                               <Link to={`/?cat=${cat}`} className="block py-4 px-4 md:px-5 hover:bg-black hover:bg-opacity-20 transition-colors">
                                   {cat}
                               </Link>

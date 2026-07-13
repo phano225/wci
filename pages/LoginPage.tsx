@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -33,48 +32,56 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white p-8 rounded shadow-lg w-full max-w-md border-t-4 border-brand-blue">
-        <div className="text-center mb-6">
-            <div className="flex justify-center mb-4">
-                <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--primary)] rounded-full blur-[120px] opacity-40"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[var(--secondary)] rounded-full blur-[120px] opacity-40"></div>
+      
+      <div className="z-10 bg-white/10 backdrop-blur-xl border border-white/20 p-10 rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+                <img src="/logo.png" alt="Logo WCI" className="h-24 w-auto drop-shadow-lg filter brightness-0 invert" />
             </div>
-            <p className="text-sm text-gray-500 uppercase tracking-widest mt-1">Espace Administration</p>
+            <h2 className="text-2xl font-bold text-white mb-2 font-serif">Espace Rédaction</h2>
+            <p className="text-sm text-gray-300 font-light">Connectez-vous pour publier vos articles.</p>
         </div>
         
         {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded text-sm mb-4 border border-red-200">
+            <div className="bg-red-500/20 text-red-200 p-4 rounded-lg text-sm mb-6 border border-red-500/30 flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 {error}
             </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">Adresse Email</label>
             <input 
                 type="email"
                 required
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-brand-blue outline-none bg-white text-gray-900 placeholder-gray-500"
-                placeholder="admin@example.com"
+                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent outline-none text-white placeholder-gray-400 transition-all shadow-inner"
+                placeholder="votre.email@worldcanalinfo.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Mot de passe</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">Mot de passe</label>
             <div className="relative">
                 <input 
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-3 pr-12 border border-gray-300 rounded focus:ring-2 focus:ring-brand-blue outline-none bg-white text-gray-900 placeholder-gray-500"
-                    placeholder="Votre mot de passe"
+                    className="w-full p-4 pr-12 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent outline-none text-white placeholder-gray-400 transition-all shadow-inner"
+                    placeholder="••••••••"
                 />
                 <button 
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-blue transition-colors focus:outline-none"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors focus:outline-none"
                     title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
                     {showPassword ? (
@@ -93,14 +100,17 @@ export const LoginPage = () => {
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className={`w-full bg-brand-blue text-white font-bold py-3 rounded hover:bg-blue-700 transition-colors shadow-md active:scale-[0.98] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`w-full bg-gradient-to-r from-[var(--primary)] to-[#e55314] text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-[var(--primary)]/30 transition-all active:scale-[0.98] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            {isSubmitting ? 'Connexion en cours...' : 'Se Connecter'}
+            {isSubmitting ? 'Authentification...' : 'Connexion au Dashboard'}
           </button>
 
-          <div className="text-center mt-4">
-            <button type="button" onClick={() => navigate('/')} className="text-sm text-gray-500 hover:text-brand-blue hover:underline transition-colors">
-                Retour au site public
+          <div className="text-center pt-4 border-t border-white/10 mt-6">
+            <button type="button" onClick={() => navigate('/')} className="text-sm text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2 mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour au site WCI
             </button>
           </div>
         </form>

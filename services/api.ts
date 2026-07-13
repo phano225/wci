@@ -676,13 +676,16 @@ export const uploadImage = async (file: File): Promise<string> => {
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-        .from('images')
+        .from('wci-media')
         .upload(filePath, file);
 
     if (uploadError) {
+        console.error('Error uploading image:', uploadError);
         throw uploadError;
     }
 
-    const { data } = supabase.storage.from('images').getPublicUrl(filePath);
-    return data.publicUrl;
+    const { data: publicUrlData } = supabase.storage
+        .from('wci-media')
+        .getPublicUrl(filePath);
+    return publicUrlData.publicUrl;
 };

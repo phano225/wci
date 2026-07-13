@@ -87,7 +87,33 @@ export const AdminDashboard = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
+
   const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = useState(false);
+  const [confirmSaveStatus, setConfirmSaveStatus] = useState<ArticleStatus | null>(null);
+  const quillRef = useRef<ReactQuill>(null);
+
+  const imageHandler = React.useCallback(() => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+    input.onchange = async () => {
+      const file = input.files ? input.files[0] : null;
+      if (!file) return;
+      try {
+        const url = await uploadImage(file);
+        const quill = quillRef.current?.getEditor();
+        if (quill) {
+          const range = quill.getSelection(true);
+          quill.insertEmbed(range.index, 'image', url);
+          quill.setSelection(range.index + 1, 0);
+        }
+      } catch (e) {
+        alert("Erreur lors de l'upload de l'image.");
+      }
+    };
+  }, []);
+
   
   const [currentArticle, setCurrentArticle] = useState<Partial<Article>>({});
   const [currentCategory, setCurrentCategory] = useState<Partial<Category>>({});
@@ -120,14 +146,18 @@ export const AdminDashboard = () => {
 
   // --- EDITOR MODULES ---
   const modules = React.useMemo(() => ({
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-      ['link', 'image', 'video'],
-      ['clean']
-    ],
-  }), []);
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+        [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+        ['link', 'image', 'video'],
+        ['clean']
+      ],
+      handlers: { image: imageHandler }
+    },
+    imageResize: { parchment: Quill.import('parchment'), modules: ['Resize', 'DisplaySize'] }
+  }), [imageHandler]);
 
   useEffect(() => {
     if (user) {
@@ -352,7 +382,7 @@ export const AdminDashboard = () => {
     e.target.value = '';
   };
 
-  const handleSaveArticle = async (targetStatus: ArticleStatus) => {
+  const handleSaveArticleActual = async (targetStatus: ArticleStatus) => {
     if (!currentArticle.title || !user) { alert("Le titre est requis."); return; }
     
     setIsProcessing(true);
@@ -864,9 +894,9 @@ export const AdminDashboard = () => {
                 <i className="fas fa-ad w-5 text-center"></i> Publicités
             </button>}
             
-            <button onClick={() => { setActiveTab('videos'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'videos' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('videos'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'videos' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                 <i className="fas fa-video w-5 text-center"></i> Vidéos
-            </button>
+            </button>}
 
             {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('users'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                 <i className="fas fa-users w-5 text-center"></i> Équipe
@@ -887,9 +917,9 @@ export const AdminDashboard = () => {
                 <i className="fas fa-cog w-5 text-center"></i> Paramètres
             </button>}
 
-            <button onClick={() => { setActiveTab('permissions'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'permissions' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('permissions'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'permissions' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                 <i className="fas fa-shield-alt w-5 text-center"></i> Permissions
-            </button>
+            </button>}
         </nav>
         
         <div className="p-6 border-t border-white/5">
@@ -1481,14 +1511,14 @@ export const AdminDashboard = () => {
                 
                 {/* Desktop Actions */}
                 <div className="hidden md:flex gap-2">
-                    <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-700 text-gray-300 rounded-2xl font-black text-xs uppercase hover:bg-gray-800 whitespace-nowrap">Brouillon</button>
+                    <button onClick={() => setConfirmSaveStatus(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-700 text-gray-300 rounded-2xl font-black text-xs uppercase hover:bg-gray-800 whitespace-nowrap">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-[#fbbf24] text-black rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
+                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-[#fbbf24] text-black rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticle(ArticleStatus.SUBMITTED)} className="px-12 py-4 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">SOUMETTRE</button>
+                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.SUBMITTED)} className="px-12 py-4 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">SOUMETTRE</button>
                     )}
                 </div>
 
@@ -1593,7 +1623,7 @@ export const AdminDashboard = () => {
                                     .ql-editor { min-height: 600px; padding: 40px !important; max-width: 900px; margin: 0 auto; }
                                 }
                             `}</style>
-                            <ReactQuill 
+                            <ReactQuill ref={quillRef}
                                 theme="snow"
                                 value={currentArticle.content || ''}
                                 onChange={(content) => setCurrentArticle(prev => ({ ...prev, content }))}
@@ -1607,14 +1637,14 @@ export const AdminDashboard = () => {
 
                 {/* Mobile Bottom Action Bar */}
                 <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-gray-800 p-3 z-40 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
-                    <button onClick={() => handleSaveArticle(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-700 bg-transparent rounded-xl font-black text-[10px] uppercase text-gray-300">Brouillon</button>
+                    <button onClick={() => setConfirmSaveStatus(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-700 bg-transparent rounded-xl font-black text-[10px] uppercase text-gray-300">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticle(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-[#fbbf24] text-black rounded-xl font-black text-xs uppercase shadow-lg">ENREGISTRER</button>
+                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-[#fbbf24] text-black rounded-xl font-black text-xs uppercase shadow-lg">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticle(ArticleStatus.SUBMITTED)} className="flex-[2] py-3 bg-brand-yellow text-brand-dark rounded-xl font-black text-xs uppercase shadow-lg">SOUMETTRE</button>
+                        <button onClick={() => setConfirmSaveStatus(ArticleStatus.SUBMITTED)} className="flex-[2] py-3 bg-brand-yellow text-brand-dark rounded-xl font-black text-xs uppercase shadow-lg">SOUMETTRE</button>
                     )}
                 </div>
 
