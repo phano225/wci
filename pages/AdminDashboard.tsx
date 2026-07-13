@@ -66,7 +66,11 @@ const sortCategoriesForDisplay = (list: Category[]) =>
 export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social' | 'settings' | 'permissions'>('articles');
+  const [currentPage, setCurrentPage] = useState(1);
+  const articlesPerPage = 10;
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -164,6 +168,15 @@ export const AdminDashboard = () => {
       loadData();
     }
   }, [user, activeTab]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const indexOfLastArticle = currentPage * articlesPerPage;
+  const indexOfFirstArticle = indexOfLastArticle - articlesPerPage;
+  const currentArticles = articles.slice(indexOfFirstArticle, indexOfLastArticle);
+  const totalPages = Math.ceil(articles.length / articlesPerPage);
 
   if (!user) {
       return <LoginPage />;
@@ -1015,6 +1028,27 @@ export const AdminDashboard = () => {
                         {categories.map(c => (
                           <option key={c.id} value={c.name}>{c.name}</option>
                         ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                       </select>
                       <button
                         onClick={handleBulkChangeCategory}
@@ -1034,7 +1068,7 @@ export const AdminDashboard = () => {
                     </div>
                   </div>
                 )}
-                {articles.map(art => (
+                {currentArticles.map(art => (
                     <div key={art.id} className="bg-white p-3 md:p-5 rounded-2xl border border-gray-100 flex flex-row items-center gap-3 md:gap-5 hover:shadow-md transition-all group relative overflow-hidden">
                         {/* Status Strip */}
                         <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
@@ -1084,6 +1118,27 @@ export const AdminDashboard = () => {
                         </div>
                     </div>
                 ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                 {articles.length === 0 && (
                     <div className="flex flex-col items-center justify-center p-12 bg-white rounded-[35px] border border-dashed border-gray-300 text-center">
                         <div className="text-4xl mb-4">📄</div>
@@ -1117,6 +1172,27 @@ export const AdminDashboard = () => {
                         </div>
                     </div>
                 ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                 {articles.filter(art => art.status === ArticleStatus.SUBMITTED).length === 0 && (
                     <div className="bg-white p-6 md:p-12 rounded-[35px] text-center">
                         <p className="text-gray-500 text-lg">Aucune soumission en attente</p>
@@ -1161,6 +1237,27 @@ export const AdminDashboard = () => {
                                 />
                             </div>
                         ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                     </div>
                 </div>
 
@@ -1198,6 +1295,27 @@ export const AdminDashboard = () => {
                             </div>
                         </div>
                     ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                 </div>
             </div>
         )}
@@ -1220,6 +1338,27 @@ export const AdminDashboard = () => {
                         </div>
                     </div>
                 ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
             </div>
         )}
 
@@ -1253,6 +1392,27 @@ export const AdminDashboard = () => {
                                 </td>
                             </tr>
                         ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                     </tbody>
                 </table>
             </div>
@@ -1285,6 +1445,27 @@ export const AdminDashboard = () => {
                         </div>
                     </div>
                 ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
             </div>
         )}
 
@@ -1314,6 +1495,27 @@ export const AdminDashboard = () => {
                                 </td>
                             </tr>
                         ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                     </tbody>
                 </table>
                 {videos.length === 0 && <div className="text-center p-10 text-gray-400">Aucune vidéo trouvée.</div>}
@@ -1352,6 +1554,27 @@ export const AdminDashboard = () => {
                                 </td>
                             </tr>
                         ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                     </tbody>
                 </table>
                 {socialLinks.length === 0 && <div className="text-center p-10 text-gray-400">Aucun réseau social configuré.</div>}
@@ -1438,6 +1661,27 @@ export const AdminDashboard = () => {
                                     </td>
                                 </tr>
                             ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                         </tbody>
                     </table>
                 </div>
@@ -1813,6 +2057,27 @@ export const AdminDashboard = () => {
                         {categories.filter(c => c.id !== currentCategory.id).map(c => (
                           <option key={c.id} value={c.name}>{c.name}</option>
                         ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                         <option value="__new__">Créer une nouvelle rubrique...</option>
                       </select>
                     </div>
@@ -1989,6 +2254,27 @@ export const AdminDashboard = () => {
                                     <span className="text-[8px] sm:text-[9px] font-bold uppercase truncate w-full text-center">{icon.name}</span>
                                 </button>
                             ))}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Précédent
+                        </button>
+                        <span className="text-sm font-bold text-gray-500">
+                            Page {currentPage} sur {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
                         </div>
                     </div>
 
