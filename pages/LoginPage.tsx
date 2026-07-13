@@ -19,9 +19,10 @@ export const LoginPage = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/admin');
+        window.location.href = '/admin'; // Force full reload to bypass any React Router state bugs
+        return; // Early return so we don't set isSubmitting(false) while reloading
       } else {
-        setError('Email ou mot de passe incorrect.');
+        setError('Email ou mot de passe incorrect. Vérifiez vos identifiants.');
       }
     } catch (error) {
       console.error('Erreur lors de la connexion:', error);

@@ -77,7 +77,15 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     }
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // Add a timeout to prevent hanging forever
+      const timeout = new Promise<{error: any}>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout de connexion')), 15000)
+      );
+      
+      const { error } = await Promise.race([
+          supabase.auth.signInWithPassword({ email, password }),
+          timeout
+      ]);
       
       if (error) {
         console.error('Erreur de connexion Supabase:', error);
