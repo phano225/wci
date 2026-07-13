@@ -32,9 +32,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LoginPage } from './LoginPage';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import ImageResize from 'quill-image-resize-module-react';
-
-Quill.register('modules/imageResize', ImageResize);
+Quill.register('modules/imageResize', function() {}); // Placeholder to prevent errors before dynamic load
 
 const formatPermissionName = (key: string) => {
     const map: Record<string, string> = {
@@ -167,6 +165,14 @@ export const AdminDashboard = () => {
     if (user) {
       loadData();
     }
+    // Dynamic import to avoid Vite production crash with CommonJS module
+    (window as any).Quill = Quill;
+    import('quill-image-resize-module-react').then((module) => {
+      try {
+        const ImageResize = module.default || module;
+        Quill.register('modules/imageResize', ImageResize);
+      } catch(e) {}
+    }).catch(() => {});
   }, [user, activeTab]);
 
   useEffect(() => {
