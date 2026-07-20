@@ -677,9 +677,17 @@ export const uploadImage = async (file: File): Promise<string> => {
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    // Add a timeout to prevent hanging on slow networks
+    const timeoutPromise = new Promise<{error: any}>((_, reject) => 
+        setTimeout(() => reject(new Error('Délai d\'attente dépassé. Veuillez réessayer avec une image plus petite ou vérifier votre connexion.')), 30000)
+    );
+
+    const uploadPromise = supabase.storage
         .from('wci-media')
         .upload(filePath, file);
+
+    const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
+    const uploadError = result?.error;
 
     if (uploadError) {
         console.error('Error uploading image:', uploadError);
