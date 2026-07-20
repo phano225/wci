@@ -105,9 +105,10 @@ export const AdminDashboard = () => {
         const url = await uploadImage(file);
         const quill = quillRef.current?.getEditor();
         if (quill) {
-          const range = quill.getSelection(true);
-          quill.insertEmbed(range.index, 'image', url);
-          quill.setSelection(range.index + 1, 0);
+          const range = quill.getSelection();
+          const index = range ? range.index : quill.getLength();
+          quill.insertEmbed(index, 'image', url);
+          quill.setSelection(index + 1, 0);
         }
       } catch (e) {
         alert("Erreur lors de l'upload de l'image.");
