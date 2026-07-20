@@ -292,9 +292,16 @@ export const ArticlePage = () => {
             
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-500 mb-8 border-b border-gray-100 pb-6">
                 <div className="flex items-center gap-2">
-                    {article.authorAvatar && (
-                        <img src={article.authorAvatar} alt={article.authorName} className="w-10 h-10 rounded-full border border-gray-200 object-cover" />
-                    )}
+                    <img 
+                        src={authorProfile?.avatar || article.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(article.authorName)}&background=random`}
+                        alt={article.authorName} 
+                        className="w-10 h-10 rounded-full border border-gray-200 object-cover" 
+                        onError={(e) => {
+                            const img = e.currentTarget as HTMLImageElement;
+                            img.onerror = null;
+                            img.src = 'https://via.placeholder.com/40?text=A';
+                        }}
+                    />
                     <div className="font-bold text-gray-900">Par {article.authorName}</div>
                 </div>
                 <div className="hidden sm:block">•</div>
@@ -364,7 +371,7 @@ export const ArticlePage = () => {
             <div className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 mb-8">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                 <img
-                  src={authorProfile?.avatar || article.authorAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=journalist'}
+                  src={authorProfile?.avatar || article.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(article.authorName)}&background=random`}
                   alt={article.authorName}
                   className="w-full h-full object-cover"
                   onError={(e) => {
