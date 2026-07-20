@@ -4,6 +4,7 @@ import { PublicLayout } from '../components/PublicLayout';
 import { getArticles, getVideos } from '../services/api';
 import { Article, ArticleStatus, AdLocation, Video } from '../types';
 import { Link, useSearchParams } from 'react-router-dom';
+import { decode } from 'html-entities';
 import { AdDisplay } from '../components/AdDisplay';
 
 // Transforme les URLs d'images WordPress pour éviter ORB via proxy
@@ -111,7 +112,7 @@ export const HomePage = () => {
       return (
         <section className="mb-12 border-b border-gray-100 pb-8 last:border-0">
             <div className="flex items-center mb-6">
-                <h2 className={`text-sm font-bold uppercase text-white px-5 py-2.5 rounded-r-lg shadow-md ${color === 'green' ? 'bg-gradient-to-r from-[var(--secondary)] to-[#007a2e]' : 'bg-gradient-to-r from-[var(--primary)] to-[#e55314]'}`}>{title}</h2>
+                <h2 className={`text-sm font-bold uppercase text-white px-5 py-2.5 rounded-r-lg shadow-md ${color === 'green' ? 'bg-gradient-to-r from-[var(--secondary)] to-[#007a2e]' : 'bg-gradient-to-r from-[var(--primary)] to-[#e55314]'}`}>{decode(title)}</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-gray-300 to-transparent ml-4"></div>
                 <Link to={`/?cat=${title}`} className="text-xs font-bold text-[var(--primary)] uppercase ml-2 hover:underline tracking-wide">Voir plus &rarr;</Link>
             </div>
@@ -133,12 +134,12 @@ export const HomePage = () => {
                               }} 
                             />
                             <div className="absolute top-3 left-3">
-                                <span className={`badge-category ${color === 'green' ? 'green' : ''}`}>{article.category}</span>
+                                <span className={`badge-category ${color === 'green' ? 'green' : ''}`}>{decode(article.category)}</span>
                             </div>
                         </div>
                         <div className="p-4 flex flex-col flex-1">
                             <h3 className="text-[1.1rem] font-serif font-bold text-gray-900 group-hover:text-[var(--primary)] leading-snug mb-2 line-clamp-2 transition-colors">
-                                {article.title}
+                                {decode(article.title)}
                             </h3>
                             <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">{article.excerpt}</p>
                             <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
@@ -184,11 +185,11 @@ export const HomePage = () => {
                     }}
                   />
                   <span className="absolute top-0 left-0 bg-brand-red text-white text-[10px] font-bold uppercase px-2 py-0.5">
-                    {article.category}
+                    {decode(article.category)}
                   </span>
                 </div>
                 <h3 className="text-base font-bold text-gray-900 group-hover:text-brand-red leading-tight line-clamp-3">
-                  {article.title}
+                  {decode(article.title)}
                 </h3>
               </Link>
             ))}
@@ -237,10 +238,10 @@ export const HomePage = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/40 to-transparent opacity-90"></div>
                         <div className="absolute bottom-0 left-0 p-6 md:p-10 w-full">
                             <span className="badge-category mb-4 inline-block">
-                                {featured.category}
+                                {decode(featured.category)}
                             </span>
                             <h1 className="text-2xl md:text-4xl font-serif font-bold text-white leading-tight mb-4 drop-shadow-lg" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-                                {featured.title}
+                                {decode(featured.title)}
                             </h1>
                             <div className="flex items-center text-gray-300 text-sm font-bold uppercase tracking-widest gap-3">
                                 <span style={{ color: 'var(--primary)' }}>●</span>
@@ -270,13 +271,13 @@ export const HomePage = () => {
                             />
                             <div className="absolute top-2 left-2">
                                 <span className="badge-category" style={{ padding: '2px 8px', fontSize: '0.65rem' }}>
-                                    {article.category}
+                                    {decode(article.category)}
                                 </span>
                             </div>
                         </div>
                         <div className="p-4 flex flex-col flex-1">
                             <h3 className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] leading-tight line-clamp-3 transition-colors">
-                                {article.title}
+                                {decode(article.title)}
                             </h3>
                             <div className="mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1">
                                 <i className="far fa-clock"></i> {new Date(article.createdAt).toLocaleDateString()}
@@ -309,11 +310,11 @@ export const HomePage = () => {
                           }}
                         />
                         <span className="absolute top-0 left-0 bg-gray-900/80 text-white text-[10px] font-bold uppercase px-2 py-0.5">
-                          {article.category}
+                          {decode(article.category)}
                         </span>
                       </div>
                       <h3 className="text-base font-bold text-gray-900 group-hover:text-brand-blue leading-tight line-clamp-3">
-                        {article.title}
+                        {decode(article.title)}
                       </h3>
                     </Link>
                   ))}
@@ -349,7 +350,7 @@ export const HomePage = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/90 via-[#1a1a1a]/30 to-transparent"></div>
                     <div className="absolute top-3 left-3">
                         <span className="badge-category">
-                          {carouselItems[carouselIndex].category}
+                          {decode(carouselItems[carouselIndex].category)}
                         </span>
                     </div>
                     {isNew(carouselItems[carouselIndex].createdAt) && (
@@ -359,7 +360,7 @@ export const HomePage = () => {
                       </span>
                     )}
                     <div className="absolute bottom-0 left-0 p-4">
-                      <h3 className="text-white font-serif font-bold text-lg leading-tight line-clamp-3 drop-shadow">{carouselItems[carouselIndex].title}</h3>
+                      <h3 className="text-white font-serif font-bold text-lg leading-tight line-clamp-3 drop-shadow">{decode(carouselItems[carouselIndex].title)}</h3>
                     </div>
                   </Link>
                   <button onClick={() => setCarouselIndex(i => (i - 1 + carouselItems.length) % carouselItems.length)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/70">
@@ -402,9 +403,9 @@ export const HomePage = () => {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
                                 </div>
                             </div>
-                            <h4 className="font-serif font-bold text-xl leading-tight mb-2 text-gray-900">{editoArticle.title}</h4>
+                            <h4 className="font-serif font-bold text-xl leading-tight mb-2 text-gray-900">{decode(editoArticle.title)}</h4>
                             <p className="text-sm text-gray-600 italic leading-relaxed mb-4 line-clamp-4">
-                                "{editoArticle.excerpt}"
+                                "{decode(editoArticle.excerpt)}"
                             </p>
                             <Link to={`/article/${editoArticle.id}`} className="text-xs font-bold text-brand-red uppercase hover:underline">Lire l'édito &rarr;</Link>
                         </>
@@ -440,9 +441,9 @@ export const HomePage = () => {
                                 {idx + 1}
                             </div>
                             <div>
-                                <span className="text-[var(--primary)] text-[10px] font-bold uppercase tracking-wider mb-1 block">{article.category}</span>
+                                <span className="text-[var(--primary)] text-[10px] font-bold uppercase tracking-wider mb-1 block">{decode(article.category)}</span>
                                 <h4 className="text-sm font-medium text-gray-800 group-hover:text-[var(--primary)] leading-snug transition-colors">
-                                    {article.title}
+                                    {decode(article.title)}
                                 </h4>
                             </div>
                         </Link>
@@ -499,9 +500,9 @@ export const HomePage = () => {
                                 )}
                             </div>
                             <div className="flex gap-2">
-                                <span className="text-red-500 text-[10px] font-bold uppercase mt-1">{video.category}</span>
+                                <span className="text-red-500 text-[10px] font-bold uppercase mt-1">{decode(video.category)}</span>
                                 <p className="text-gray-300 text-sm font-bold leading-snug group-hover:text-white line-clamp-2">
-                                    {video.title}
+                                    {decode(video.title)}
                                 </p>
                             </div>
                         </div>

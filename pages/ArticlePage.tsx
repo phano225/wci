@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { decode } from 'html-entities';
 import { PublicLayout } from '../components/PublicLayout';
 import { getArticleById, getArticles, getVideos, getSocialLinks, getUsers, incrementArticleViews } from '../services/api';
 import { Article, ArticleStatus, AdLocation, SocialLink, Video, User } from '../types';
@@ -217,21 +218,21 @@ export const ArticlePage = () => {
     <PublicLayout>
       {article && (
         <Helmet>
-          <title>{`${article.title} | WCI`}</title>
+          <title>{`${decode(article.title)} | WCI`}</title>
           <meta name="description" content={article.excerpt} />
           
           {/* Open Graph / Facebook */}
           <meta property="og:type" content="article" />
           <meta property="og:url" content={window.location.href} />
-          <meta property="og:title" content={article.title} />
+          <meta property="og:title" content={decode(article.title)} />
           <meta property="og:description" content={article.excerpt} />
           <meta property="og:image" content={getAbsoluteUrl(article.imageUrl)} />
-          <meta property="og:image:alt" content={article.title} />
+          <meta property="og:image:alt" content={decode(article.title)} />
 
           {/* Twitter */}
           <meta property="twitter:card" content="summary_large_image" />
           <meta property="twitter:url" content={window.location.href} />
-          <meta property="twitter:title" content={article.title} />
+          <meta property="twitter:title" content={decode(article.title)} />
           <meta property="twitter:description" content={article.excerpt} />
           <meta property="twitter:image" content={getAbsoluteUrl(article.imageUrl)} />
 
@@ -240,7 +241,7 @@ export const ArticlePage = () => {
             {JSON.stringify({
               "@context": "https://schema.org",
               "@type": "NewsArticle",
-              "headline": article.title,
+              "headline": decode(article.title),
               "image": [getAbsoluteUrl(article.imageUrl)],
               "datePublished": article.createdAt,
               "author": [{
@@ -264,10 +265,10 @@ export const ArticlePage = () => {
         
         <div className="lg:col-span-8">
             <div className="mb-6 flex justify-between items-center border-b border-[var(--glass-border)] pb-4">
-                <span className="badge-category">{article.category}</span>
+                <span className="badge-category">{decode(article.category)}</span>
             </div>
             <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-900 leading-tight mb-2">
-                {article.title}
+                {decode(article.title)}
             </h1>
             <div className="mb-6">
               <div className="flex items-center gap-3">
@@ -308,10 +309,10 @@ export const ArticlePage = () => {
                   {also.map(a => (
                     <Link to={`/article/${a.id}`} key={a.id} className="group block">
                       <div className="h-28 overflow-hidden rounded mb-2 img-reveal">
-                        <img src={a.imageUrl} alt={a.title} className="w-full h-full object-cover" />
+                        <img src={a.imageUrl} alt={decode(a.title)} className="w-full h-full object-cover" />
                       </div>
-                      <div className="text-[10px] font-black uppercase text-[var(--primary)] tracking-widest">{a.category}</div>
-                      <div className="text-sm font-bold leading-snug text-gray-900 group-hover:text-[var(--primary)] transition-colors line-clamp-2">{a.title}</div>
+                      <div className="text-[10px] font-black uppercase text-[var(--primary)] tracking-widest">{decode(a.category)}</div>
+                      <div className="text-sm font-bold leading-snug text-gray-900 group-hover:text-[var(--primary)] transition-colors line-clamp-2">{decode(a.title)}</div>
                     </Link>
                   ))}
                 </div>
@@ -341,7 +342,7 @@ export const ArticlePage = () => {
                     <div className="w-full max-h-[500px] overflow-hidden rounded shadow-sm">
                          <img 
                            src={resolveImage(article.imageUrl, { w: 1200, h: 600 })} 
-                           alt={article.title} 
+                           alt={decode(article.title)} 
                            className="w-full h-full object-cover" 
                            referrerPolicy="no-referrer"
                            crossOrigin="anonymous"
@@ -408,11 +409,11 @@ export const ArticlePage = () => {
               {carouselItems.length > 0 ? (
                 <div className="relative h-64 img-reveal">
                   <Link to={`/article/${carouselItems[carouselIndex].id}`} className="block h-full">
-                    <img src={carouselItems[carouselIndex].imageUrl} alt={carouselItems[carouselIndex].title} className="w-full h-full object-cover" />
+                    <img src={carouselItems[carouselIndex].imageUrl} alt={decode(carouselItems[carouselIndex].title)} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/90 via-transparent to-transparent"></div>
-                    <span className="badge-category absolute top-2 left-2">{carouselItems[carouselIndex].category}</span>
+                    <span className="badge-category absolute top-2 left-2">{decode(carouselItems[carouselIndex].category)}</span>
                     <div className="absolute bottom-0 left-0 p-4">
-                      <h4 className="text-white font-serif font-bold leading-tight line-clamp-3">{carouselItems[carouselIndex].title}</h4>
+                      <h4 className="text-white font-serif font-bold leading-tight line-clamp-3">{decode(carouselItems[carouselIndex].title)}</h4>
                     </div>
                   </Link>
                   <button onClick={() => setCarouselIndex(i => (i - 1 + carouselItems.length) % carouselItems.length)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center">‹</button>

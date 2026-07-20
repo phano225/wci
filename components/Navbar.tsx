@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { decode } from 'html-entities';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, AdLocation, Article, ArticleStatus, SocialLink } from '../types';
 import { getCategories, getArticles, getSocialLinks, getCategoryOrder } from '../services/api';
@@ -135,7 +136,7 @@ export const Navbar = () => {
                       {categories.map((cat) => (
                           <li key={cat} className="border-b md:border-b-0 border-red-700 md:border-l md:border-red-600">
                               <Link to={`/?cat=${cat}`} className="block py-4 px-4 md:px-5 hover:bg-black hover:bg-opacity-20 transition-colors">
-                                  {cat}
+                                  {decode(cat)}
                               </Link>
                           </li>
                       ))}
@@ -169,7 +170,7 @@ export const Navbar = () => {
                         <span key={article.id} className="mx-8">
                           <span className="text-[var(--primary)] mr-2">●</span>
                           <Link to={`/article/${article.id}`} className="hover:text-[var(--primary)] transition-colors">
-                            {article.title}
+                            {decode(article.title)}
                           </Link>
                         </span>
                       ))}
@@ -179,7 +180,7 @@ export const Navbar = () => {
                         <span key={`${article.id}-dup`} className="mx-8">
                           <span className="text-[var(--primary)] mr-2">●</span>
                           <Link to={`/article/${article.id}`} className="hover:text-[var(--primary)] transition-colors">
-                            {article.title}
+                            {decode(article.title)}
                           </Link>
                         </span>
                       ))}

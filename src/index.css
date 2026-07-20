@@ -106,14 +106,14 @@ h1, h2, h3, .brand-font {
 .animate-marquee {
   display: inline-block;
   will-change: transform;
-  animation: marquee 80s linear infinite;
+  animation: marquee 160s linear infinite;
 }
 
 .animate-marquee-slow {
   display: inline-block;
   will-change: transform;
-  animation: marquee 80s linear infinite;
-  animation-delay: 40s;
+  animation: marquee 160s linear infinite;
+  animation-delay: 80s;
 }
 
 @keyframes marquee {
