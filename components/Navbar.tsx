@@ -6,6 +6,7 @@ import { UserRole, AdLocation, Article, ArticleStatus, SocialLink } from '../typ
 import { getCategories, getArticles, getSocialLinks, getCategoryOrder } from '../services/api';
 import { AdDisplay } from './AdDisplay';
 import { VisitorCounter } from './VisitorCounter';
+import { PwaInstallPrompt } from './PwaInstallPrompt';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
@@ -60,6 +61,7 @@ export const Navbar = () => {
                 <span className="text-gray-400 hidden sm:inline">
                     {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </span>
+                <PwaInstallPrompt />
             </div>
 
             {/* Right: Socials + Account */}
@@ -106,8 +108,10 @@ export const Navbar = () => {
         </div>
         
         {/* Ad Space Right (Leaderboard) */}
-        <div className="hidden md:flex w-[728px] h-[90px] bg-gray-100 items-center justify-center border border-gray-200">
-            <AdDisplay location={AdLocation.HEADER_LEADERBOARD} />
+        <div className="hidden lg:flex flex-1 justify-end max-w-full overflow-hidden">
+            <div className="w-[728px] h-[90px] bg-gray-100 flex items-center justify-center border border-gray-200 shrink-0">
+                <AdDisplay location={AdLocation.HEADER_LEADERBOARD} />
+            </div>
         </div>
       </div>
 
