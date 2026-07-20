@@ -664,6 +664,56 @@ export const saveMessage = async (message: { name: string; email: string; subjec
     if (error) throw error;
 };
 
+const compressImage = (file: File, maxWidth: number = 1200, quality: number = 0.7): Promise<File> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(
+                        (blob) => {
+                            if (blob) {
+                                // Force .jpg extension since we converted to jpeg
+                                const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                                const compressedFile = new File([blob], newName, {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now(),
+                                });
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file); // fallback
+                            }
+                        },
+                        'image/jpeg',
+                        quality
+                    );
+                } else {
+                    resolve(file); // fallback
+                }
+            };
+            img.onerror = (error) => reject(error);
+        };
+        reader.onerror = (error) => reject(error);
+    });
+};
+
 export const uploadImage = async (file: File): Promise<string> => {
     if (IS_OFFLINE_MODE) {
         return new Promise((resolve) => {
@@ -673,7 +723,17 @@ export const uploadImage = async (file: File): Promise<string> => {
         });
     }
 
-    const fileExt = file.name.split('.').pop();
+    let fileToUpload = file;
+    // Compress image if it's not a gif
+    if (file.type.startsWith('image/') && file.type !== 'image/gif') {
+        try {
+            fileToUpload = await compressImage(file);
+        } catch (e) {
+            console.error("Erreur de compression d'image:", e);
+        }
+    }
+
+    const fileExt = fileToUpload.name.split('.').pop() || 'jpg';
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
@@ -684,7 +744,7 @@ export const uploadImage = async (file: File): Promise<string> => {
 
     const uploadPromise = supabase.storage
         .from('wci-media')
-        .upload(filePath, file);
+        .upload(filePath, fileToUpload);
 
     const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
     const uploadError = result?.error;
