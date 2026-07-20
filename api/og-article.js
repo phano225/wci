@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import sanitizeHtml from 'sanitize-html';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -23,18 +24,8 @@ export default async function handler(req, res) {
     return res.status(404).send('Article not found');
   }
 
-  // Sécuriser les chaînes pour éviter les injections HTML
-  const escapeHtml = (unsafe) => {
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  };
-
-  const title = escapeHtml(article.title || 'Article WCI');
-  const description = escapeHtml(article.excerpt || 'Lisez cet article sur WCI News.');
+  const title = sanitizeHtml(article.title || 'Article WCI', { allowedTags: [], allowedAttributes: {} });
+  const description = sanitizeHtml(article.excerpt || 'Lisez cet article sur WCI News.', { allowedTags: [], allowedAttributes: {} });
   
   let imageUrl = article.imageUrl;
   if (imageUrl && !imageUrl.startsWith('http')) {
@@ -47,8 +38,8 @@ export default async function handler(req, res) {
     imageUrl = `${SITE_URL}/logo.png`;
   }
 
-  const url = escapeHtml(`${SITE_URL}/article/${id}`);
-  imageUrl = escapeHtml(imageUrl);
+  const url = sanitizeHtml(`${SITE_URL}/article/${id}`, { allowedTags: [], allowedAttributes: {} });
+  imageUrl = sanitizeHtml(imageUrl, { allowedTags: [], allowedAttributes: {} });
 
   const html = `<!DOCTYPE html>
 <html lang="fr">

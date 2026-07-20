@@ -1,19 +1,66 @@
                     
                     
 ┌──────────────────┐
-│ 26 Code Findings │
+│ 47 Code Findings │
 └──────────────────┘
-          
-    .npmrc
-    ❯❱ package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age
+               
+    .env.vercel
+   ❯❯❱ generic.secrets.security.detected-jwt-token.detected-jwt-token
           ❰❰ Blocking ❱❱
-          This .npmrc does not set a minimum release age or sets it too low. Newly published packages can be
-          malicious or unstable. Add `min-release-age = 7` to wait 7 days before resolving newly published  
-          package versions. Added in: v11.10 Reference: https://github.blog/changelog/2026-02-18-npm-bulk-  
-          trusted-publishing-config-and-script-security-now-generally-available/                            
-          Details: https://sg.run/GRo1z                                                                     
-                                                                                                            
-            1┆ legacy-peer-deps=true
+          JWT token detected          
+          Details: https://sg.run/05N5
+                                      
+            2┆ VERCEL_OIDC_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1yay00MzAyZWMxYjY3MGY0OGE5
+               OGFkNjFkYWRlNGEyM2JlNyJ9.eyJpc3MiOiJodHRwczovL29pZGMudmVyY2VsLmNvbS9waGFubzIyNXMtcHJvamVjdH
+               MiLCJzdWIiOiJvd25lcjpwaGFubzIyNXMtcHJvamVjdHM6cHJvamVjdDp3Y2k6ZW52aXJvbm1lbnQ6ZGV2ZWxvcG1lb
+               nQiLCJzY29wZSI6Im93bmVyOnBoYW5vMjI1cy1wcm9qZWN0czpwcm9qZWN0OndjaTplbnZpcm9ubWVudDpkZXZlbG9w
+               bWVudCIsImF1ZCI6Imh0dHBzOi8vdmVyY2VsLmNvbS9waGFubzIyNXMtcHJvamVjdHMiLCJvd25lciI6InBoYW5vMjI
+               1cy1wcm9qZWN0cyIsIm93bmVyX2lkIjoidGVhbV9hZ28zbk9QWWl6bHVTTnhzR0cwSmRwMmMiLCJwcm9qZWN0Ijoid2
+               NpIiwicHJvamVjdF9pZCI6InByal9CaUJhNWZ0R2RxV2ZmNlVscW9HM2dLdjJETXNTIiwiZW52aXJvbm1lbnQiOiJkZ
+               XZlbG9wbWVudCIsInBsYW4iOiJob2JieSIsInVzZXJfaWQiOiJ0Wll4ZGZtNllGR1FJQ0JSdEFFWm1wdGUiLCJjbGll
+               bnRfaWQiOiJjbF9IWXlPUEJOdEZNZkhoYVVuOUw0UVBmVFp6NlRQNDdicCIsIm5iZiI6MTc4Mzk4MDgzMiwiaWF0Ijo
+               xNzgzOTgwODMyLCJleHAiOjE3ODQwMjQwMzJ9.EjqDPi-XjDnjH8AJOCOfOtSJsR2mOIMuIMQ_WZpWAKiGKBz9Oiwcj
+               o7jctpIJZK9y59Bkip_Xih48aqCAvLdWXAg_KedozjeVhxYQiPlqPqb63riMB1jBraakktb8LdeJx70lE0T9MB9DmoJ
+               nv7oFRcqN2ibnU3VGmaHT540K9ZKocdhf-4mdYH7wFN5FN-MbPsf8rAbnbuj7QyCe15g6PTUMJVT4PVMIbOYfAp2YoW
+               AXINdTpdId9AKw1nKgyIdMggT9kK3JyRmCkiX_KEMqfYoqn7ylJOBuj8fDsVbDYBJ0iIo7Rp4abOTZbPRdzCzxs7_21
+               Ph6Q59LpgfBrmqYg"                                                                          
+            ⋮┆----------------------------------------
+            3┆ VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
+               I6InZkYm5zZm9hZ21kc2h5bG9uYnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMTU0MzksImV4cCI6MjA4MjY5M
+               TQzOX0.oDyTzUvpv0kppt1iBVBZ6_WWnW_3wbb_RVjuhKmMvY4"                                        
+                    
+    .env.vercel.prod
+   ❯❯❱ generic.secrets.security.detected-jwt-token.detected-jwt-token
+          ❰❰ Blocking ❱❱
+          JWT token detected          
+          Details: https://sg.run/05N5
+                                      
+            2┆ NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
+               sInJlZiI6InZkYm5zZm9hZ21kc2h5bG9uYnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMTU0MzksImV4cCI6Mj
+               A4MjY5MTQzOX0.oDyTzUvpv0kppt1iBVBZ6_WWnW_3wbb_RVjuhKmMvY4"                                 
+            ⋮┆----------------------------------------
+           13┆ SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ
+               kYm5zZm9hZ21kc2h5bG9uYnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMTU0MzksImV4cCI6MjA4MjY5MTQzOX
+               0.oDyTzUvpv0kppt1iBVBZ6_WWnW_3wbb_RVjuhKmMvY4"                                             
+            ⋮┆----------------------------------------
+           36┆ VERCEL_OIDC_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1yay00MzAyZWMxYjY3MGY0OGE5
+               OGFkNjFkYWRlNGEyM2JlNyJ9.eyJpc3MiOiJodHRwczovL29pZGMudmVyY2VsLmNvbS9waGFubzIyNXMtcHJvamVjdH
+               MiLCJzdWIiOiJvd25lcjpwaGFubzIyNXMtcHJvamVjdHM6cHJvamVjdDp3Y2k6ZW52aXJvbm1lbnQ6ZGV2ZWxvcG1lb
+               nQiLCJzY29wZSI6Im93bmVyOnBoYW5vMjI1cy1wcm9qZWN0czpwcm9qZWN0OndjaTplbnZpcm9ubWVudDpkZXZlbG9w
+               bWVudCIsImF1ZCI6Imh0dHBzOi8vdmVyY2VsLmNvbS9waGFubzIyNXMtcHJvamVjdHMiLCJvd25lciI6InBoYW5vMjI
+               1cy1wcm9qZWN0cyIsIm93bmVyX2lkIjoidGVhbV9hZ28zbk9QWWl6bHVTTnhzR0cwSmRwMmMiLCJwcm9qZWN0Ijoid2
+               NpIiwicHJvamVjdF9pZCI6InByal9CaUJhNWZ0R2RxV2ZmNlVscW9HM2dLdjJETXNTIiwiZW52aXJvbm1lbnQiOiJkZ
+               XZlbG9wbWVudCIsInBsYW4iOiJob2JieSIsInVzZXJfaWQiOiJ0Wll4ZGZtNllGR1FJQ0JSdEFFWm1wdGUiLCJjbGll
+               bnRfaWQiOiJjbF9IWXlPUEJOdEZNZkhoYVVuOUw0UVBmVFp6NlRQNDdicCIsIm5iZiI6MTc4Mzk4MDg0NSwiaWF0Ijo
+               xNzgzOTgwODQ1LCJleHAiOjE3ODQwMjQwNDV9.Y-4OtImFzgPoKPo9OutI8gcldEf-roZ5yL8sEQRfdezLv6L5r1UNT
+               QKhQBeMHK0kGtTKXYW0vxjzlA8YjUuDWUMZ1qdTqCQAvlC6IyKCsu7nQv_I3eFK2j86NopGF_VQpewogeT-Un3Jfoxy
+               tfszNFJ0KwTPpDZAdWYqF1w_f1d_i72wTJ8PvxzcszMjX9NghgOl457aAEd8HPSOyi0aM7nu1YSaTHjPRRV9RLateqi
+               Nm8IQicRtqy8lO2dBUaIyrWQKqt9KxKLyO1tyoc-ehzrbm_oEXkUaQKOXsZmDch-A5uOQ9Ikt9Mu-              
+               LQvSBEAwG5XQmnrCwwqbSKe1_5BWDw"                                                            
+            ⋮┆----------------------------------------
+           39┆ VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
+               I6InZkYm5zZm9hZ21kc2h5bG9uYnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMTU0MzksImV4cCI6MjA4MjY5M
+               TQzOX0.oDyTzUvpv0kppt1iBVBZ6_WWnW_3wbb_RVjuhKmMvY4"                                        
                      
     api/og-article.js
     ❯❱ javascript.express.security.injection.raw-html-format.raw-html-format
@@ -23,44 +70,44 @@
           sanitization library such as DOMPurify to sanitize the HTML within.                                 
           Details: https://sg.run/5DO3                                                                        
                                                                                                               
-           56┆ <title>${title}</title>
-           57┆ <meta name="description" content="${description}" />
+           57┆ <title>${title}</title>
+           58┆ <meta name="description" content="${description}" />
             ⋮┆----------------------------------------
-           57┆ <meta name="description" content="${description}" />
-           58┆
+           58┆ <meta name="description" content="${description}" />
+           59┆
             ⋮┆----------------------------------------
-           61┆ <meta property="og:url" content="${url}" />
-           62┆ <meta property="og:title" content="${title}" />
+           62┆ <meta property="og:url" content="${url}" />
+           63┆ <meta property="og:title" content="${title}" />
             ⋮┆----------------------------------------
-           62┆ <meta property="og:title" content="${title}" />
-           63┆ <meta property="og:description" content="${description}" />
+           63┆ <meta property="og:title" content="${title}" />
+           64┆ <meta property="og:description" content="${description}" />
             ⋮┆----------------------------------------
-           63┆ <meta property="og:description" content="${description}" />
-           64┆ <meta property="og:image" content="${imageUrl}" />
+           64┆ <meta property="og:description" content="${description}" />
+           65┆ <meta property="og:image" content="${imageUrl}" />
             ⋮┆----------------------------------------
-           64┆ <meta property="og:image" content="${imageUrl}" />
-           65┆ <meta property="og:image:width" content="1200" />
+           65┆ <meta property="og:image" content="${imageUrl}" />
+           66┆ <meta property="og:image:width" content="1200" />
             ⋮┆----------------------------------------
-           71┆ <meta name="twitter:url" content="${url}" />
-           72┆ <meta name="twitter:title" content="${title}" />
+           72┆ <meta name="twitter:url" content="${url}" />
+           73┆ <meta name="twitter:title" content="${title}" />
             ⋮┆----------------------------------------
-           72┆ <meta name="twitter:title" content="${title}" />
-           73┆ <meta name="twitter:description" content="${description}" />
+           73┆ <meta name="twitter:title" content="${title}" />
+           74┆ <meta name="twitter:description" content="${description}" />
             ⋮┆----------------------------------------
-           73┆ <meta name="twitter:description" content="${description}" />
-           74┆ <meta name="twitter:image" content="${imageUrl}" />
+           74┆ <meta name="twitter:description" content="${description}" />
+           75┆ <meta name="twitter:image" content="${imageUrl}" />
             ⋮┆----------------------------------------
-           74┆ <meta name="twitter:image" content="${imageUrl}" />
-           75┆
+           75┆ <meta name="twitter:image" content="${imageUrl}" />
+           76┆
             ⋮┆----------------------------------------
-           82┆ <h1>${title}</h1>
-           83┆ <img src="${imageUrl}" alt="${title}" style="max-width:100%; display:none;" />
+           83┆ <h1>${title}</h1>
+           84┆ <img src="${imageUrl}" alt="${title}" style="max-width:100%; display:none;" />
             ⋮┆----------------------------------------
-           83┆ <img src="${imageUrl}" alt="${title}" style="max-width:100%; display:none;" />
-           84┆ <p>${description}</p>
+           84┆ <img src="${imageUrl}" alt="${title}" style="max-width:100%; display:none;" />
+           85┆ <p>${description}</p>
             ⋮┆----------------------------------------
-           84┆   <p>${description}</p>
-           85┆ </body>
+           85┆   <p>${description}</p>
+           86┆ </body>
                      
     check-db-setup.js
      ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
@@ -83,20 +130,6 @@
           195┆ console.error(`⚠️ Échec batch ${i/batchSize + 1}:`, error.message);
             ⋮┆----------------------------------------
           202┆ console.error(`⚠️ Exception batch ${i/batchSize + 1}:`, e.message);
-              
-    index.html
-    ❯❱ html.security.audit.missing-integrity.missing-integrity
-          ❰❰ Blocking ❱❱
-          This tag is missing an 'integrity' subresource integrity attribute. The 'integrity' attribute allows
-          for the browser to verify that externally hosted files (for example from a CDN) are delivered       
-          without unexpected manipulation. Without this attribute, if an attacker can modify the externally   
-          hosted resource, this could lead to XSS and other types of attacks. To prevent this, include the    
-          base64-encoded cryptographic hash of the resource (file) you’re telling the browser to fetch in the 
-          'integrity' attribute for all externally hosted files.                                              
-          Details: https://sg.run/krXA                                                                        
-                                                                                                              
-           28┆ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-
-               awesome/6.4.0/css/all.min.css">                                          
                                  
     migrate-images-to-supabase.js
     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
@@ -136,6 +169,86 @@
            39┆ if (updateError) console.error(`Erreur update ${user.email}:`, updateError);
             ⋮┆----------------------------------------
            51┆ console.error(`Erreur création ${user.email}:`, createError);
+                             
+    scripts/migrate-wp-api.js
+     ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+          ❰❰ Blocking ❱❱
+          Detected string concatenation with a non-literal variable in a util.format / console.log function.
+          If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+          constant values for the format string.                                                            
+          Details: https://sg.run/7Y5R                                                                      
+                                                                                                            
+          192┆ if (error) console.error(`Erreur insertion article ${wpPost.slug}:`, error.message);
+                                         
+    security-reports/gitleaks-report.json
+   ❯❯❱ generic.secrets.security.detected-jwt-token.detected-jwt-token
+          ❰❰ Blocking ❱❱
+          JWT token detected          
+          Details: https://sg.run/05N5
+                                      
+            9┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3_
+               qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc'",                                                    
+            ⋮┆----------------------------------------
+           10┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3
+               _qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc",                                                    
+            ⋮┆----------------------------------------
+           30┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5NzU
+               0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU'",                                         
+            ⋮┆----------------------------------------
+           31┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5Nz
+               U0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU",                                         
+            ⋮┆----------------------------------------
+           51┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5NzU
+               0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU'",                                         
+            ⋮┆----------------------------------------
+           52┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5Nz
+               U0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU",                                         
+            ⋮┆----------------------------------------
+           72┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5NzU
+               0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU'",                                         
+            ⋮┆----------------------------------------
+           73┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5Nz
+               U0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU",                                         
+            ⋮┆----------------------------------------
+           93┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3_
+               qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc'",                                                    
+            ⋮┆----------------------------------------
+           94┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3
+               _qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc",                                                    
+            ⋮┆----------------------------------------
+          114┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5NzU
+               0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU'",                                         
+            ⋮┆----------------------------------------
+          115┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMzc1NCwiZXhwIjoyMDgxNzk5Nz
+               U0fQ.EprIGCnYsX3bivBs6n54rBTxooRSKzc0V1XLTQadGiU",                                         
+            ⋮┆----------------------------------------
+          135┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3_
+               qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc'",                                                    
+            ⋮┆----------------------------------------
+          136┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3
+               _qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc",                                                    
+            ⋮┆----------------------------------------
+          156┆ "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2Fp
+               Zm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3_
+               qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc'",                                                    
+            ⋮┆----------------------------------------
+          157┆ "Secret": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYnNhZ2F
+               pZm10eHJyc25nYm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMjM3NTQsImV4cCI6MjA4MTc5OTc1NH0.7L1Fv3
+               _qk0pQUMyLtshuChZ-mY-R3NGQGvB6gpyCDzc",                                                    
                    
     services/api.ts
      ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring

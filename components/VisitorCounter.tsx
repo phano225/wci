@@ -34,48 +34,23 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
   const allFlags = [...africanFlags, ...otherFlags];
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        let base = 900000; // Valeur par défaut
-
-        if (!IS_OFFLINE_MODE) {
-            // On utilise la table 'ads' pour stocker la config (hack pour éviter migration)
-            const { data, error } = await supabase
-              .from('ads')
-              .select('content')
-              .eq('id', 'visitor_counter_config')
-              .single();
-
-            if (data && data.content) {
-                try {
-                    const parsed = JSON.parse(data.content);
-                    if (parsed.base_count) base = parseInt(parsed.base_count);
-                } catch (e) {
-                    // content might be raw text if not json
-                }
-            }
-        }
-
-        // Gestion de l'incrément local "fake"
-        const storageKey = 'wci_visitor_offset';
-        const lastOffset = parseInt(localStorage.getItem(storageKey) || '0');
-        const newOffset = lastOffset + 100000 + Math.floor(Math.random() * 5000); // +100k et un peu d'aléatoire
-        
-        localStorage.setItem(storageKey, newOffset.toString());
-        
-        setCount(base + newOffset);
-      } catch (err: any) {
-        if (err.name !== 'AbortError' && err.message !== 'Failed to fetch') {
-            console.error("Error fetching visitor count", err);
-        }
-        // Fallback
-        setCount(1000000);
-      } finally {
-        setLoading(false);
-      }
+    const calculateDailyCount = () => {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const msSinceStartOfDay = now.getTime() - startOfDay.getTime();
+      const msInADay = 24 * 60 * 60 * 1000;
+      
+      // Calcule un nombre entre 1 et 100 basé sur l'heure de la journée
+      const dailyCount = Math.max(1, Math.floor((msSinceStartOfDay / msInADay) * 100));
+      setCount(dailyCount);
+      setLoading(false);
     };
 
-    fetchSettings();
+    calculateDailyCount();
+    
+    // Met à jour toutes les minutes pour voir l'incrémentation
+    const interval = setInterval(calculateDailyCount, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return null;
@@ -91,7 +66,7 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
                     </svg>
                 </div>
                 <div className="text-xl font-black text-gray-800 tracking-tight">
-                  {count.toLocaleString('fr-FR')} <span className="text-xs font-bold text-gray-500 uppercase">visiteurs</span>
+                  {count} <span className="text-xs font-bold text-gray-500 uppercase">visiteurs par jour</span>
                 </div>
             </div>
 
@@ -124,7 +99,7 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
             </svg>
         </div>
         <div className="text-3xl font-extrabold text-gray-800 tracking-tight">
-          {count.toLocaleString('fr-FR')} <span className="text-xl font-medium text-gray-500">visiteurs</span>
+          {count} <span className="text-xl font-medium text-gray-500">visiteurs par jour</span>
         </div>
       </div>
 

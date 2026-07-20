@@ -265,13 +265,6 @@ export const ArticlePage = () => {
         <div className="lg:col-span-8">
             <div className="mb-6 flex justify-between items-center border-b border-[var(--glass-border)] pb-4">
                 <span className="badge-category">{article.category}</span>
-                <div className="flex items-center gap-2 text-gray-500 bg-gray-100 px-3 py-1 rounded-full" title="Nombre de lecteurs">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-[var(--primary)]">
-                      <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                      <path fillRule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-xs font-bold font-mono">{article.views || 0}</span>
-                </div>
             </div>
             <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-900 leading-tight mb-2">
                 {article.title}
@@ -362,8 +355,8 @@ export const ArticlePage = () => {
                 )}
             </div>
 
-            <div className="prose max-w-none text-gray-800 text-lg leading-relaxed mb-10">
-                <div dangerouslySetInnerHTML={{ __html: article.content.replace(/\n/g, '<br/>') }} />
+            <div className="prose prose-p:my-2 prose-headings:mb-3 prose-headings:mt-6 prose-img:my-4 max-w-none text-gray-800 text-lg leading-relaxed mb-10">
+                <div dangerouslySetInnerHTML={{ __html: article.content }} />
             </div>
 
             {/* --- Auteur (signature) --- */}
