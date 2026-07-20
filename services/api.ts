@@ -239,7 +239,9 @@ export const saveUser = async (user: User): Promise<void> => {
         return;
     }
     try {
-        const { error } = await supabase.from('users').upsert(user);
+        // Ne pas envoyer le mot de passe dans la table publique 'users'
+        const { password, ...userToSave } = user;
+        const { error } = await supabase.from('users').upsert(userToSave);
         if (error) throw error;
     } catch (e) {
         console.error('Error saving user:', e);
