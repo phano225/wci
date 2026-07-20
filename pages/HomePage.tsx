@@ -240,7 +240,7 @@ export const HomePage = () => {
                             <span className="badge-category mb-4 inline-block">
                                 {decode(featured.category)}
                             </span>
-                            <h1 className="text-2xl md:text-4xl font-serif font-bold text-white leading-tight mb-4 drop-shadow-lg" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                            <h1 className="text-xl md:text-3xl font-serif font-bold text-white leading-tight mb-4 drop-shadow-lg" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
                                 {decode(featured.title)}
                             </h1>
                             <div className="flex items-center text-gray-300 text-sm font-bold uppercase tracking-widest gap-3">

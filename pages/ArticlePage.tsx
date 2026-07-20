@@ -67,9 +67,9 @@ export const ArticlePage = () => {
                 setVideos(vids.slice(0, 4));
                 const socials = await getSocialLinks();
                 setSocialLinks(socials);
-                if (found.authorId) {
+                if (found.authorId || found.authorName) {
                   const users = await getUsers();
-                  const au = users.find(u => u.id === found.authorId) || null;
+                  const au = users.find(u => u.id === found.authorId || u.name === found.authorName) || null;
                   setAuthorProfile(au);
                 } else {
                   setAuthorProfile(null);
@@ -267,7 +267,7 @@ export const ArticlePage = () => {
             <div className="mb-6 flex justify-between items-center border-b border-[var(--glass-border)] pb-4">
                 <span className="badge-category">{decode(article.category)}</span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-900 leading-tight mb-2">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-gray-900 leading-tight mb-2">
                 {decode(article.title)}
             </h1>
             <div className="mb-6">
