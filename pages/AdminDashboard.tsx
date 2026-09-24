@@ -668,21 +668,32 @@ export const AdminDashboard = () => {
         return;
     }
 
-    const data: User = {
-        id: currentEditUser.id || `u-${Date.now()}`,
-        name: currentEditUser.name,
-        email: currentEditUser.email,
-        password: currentEditUser.password || '1234',
-        role: currentEditUser.role as UserRole,
-        avatar: currentEditUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentEditUser.name)}`
-    };
-    
-    if (currentEditUser.id === user?.id) updateUser(data);
-    else await saveUser(data);
-    
-    setIsUserModalOpen(false);
-    await loadData();
-    setIsProcessing(false);
+    try {
+      const data: User = {
+          id: currentEditUser.id || `u-${Date.now()}`,
+          name: currentEditUser.name,
+          email: currentEditUser.email,
+          password: currentEditUser.password || '1234',
+          role: currentEditUser.role as UserRole,
+          avatar: currentEditUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentEditUser.name)}`
+      };
+      
+      if (currentEditUser.id === user?.id) {
+        updateUser(data);
+      } else {
+        await saveUser(data);
+      }
+      
+      // Mise à jour ciblée des membres sans recharger 500 articles et toute la base
+      const updatedUsers = await getUsers();
+      setStaff(updatedUsers);
+      setIsUserModalOpen(false);
+    } catch (err: any) {
+      console.error('Erreur sauvegarde utilisateur:', err);
+      alert("Erreur lors de l'enregistrement : " + (err?.message || "Veuillez réessayer."));
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   const handleUserAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1454,7 +1465,20 @@ export const AdminDashboard = () => {
                                                 )}
                                                 {PERMISSIONS.canManageUsers(user?.role!) && m.id !== user?.id && (
                                                     <button 
-                                                        onClick={() => { if(confirm('Supprimer ce membre ?')) deleteUser(m.id).then(loadData); }} 
+                                                        onClick={async () => {
+                                                            if (confirm('Supprimer ce membre ?')) {
+                                                                setIsProcessing(true);
+                                                                try {
+                                                                    await deleteUser(m.id);
+                                                                    const updated = await getUsers();
+                                                                    setStaff(updated);
+                                                                } catch (err: any) {
+                                                                    alert("Erreur lors de la suppression : " + (err?.message || "Échec"));
+                                                                } finally {
+                                                                    setIsProcessing(false);
+                                                                }
+                                                            }
+                                                        }} 
                                                         className="text-red-600 font-bold text-xs uppercase tracking-wider hover:underline active:scale-95"
                                                     >
                                                         Supprimer
@@ -2323,12 +2347,19 @@ export const AdminDashboard = () => {
                       {/* Bouton supprimer seulement pour admin et pas pour soi-même */}
                       {PERMISSIONS.canManageUsers(user?.role!) && currentEditUser.id !== user?.id && currentEditUser.id && (
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (confirm('Supprimer cet utilisateur ?')) {
-                              deleteUser(currentEditUser.id!).then(() => {
+                              setIsProcessing(true);
+                              try {
+                                await deleteUser(currentEditUser.id!);
                                 setIsUserModalOpen(false);
-                                loadData();
-                              });
+                                const updated = await getUsers();
+                                setStaff(updated);
+                              } catch (err: any) {
+                                alert("Erreur lors de la suppression : " + (err?.message || "Échec"));
+                              } finally {
+                                setIsProcessing(false);
+                              }
                             }
                           }}
                           className="w-full py-4 bg-red-50 text-red-600 rounded-[40px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
