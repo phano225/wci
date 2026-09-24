@@ -1029,27 +1029,6 @@ export const AdminDashboard = () => {
                         {categories.map(c => (
                           <option key={c.id} value={c.name}>{c.name}</option>
                         ))}
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-6 gap-2">
-                        <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Précédent
-                        </button>
-                        <span className="text-sm font-bold text-gray-500">
-                            Page {currentPage} sur {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Suivant
-                        </button>
-                    </div>
-                )}
                       </select>
                       <button
                         onClick={handleBulkChangeCategory}
@@ -1742,56 +1721,86 @@ export const AdminDashboard = () => {
 
       {/* --- STUDIO RÉDACTION WYSIWYG MODERNE --- */}
       {isEditorOpen && (
-        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden text-gray-900">
-            <header className="px-4 py-3 md:px-12 md:py-6 border-b border-gray-200 flex flex-row justify-between items-center bg-white z-10 shadow-xs gap-4">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setIsEditorOpen(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full hover:bg-gray-100 text-gray-600 hover:text-gray-900 flex items-center justify-center text-xl md:text-3xl transition-all">✕</button>
-                    <div>
-                        <h2 className="text-lg md:text-2xl font-serif font-black text-gray-900 uppercase tracking-tighter truncate max-w-[150px] md:max-w-none">Éditeur</h2>
+        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in slide-in-from-bottom duration-300 overflow-hidden text-gray-900">
+            {/* Header: Responsive on Mobile & Tablet */}
+            <header className="px-3 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-4 border-b border-gray-200 flex flex-row justify-between items-center bg-white z-20 shadow-2xs gap-2 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                    <button 
+                        onClick={() => setIsEditorOpen(false)} 
+                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full hover:bg-gray-100 active:bg-gray-200 text-gray-600 hover:text-gray-900 flex items-center justify-center text-xl sm:text-2xl transition-all shrink-0 active:scale-95"
+                        title="Fermer l'éditeur"
+                    >
+                        ✕
+                    </button>
+                    <div className="min-w-0">
+                        <h2 className="text-base sm:text-xl md:text-2xl font-serif font-black text-gray-900 uppercase tracking-tight truncate">
+                            Éditeur
+                        </h2>
                         {user?.role === UserRole.CONTRIBUTOR && (
-                            <span className="text-[10px] md:text-xs text-amber-600 font-bold block">Mode Contributeur</span>
+                            <span className="text-[9px] sm:text-xs text-amber-600 font-bold block truncate">Mode Contributeur</span>
                         )}
                     </div>
                 </div>
                 
-                {/* Desktop Actions */}
-                <div className="hidden md:flex gap-3">
-                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="px-8 py-3.5 border-2 border-gray-200 text-gray-700 rounded-2xl font-black text-xs uppercase hover:bg-gray-50 hover:border-gray-300 transition-all whitespace-nowrap">Brouillon</button>
-                    
-                    {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="px-12 py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
-                    )}
-                    
-                    {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="px-12 py-3.5 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-lg hover:scale-105 active:scale-95 transition-all whitespace-nowrap">SOUMETTRE</button>
-                    )}
-                </div>
+                {/* Header Actions: Mobile gear & Tablet/Desktop Action Buttons */}
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    {/* Bouton Réglages (visible sur mobile et tablette < lg) */}
+                    <button 
+                        onClick={() => setIsMobileEditorSettingsOpen(!isMobileEditorSettingsOpen)}
+                        className="lg:hidden h-10 px-3.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-800 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 border border-gray-200 shadow-2xs"
+                        title="Ouvrir les réglages (rubrique, image, résumé)"
+                    >
+                        <span className="text-sm">⚙️</span>
+                        <span className="font-bold">Réglages</span>
+                    </button>
 
-                {/* Mobile Settings Toggle */}
-                <button 
-                    onClick={() => setIsMobileEditorSettingsOpen(!isMobileEditorSettingsOpen)}
-                    className="md:hidden w-10 h-10 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xl shrink-0"
-                >
-                    ⚙️
-                </button>
+                    {/* Desktop & Tablet actions */}
+                    <div className="hidden md:flex items-center gap-2 lg:gap-3">
+                        <button 
+                            onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} 
+                            className="h-10 lg:h-11 px-4 lg:px-6 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-2xs whitespace-nowrap active:scale-95 flex items-center gap-1.5"
+                        >
+                            <span>💾</span> Brouillon
+                        </button>
+                        
+                        {PERMISSIONS.canPublishArticle(user?.role!) && (
+                            <button 
+                                onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} 
+                                className="h-10 lg:h-11 px-5 lg:px-7 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl font-black text-xs uppercase tracking-wide shadow-xs hover:shadow-md transition-all whitespace-nowrap active:scale-95 flex items-center gap-1.5"
+                            >
+                                <span>🚀</span> ENREGISTRER
+                            </button>
+                        )}
+                        
+                        {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
+                            <button 
+                                onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} 
+                                className="h-10 lg:h-11 px-5 lg:px-7 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-wide shadow-xs hover:shadow-md transition-all whitespace-nowrap active:scale-95 flex items-center gap-1.5"
+                            >
+                                <span>📤</span> SOUMETTRE
+                            </button>
+                        )}
+                    </div>
+                </div>
             </header>
 
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-50 relative">
-                <div className="flex-1 overflow-y-auto p-4 md:py-10 md:px-8 pb-24 md:pb-12">
-                    <div className="max-w-[850px] mx-auto space-y-6">
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-slate-50 relative">
+                {/* Main Content Area */}
+                <div className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 lg:p-10 pb-28 md:pb-28 lg:pb-12">
+                    <div className="max-w-[850px] mx-auto space-y-4 sm:space-y-6">
                         {/* Title Section */}
-                        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div className="bg-white p-3.5 sm:p-5 md:p-6 rounded-2xl shadow-2xs border border-gray-200">
                             <input 
                                 type="text" 
-                                placeholder="Saisissez votre titre ici" 
-                                className="w-full text-xl md:text-3xl font-serif font-bold bg-transparent outline-none border-none text-gray-900 placeholder:text-gray-400"
+                                placeholder="Saisissez votre titre ici..." 
+                                className="w-full text-lg sm:text-2xl md:text-3xl font-serif font-bold bg-transparent outline-none border-none text-gray-900 placeholder:text-gray-400"
                                 value={currentArticle.title || ''}
                                 onChange={e => setCurrentArticle({...currentArticle, title: e.target.value})}
                             />
                         </div>
 
-                        {/* Media & AI Actions */}
-                        <div className="flex flex-wrap items-center gap-3">
+                        {/* Media & AI Actions - Responsive Grid on Mobile / Flex on Tablet & Desktop */}
+                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3">
                             <input 
                                 type="file" 
                                 ref={fileInputRef} 
@@ -1801,36 +1810,69 @@ export const AdminDashboard = () => {
                             />
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-white text-gray-700 px-5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold uppercase hover:bg-gray-50 hover:border-gray-400 shadow-xs transition-all flex items-center gap-2"
+                                className="w-full sm:w-auto h-11 sm:h-10 px-3 sm:px-5 bg-white text-gray-700 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-xs font-bold uppercase shadow-2xs transition-all flex items-center justify-center gap-2 active:scale-95"
                             >
-                                <span>📷</span> Média
+                                <span className="text-sm">📷</span> Média
                             </button>
                             <button 
                                 onClick={handleAIFill}
-                                className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-5 py-2.5 rounded-xl border border-amber-300 text-xs font-black uppercase hover:from-amber-100 hover:to-orange-100 hover:border-amber-400 shadow-xs transition-all flex items-center gap-2 tracking-wide"
+                                className="w-full sm:w-auto h-11 sm:h-10 px-3 sm:px-5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center justify-center gap-2 tracking-wide active:scale-95"
                                 title="Générer un article avec World Canal Info AI"
                             >
-                                <span className="text-base">✨</span> World Canal Info AI
+                                <span className="text-sm">✨</span> <span className="truncate">World Canal Info AI</span>
                             </button>
                         </div>
 
-                        {/* Editor Section - LIGHT WHITE THEME */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[500px] md:min-h-[700px] flex flex-col relative overflow-hidden">
+                        {/* Editor Section - LIGHT WHITE THEME with Enhanced Mobile Toolbar */}
+                        <div className="bg-white rounded-2xl shadow-2xs border border-gray-200 min-h-[450px] sm:min-h-[550px] md:min-h-[700px] flex flex-col relative overflow-hidden">
                             <style>{`
                                 /* Toolbar Light Theme */
                                 .ql-toolbar.ql-snow { 
                                     border: none !important; 
                                     border-bottom: 1px solid #e5e7eb !important; 
                                     background: #f9fafb; 
-                                    padding: 12px 14px !important;
+                                    padding: 8px 10px !important;
                                     position: sticky;
                                     top: 0;
                                     z-index: 30;
                                     display: flex;
                                     flex-wrap: wrap;
-                                    gap: 4px;
+                                    align-items: center;
+                                    gap: 3px;
                                 }
                                 
+                                @media (min-width: 640px) {
+                                    .ql-toolbar.ql-snow {
+                                        padding: 10px 14px !important;
+                                        gap: 5px;
+                                    }
+                                }
+
+                                @media (min-width: 768px) {
+                                    .ql-toolbar.ql-snow { 
+                                        padding: 12px 18px !important; 
+                                    }
+                                }
+                                
+                                /* Touch target friendly buttons for mobile */
+                                .ql-toolbar.ql-snow button {
+                                    width: 32px !important;
+                                    height: 32px !important;
+                                    display: flex !important;
+                                    align-items: center !important;
+                                    justify-content: center !important;
+                                    border-radius: 6px !important;
+                                    transition: background-color 0.15s ease !important;
+                                }
+
+                                .ql-toolbar.ql-snow button:hover {
+                                    background-color: #f3f4f6 !important;
+                                }
+
+                                .ql-toolbar.ql-snow button.ql-active {
+                                    background-color: #fef3c7 !important;
+                                }
+
                                 /* Icons Color */
                                 .ql-snow .ql-stroke { stroke: #4b5563 !important; }
                                 .ql-snow .ql-fill { fill: #4b5563 !important; }
@@ -1847,23 +1889,39 @@ export const AdminDashboard = () => {
                                 button:hover .ql-stroke { stroke: #111827 !important; }
                                 button:hover .ql-fill { fill: #111827 !important; }
 
-                                .ql-formats { margin-right: 12px !important; border-right: 1px solid #e5e7eb; padding-right: 12px; }
-                                .ql-formats:last-child { border-right: none; }
+                                .ql-formats { 
+                                    margin-right: 6px !important; 
+                                    border-right: 1px solid #e5e7eb; 
+                                    padding-right: 6px; 
+                                    display: flex;
+                                    align-items: center;
+                                }
+                                @media (min-width: 640px) {
+                                    .ql-formats {
+                                        margin-right: 10px !important;
+                                        padding-right: 10px;
+                                    }
+                                }
                                 
                                 .ql-snow .ql-picker-label { padding-left: 4px !important; }
-                                .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', Georgia, serif; font-size: 18px; background-color: #ffffff; }
+                                .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', Georgia, serif; font-size: 16px; background-color: #ffffff; }
                                 
                                 .ql-editor { 
-                                    min-height: 400px; 
-                                    padding: 20px !important; 
+                                    min-height: 350px; 
+                                    padding: 16px !important; 
                                     color: #1f2937; 
                                     line-height: 1.8;
                                 }
                                 .ql-editor.ql-blank::before { color: #9ca3af !important; font-style: italic; }
 
+                                @media (min-width: 640px) {
+                                    .ql-container.ql-snow { font-size: 17px; }
+                                    .ql-editor { min-height: 450px; padding: 24px !important; }
+                                }
+
                                 @media (min-width: 768px) {
-                                    .ql-toolbar.ql-snow { padding: 14px 20px !important; }
-                                    .ql-editor { min-height: 600px; padding: 35px !important; max-width: 900px; margin: 0 auto; }
+                                    .ql-container.ql-snow { font-size: 18px; }
+                                    .ql-editor { min-height: 600px; padding: 32px !important; max-width: 900px; margin: 0 auto; }
                                 }
                             `}</style>
                             <ReactQuill ref={quillRef}
@@ -1878,39 +1936,65 @@ export const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* Mobile Bottom Action Bar */}
-                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-40 flex gap-3 shadow-lg">
-                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-300 bg-white rounded-xl font-black text-[10px] uppercase text-gray-700">Brouillon</button>
-                    
-                    {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-amber-500 text-white rounded-xl font-black text-xs uppercase shadow-md">ENREGISTRER</button>
-                    )}
-                    
-                    {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="flex-[2] py-3 bg-brand-yellow text-brand-dark rounded-xl font-black text-xs uppercase shadow-md">SOUMETTRE</button>
-                    )}
+                {/* Mobile & Small Tablet Bottom Action Bar */}
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+                    <div className="flex items-center gap-2.5 max-w-lg mx-auto">
+                        <button 
+                            onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} 
+                            className="flex-1 h-12 border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 rounded-xl font-bold text-xs uppercase text-gray-700 shadow-2xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                        >
+                            <span>💾</span> Brouillon
+                        </button>
+                        
+                        {PERMISSIONS.canPublishArticle(user?.role!) && (
+                            <button 
+                                onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} 
+                                className="flex-[1.4] h-12 bg-gradient-to-r from-amber-500 to-amber-600 active:from-amber-600 active:to-amber-700 text-white rounded-xl font-black text-xs uppercase shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"
+                            >
+                                <span>🚀</span> ENREGISTRER
+                            </button>
+                        )}
+                        
+                        {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
+                            <button 
+                                onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} 
+                                className="flex-[1.4] h-12 bg-amber-500 active:bg-amber-600 text-white rounded-xl font-black text-xs uppercase shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"
+                            >
+                                <span>📤</span> SOUMETTRE
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Sidebar - Clean Light Theme */}
+                {/* Sidebar - Clean Light Theme with Smooth Drawer on Mobile/Tablet */}
                 <aside className={`
-                    fixed inset-0 z-50 bg-white overflow-y-auto p-6 transition-transform duration-300 ease-in-out
-                    md:static md:translate-x-0 md:w-[420px] md:border-l md:border-gray-200 md:p-8 md:space-y-8 md:shadow-xs md:z-10
-                    ${isMobileEditorSettingsOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+                    fixed inset-0 z-50 bg-white overflow-y-auto p-4 sm:p-6 transition-transform duration-300 ease-in-out
+                    lg:static lg:translate-x-0 lg:w-[360px] xl:w-[400px] lg:border-l lg:border-gray-200 lg:p-7 lg:space-y-6 lg:shadow-xs lg:z-10
+                    ${isMobileEditorSettingsOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
                 `}>
-                    <div className="flex justify-between items-center mb-8 md:hidden">
-                        <h3 className="text-2xl font-serif font-black text-gray-900 uppercase">Paramètres</h3>
-                        <button onClick={() => setIsMobileEditorSettingsOpen(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl text-gray-700">✕</button>
+                    <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-100 lg:hidden">
+                        <div>
+                            <h3 className="text-lg font-serif font-black text-gray-900 uppercase">Paramètres</h3>
+                            <p className="text-[11px] text-gray-500">Rubrique, image, résumé et vidéo</p>
+                        </div>
+                        <button 
+                            onClick={() => setIsMobileEditorSettingsOpen(false)} 
+                            className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-lg text-gray-700 active:scale-95"
+                            title="Fermer les paramètres"
+                        >
+                            ✕
+                        </button>
                     </div>
 
-                    <div className="space-y-2 mb-6 md:mb-0">
+                    <div className="space-y-2 mb-5 lg:mb-0">
                         <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider">Rubrique</label>
-                        <select className="w-full p-4 bg-gray-50 text-gray-900 rounded-xl font-bold outline-none border border-gray-200 focus:border-amber-500 focus:bg-white transition-all text-sm" value={currentArticle.category || ''} onChange={e => setCurrentArticle({...currentArticle, category: e.target.value})}>
+                        <select className="w-full p-3.5 bg-gray-50 text-gray-900 rounded-xl font-bold outline-none border border-gray-200 focus:border-amber-500 focus:bg-white transition-all text-sm" value={currentArticle.category || ''} onChange={e => setCurrentArticle({...currentArticle, category: e.target.value})}>
                             <option value="">Sélectionner une rubrique...</option>
                             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                         </select>
                     </div>
 
-                    <div className="space-y-2 mb-6 md:mb-0">
+                    <div className="space-y-2 mb-5 lg:mb-0">
                         <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider">Image de Une</label>
                         <input 
                             type="file" 
@@ -1920,29 +2004,39 @@ export const AdminDashboard = () => {
                             onChange={handleFeaturedImage} 
                         />
                         <div className="flex gap-2">
-                            <input type="text" className="flex-1 p-3.5 bg-gray-50 text-gray-900 rounded-xl text-xs font-mono outline-none border border-gray-200 focus:border-amber-500 focus:bg-white" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} placeholder="https://..." />
+                            <input type="text" className="flex-1 p-3 bg-gray-50 text-gray-900 rounded-xl text-xs font-mono outline-none border border-gray-200 focus:border-amber-500 focus:bg-white" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} placeholder="https://..." />
                             <button 
                                 onClick={() => featuredImageRef.current?.click()}
-                                className="w-14 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center justify-center transition-all border border-gray-200"
+                                className="w-12 h-11 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 rounded-xl flex items-center justify-center transition-all border border-gray-200 shrink-0 active:scale-95"
                                 title="Uploader une image locale"
                             >
                                 📷
                             </button>
                         </div>
-                        {currentArticle.imageUrl && <img src={currentArticle.imageUrl} className="w-full h-44 object-cover rounded-2xl shadow-sm border border-gray-200 mt-2" alt="Aperçu" />}
+                        {currentArticle.imageUrl && <img src={currentArticle.imageUrl} className="w-full h-40 object-cover rounded-xl shadow-2xs border border-gray-200 mt-2" alt="Aperçu" />}
                     </div>
 
-                    <div className="bg-gray-50 p-6 rounded-2xl space-y-4 mb-6 md:mb-0 border border-gray-200">
+                    <div className="bg-gray-50 p-4 sm:p-5 rounded-2xl space-y-3 mb-5 lg:mb-0 border border-gray-200">
                         <div className="flex justify-between items-center">
                             <label className="text-[11px] font-black uppercase text-gray-500 tracking-wider">Chapeau (IA)</label>
-                            <button onClick={handleAISummary} className="text-[10px] font-black bg-amber-500 text-white px-4 py-1.5 rounded-full hover:bg-amber-600 transition-all shadow-xs">GÉNÉRER RÉSUMÉ</button>
+                            <button onClick={handleAISummary} className="text-[10px] font-black bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-1.5 rounded-full transition-all shadow-2xs active:scale-95">GÉNÉRER RÉSUMÉ</button>
                         </div>
-                        <textarea className="w-full p-4 bg-white text-gray-800 rounded-xl text-sm italic font-serif border border-gray-200 outline-none focus:border-amber-500 h-32 resize-none shadow-xs" value={currentArticle.excerpt || ''} onChange={e => setCurrentArticle({...currentArticle, excerpt: e.target.value})} placeholder="Court résumé de l'article..." />
+                        <textarea className="w-full p-3.5 bg-white text-gray-800 rounded-xl text-sm italic font-serif border border-gray-200 outline-none focus:border-amber-500 h-28 resize-none shadow-2xs" value={currentArticle.excerpt || ''} onChange={e => setCurrentArticle({...currentArticle, excerpt: e.target.value})} placeholder="Court résumé de l'article..." />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 mb-6 lg:mb-0">
                         <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider">Vidéo (URL optionnelle)</label>
-                        <input type="text" className="w-full p-3.5 bg-gray-50 text-gray-900 rounded-xl text-xs font-mono outline-none border border-gray-200 focus:border-amber-500 focus:bg-white" placeholder="Lien vidéo YouTube..." value={currentArticle.videoUrl || ''} onChange={e => setCurrentArticle({...currentArticle, videoUrl: e.target.value})} />
+                        <input type="text" className="w-full p-3 bg-gray-50 text-gray-900 rounded-xl text-xs font-mono outline-none border border-gray-200 focus:border-amber-500 focus:bg-white" placeholder="Lien vidéo YouTube..." value={currentArticle.videoUrl || ''} onChange={e => setCurrentArticle({...currentArticle, videoUrl: e.target.value})} />
+                    </div>
+
+                    {/* Bouton de confirmation en bas du panneau mobile */}
+                    <div className="pt-2 pb-10 lg:hidden">
+                        <button 
+                            onClick={() => setIsMobileEditorSettingsOpen(false)}
+                            className="w-full h-12 bg-gray-900 hover:bg-black active:bg-gray-800 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
+                        >
+                            ✓ Valider les réglages & Revenir à l'éditeur
+                        </button>
                     </div>
                 </aside>
             </div>
@@ -2059,27 +2153,6 @@ export const AdminDashboard = () => {
                         {categories.filter(c => c.id !== currentCategory.id).map(c => (
                           <option key={c.id} value={c.name}>{c.name}</option>
                         ))}
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-6 gap-2">
-                        <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Précédent
-                        </button>
-                        <span className="text-sm font-bold text-gray-500">
-                            Page {currentPage} sur {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Suivant
-                        </button>
-                    </div>
-                )}
                         <option value="__new__">Créer une nouvelle rubrique...</option>
                       </select>
                     </div>
