@@ -1,19 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabase-config';
-import { IS_OFFLINE_MODE } from '../services/api';
-
-interface VisitorSettings {
-  base_count: number;
-}
+import React from 'react';
 
 interface VisitorCounterProps {
   variant?: 'default' | 'header';
 }
 
 export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'default' }) => {
-  const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-
   // Drapeaux (URLs from flagcdn)
   const africanFlags = [
     { code: 'sn', name: 'Sénégal' },
@@ -33,40 +24,18 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
 
   const allFlags = [...africanFlags, ...otherFlags];
 
-  useEffect(() => {
-    const calculateDailyCount = () => {
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const msSinceStartOfDay = now.getTime() - startOfDay.getTime();
-      const msInADay = 24 * 60 * 60 * 1000;
-      
-      // Calcule un nombre entre 1 et 100 basé sur l'heure de la journée
-      const dailyCount = Math.max(1, Math.floor((msSinceStartOfDay / msInADay) * 100));
-      setCount(dailyCount);
-      setLoading(false);
-    };
-
-    calculateDailyCount();
-    
-    // Met à jour toutes les minutes pour voir l'incrémentation
-    const interval = setInterval(calculateDailyCount, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) return null;
-
   if (variant === 'header') {
       return (
         <div className="hidden xl:flex flex-col items-center justify-center space-y-1 mx-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm min-w-[200px]">
-            {/* Icone et Compteur Compact */}
+            {/* Icone et Titre Compact */}
             <div className="flex items-center space-x-2">
-                <div className="bg-blue-100 p-1.5 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="bg-blue-100 p-1.5 rounded-full shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </div>
-                <div className="text-xl font-black text-gray-800 tracking-tight">
-                  {count} <span className="text-xs font-bold text-gray-500 uppercase">visiteurs par jour</span>
+                <div className="text-xs font-bold text-gray-800 tracking-tight">
+                  Les internautes nous suivent depuis :
                 </div>
             </div>
 
@@ -80,7 +49,7 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
                     height="13"
                     alt={flag.name}
                     title={flag.name}
-                    className="rounded-sm shadow-sm opacity-90 hover:opacity-100 transition-opacity object-cover"
+                    className="rounded-xs shadow-xs opacity-90 hover:opacity-100 hover:scale-110 transition-all object-cover"
                     style={{ width: '18px', height: '13px' }}
                   />
                 ))}
@@ -90,21 +59,21 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
   }
 
   return (
-    <div className="bg-white border-t-4 border-blue-600 shadow-lg rounded-lg p-4 max-w-md mx-auto my-6 flex flex-col items-center justify-center space-y-3 transform hover:scale-105 transition-transform duration-300">
-      {/* Icone et Compteur */}
+    <div className="bg-white border-t-4 border-blue-600 shadow-lg rounded-lg p-5 max-w-md mx-auto my-6 flex flex-col items-center justify-center space-y-3 transform hover:scale-105 transition-transform duration-300">
+      {/* Icone et Titre */}
       <div className="flex items-center space-x-3">
-        <div className="bg-blue-100 p-2 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="bg-blue-100 p-2 rounded-full shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
         </div>
-        <div className="text-3xl font-extrabold text-gray-800 tracking-tight">
-          {count} <span className="text-xl font-medium text-gray-500">visiteurs par jour</span>
+        <div className="text-base sm:text-lg font-bold text-gray-800 tracking-tight text-center">
+          Les internautes nous suivent depuis :
         </div>
       </div>
 
       {/* Drapeaux */}
-      <div className="flex flex-wrap justify-center gap-2 mt-2">
+      <div className="flex flex-wrap justify-center gap-2 pt-1">
         {allFlags.map((flag) => (
           <img 
             key={flag.code}
@@ -114,12 +83,12 @@ export const VisitorCounter: React.FC<VisitorCounterProps> = ({ variant = 'defau
             height="18"
             alt={flag.name}
             title={flag.name}
-            className="rounded shadow-sm hover:opacity-80 transition-opacity object-cover border border-gray-200"
-            style={{ width: '24px', height: '18px' }} // Taille favicon-ish
+            className="rounded shadow-xs hover:scale-110 transition-transform object-cover border border-gray-200"
+            style={{ width: '24px', height: '18px' }}
           />
         ))}
       </div>
-      <div className="text-xs text-gray-400 font-medium">Ils nous suivent depuis le monde entier</div>
+      <div className="text-xs text-gray-400 font-medium">Dans le monde entier</div>
     </div>
   );
 };
