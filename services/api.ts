@@ -645,18 +645,20 @@ export const updateMessageStatus = async (id: string, status: 'READ' | 'ARCHIVED
     if (error) throw error;
 };
 
-export const saveMessage = async (message: { name: string; email: string; subject: string; message: string }): Promise<void> => {
+export const saveMessage = async (message: { name: string; email: string; subject: string; message: string; id?: string }): Promise<void> => {
     if (IS_OFFLINE_MODE) {
         MOCK_MESSAGES.push({
             ...message,
-            id: Math.random().toString(36).substr(2, 9),
+            id: message.id || Math.random().toString(36).substr(2, 9),
             date: new Date().toISOString(),
             status: 'UNREAD'
         });
         saveToStorage('wci_messages', MOCK_MESSAGES);
         return;
     }
+    const messageId = message.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined);
     const { error } = await supabase.from('messages').insert([{
+        ...(messageId ? { id: messageId } : {}),
         ...message,
         date: new Date().toISOString(),
         status: 'UNREAD'
