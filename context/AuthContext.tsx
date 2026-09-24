@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '../types';
+import { User, UserRole } from '../types';
 import { supabase } from '../supabase-config';
 import { getUsers, saveUser, IS_OFFLINE_MODE, clearCache } from '../services/api';
 
@@ -41,26 +41,48 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
           const profile = users.find(u => u.email === session.user.email);
           
           if (profile) {
-            setUser(profile);
-          } else if (users.length === 0 && session.user.email) {
-            // Fallback: If we have a session but couldn't fetch the profile (likely network error),
-            // keep the user logged in with basic info from session to avoid kicking them out.
-            
+            // S'assurer que l'ID correspond toujours à l'ID de session Auth pour les droits RLS
             setUser({
+              ...profile,
+              id: session.user.id
+            });
+          } else if (session.user.email) {
+            // Créer le profil s'il n'existe pas encore dans public.users
+            const metaRole = session.user.user_metadata?.role;
+            const userRole = (session.user.email.includes('admin') || session.user.email.includes('koffi')) 
+              ? UserRole.ADMIN 
+              : (metaRole === 'EDITOR' ? UserRole.EDITOR : UserRole.CONTRIBUTOR);
+
+            const fallbackUser: User = {
                 id: session.user.id,
                 email: session.user.email,
-                name: session.user.email.split('@')[0], // Fallback name
-                role: 'CONTRIBUTOR', // Safe default
+                name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                role: userRole,
+                avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email.split('@')[0])}&background=random`,
                 active: true,
                 createdAt: new Date().toISOString()
-            } as User);
+            };
+
+            setUser(fallbackUser);
+            // Sauvegarder automatiquement en base pour synchroniser
+            saveUser(fallbackUser).catch(e => console.warn('Could not auto-create public user profile:', e));
           } else {
-            
             setUser(null);
           }
         } catch (error) {
           console.error('Erreur lors de la récupération du profil:', error);
-          setUser(null);
+          if (session.user?.email) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email,
+              name: session.user.email.split('@')[0],
+              role: UserRole.CONTRIBUTOR,
+              active: true,
+              createdAt: new Date().toISOString()
+            });
+          } else {
+            setUser(null);
+          }
         }
       } else {
         

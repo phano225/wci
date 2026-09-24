@@ -22,6 +22,7 @@ import {
     saveSocialLink,
     deleteSocialLink,
     uploadImage,
+    uploadAvatar,
     getArticleById,
     getCategoryOrder,
     saveCategoryOrder
@@ -678,10 +679,10 @@ export const AdminDashboard = () => {
     if (!file) return;
     setIsProcessing(true);
     try {
-      const url = await uploadImage(file);
+      const url = await uploadAvatar(file);
       setCurrentEditUser(prev => ({ ...prev, avatar: url }));
     } catch (error) {
-      console.error('Erreur upload avatar:', error);
+      console.error('Erreur upload avatar vers bucket avatars:', error);
       alert("Échec de l'upload de la photo de profil.");
     } finally {
       setIsProcessing(false);
@@ -733,12 +734,15 @@ export const AdminDashboard = () => {
   };
 
   const handleAIFill = async () => {
-    if (!currentArticle.title) { alert("Entrez un titre d'abord."); return; }
+    if (!currentArticle.title) { alert("Veuillez saisir un titre d'abord pour guider World Canal Info AI."); return; }
     setIsProcessing(true);
     try {
         const res = await generateArticleDraft(currentArticle.title, currentArticle.category || 'Information');
         setCurrentArticle(prev => ({ ...prev, content: res }));
-    } catch (e) { alert("Erreur IA. Vérifiez votre clé API Grok."); }
+    } catch (e) { 
+        console.error('Erreur World Canal Info AI:', e);
+        alert("Erreur World Canal Info AI. Vérifiez la configuration."); 
+    }
     setIsProcessing(false);
   };
   
@@ -1738,56 +1742,56 @@ export const AdminDashboard = () => {
 
       {/* --- STUDIO RÉDACTION WYSIWYG MODERNE --- */}
       {isEditorOpen && (
-        <div className="fixed inset-0 bg-[#121212] z-[100] flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden">
-            <header className="px-4 py-3 md:px-12 md:py-6 border-b border-gray-800 flex flex-row justify-between items-center bg-[#181818] z-10 shadow-sm gap-4">
+        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden text-gray-900">
+            <header className="px-4 py-3 md:px-12 md:py-6 border-b border-gray-200 flex flex-row justify-between items-center bg-white z-10 shadow-xs gap-4">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => setIsEditorOpen(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full hover:bg-gray-800 text-white flex items-center justify-center text-xl md:text-3xl transition-all">✕</button>
+                    <button onClick={() => setIsEditorOpen(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full hover:bg-gray-100 text-gray-600 hover:text-gray-900 flex items-center justify-center text-xl md:text-3xl transition-all">✕</button>
                     <div>
-                        <h2 className="text-lg md:text-2xl font-serif font-black text-white uppercase tracking-tighter truncate max-w-[150px] md:max-w-none">Éditeur</h2>
+                        <h2 className="text-lg md:text-2xl font-serif font-black text-gray-900 uppercase tracking-tighter truncate max-w-[150px] md:max-w-none">Éditeur</h2>
                         {user?.role === UserRole.CONTRIBUTOR && (
-                            <span className="text-[10px] md:text-xs text-orange-500 font-bold block">Mode Contributeur</span>
+                            <span className="text-[10px] md:text-xs text-amber-600 font-bold block">Mode Contributeur</span>
                         )}
                     </div>
                 </div>
                 
                 {/* Desktop Actions */}
-                <div className="hidden md:flex gap-2">
-                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="px-8 py-4 border-2 border-gray-700 text-gray-300 rounded-2xl font-black text-xs uppercase hover:bg-gray-800 whitespace-nowrap">Brouillon</button>
+                <div className="hidden md:flex gap-3">
+                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="px-8 py-3.5 border-2 border-gray-200 text-gray-700 rounded-2xl font-black text-xs uppercase hover:bg-gray-50 hover:border-gray-300 transition-all whitespace-nowrap">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="px-12 py-4 bg-[#fbbf24] text-black rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="px-12 py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="px-12 py-4 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap">SOUMETTRE</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="px-12 py-3.5 bg-brand-yellow text-brand-dark rounded-2xl font-black text-xs uppercase shadow-lg hover:scale-105 active:scale-95 transition-all whitespace-nowrap">SOUMETTRE</button>
                     )}
                 </div>
 
                 {/* Mobile Settings Toggle */}
                 <button 
                     onClick={() => setIsMobileEditorSettingsOpen(!isMobileEditorSettingsOpen)}
-                    className="md:hidden w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center text-xl shrink-0"
+                    className="md:hidden w-10 h-10 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xl shrink-0"
                 >
                     ⚙️
                 </button>
             </header>
 
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-[#0a0a0a] relative">
-                <div className="flex-1 overflow-y-auto p-2 md:py-12 md:px-8 pb-24 md:pb-12">
-                    <div className="max-w-[850px] mx-auto">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-50 relative">
+                <div className="flex-1 overflow-y-auto p-4 md:py-10 md:px-8 pb-24 md:pb-12">
+                    <div className="max-w-[850px] mx-auto space-y-6">
                         {/* Title Section */}
-                        <div className="bg-[#141414] p-3 md:p-6 rounded-lg shadow-sm border border-gray-800 mb-4 md:mb-6">
+                        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-200">
                             <input 
                                 type="text" 
                                 placeholder="Saisissez votre titre ici" 
-                                className="w-full text-lg md:text-3xl font-serif font-bold bg-transparent outline-none border-none text-white placeholder:text-gray-600"
+                                className="w-full text-xl md:text-3xl font-serif font-bold bg-transparent outline-none border-none text-gray-900 placeholder:text-gray-400"
                                 value={currentArticle.title || ''}
                                 onChange={e => setCurrentArticle({...currentArticle, title: e.target.value})}
                             />
                         </div>
 
                         {/* Media & AI Actions */}
-                        <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-4">
+                        <div className="flex flex-wrap items-center gap-3">
                             <input 
                                 type="file" 
                                 ref={fileInputRef} 
@@ -1797,71 +1801,69 @@ export const AdminDashboard = () => {
                             />
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-[#141414] text-gray-300 px-4 py-2 rounded border border-gray-700 text-[10px] md:text-xs font-bold uppercase hover:bg-[#1a1a1a] hover:border-gray-600 transition-all flex items-center gap-2"
+                                className="bg-white text-gray-700 px-5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold uppercase hover:bg-gray-50 hover:border-gray-400 shadow-xs transition-all flex items-center gap-2"
                             >
                                 <span>📷</span> Média
                             </button>
                             <button 
                                 onClick={handleAIFill}
-                                className="bg-[#141414] text-gray-300 px-4 py-2 rounded border border-gray-700 text-[10px] md:text-xs font-bold uppercase hover:bg-brand-yellow/10 hover:border-brand-yellow transition-all flex items-center gap-2"
-                                title="Générer un brouillon avec l'IA"
+                                className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 px-5 py-2.5 rounded-xl border border-amber-300 text-xs font-black uppercase hover:from-amber-100 hover:to-orange-100 hover:border-amber-400 shadow-xs transition-all flex items-center gap-2 tracking-wide"
+                                title="Générer un article avec World Canal Info AI"
                             >
-                                <span>✨</span> IA
+                                <span className="text-base">✨</span> World Canal Info AI
                             </button>
                         </div>
 
-                        {/* Editor Section - DARK THEME */}
-                        <div className="bg-[#0a0a0a] rounded-lg shadow-2xl border border-gray-800 min-h-[500px] md:min-h-[700px] flex flex-col relative overflow-visible">
+                        {/* Editor Section - LIGHT WHITE THEME */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[500px] md:min-h-[700px] flex flex-col relative overflow-hidden">
                             <style>{`
-                                /* Toolbar Dark Theme */
+                                /* Toolbar Light Theme */
                                 .ql-toolbar.ql-snow { 
                                     border: none !important; 
-                                    border-bottom: 1px solid #333 !important; 
-                                    background: #141414; 
-                                    padding: 12px 8px !important;
+                                    border-bottom: 1px solid #e5e7eb !important; 
+                                    background: #f9fafb; 
+                                    padding: 12px 14px !important;
                                     position: sticky;
                                     top: 0;
                                     z-index: 30;
                                     display: flex;
                                     flex-wrap: wrap;
-                                    justify-content: center;
-                                    border-top-left-radius: 0.5rem;
-                                    border-top-right-radius: 0.5rem;
+                                    gap: 4px;
                                 }
                                 
-                                /* Icons Color Fix */
-                                .ql-snow .ql-stroke { stroke: #a3a3a3 !important; }
-                                .ql-snow .ql-fill { fill: #a3a3a3 !important; }
-                                .ql-snow .ql-picker { color: #a3a3a3 !important; }
-                                .ql-snow .ql-picker-options { background-color: #1a1a1a !important; color: #a3a3a3 !important; border: 1px solid #333 !important; }
+                                /* Icons Color */
+                                .ql-snow .ql-stroke { stroke: #4b5563 !important; }
+                                .ql-snow .ql-fill { fill: #4b5563 !important; }
+                                .ql-snow .ql-picker { color: #4b5563 !important; }
+                                .ql-snow .ql-picker-options { background-color: #ffffff !important; color: #1f2937 !important; border: 1px solid #e5e7eb !important; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; border-radius: 0.5rem; }
                                 
                                 /* Hover States */
-                                .ql-snow .ql-picker:hover { color: #fff !important; }
-                                .ql-snow .ql-picker:hover .ql-picker-label { color: #fff !important; }
-                                .ql-snow .ql-picker-label:hover { color: #fff !important; }
-                                .ql-snow .ql-picker-item:hover { color: #fff !important; background-color: #333 !important; }
-                                button.ql-active .ql-stroke { stroke: #fbbf24 !important; } /* Active Gold */
-                                button.ql-active .ql-fill { fill: #fbbf24 !important; }
-                                button:hover .ql-stroke { stroke: #fff !important; }
-                                button:hover .ql-fill { fill: #fff !important; }
+                                .ql-snow .ql-picker:hover { color: #111827 !important; }
+                                .ql-snow .ql-picker:hover .ql-picker-label { color: #111827 !important; }
+                                .ql-snow .ql-picker-label:hover { color: #111827 !important; }
+                                .ql-snow .ql-picker-item:hover { color: #d97706 !important; background-color: #fef3c7 !important; }
+                                button.ql-active .ql-stroke { stroke: #d97706 !important; }
+                                button.ql-active .ql-fill { fill: #d97706 !important; }
+                                button:hover .ql-stroke { stroke: #111827 !important; }
+                                button:hover .ql-fill { fill: #111827 !important; }
 
-                                .ql-formats { margin-right: 15px !important; border-right: 1px solid #333; padding-right: 15px; }
+                                .ql-formats { margin-right: 12px !important; border-right: 1px solid #e5e7eb; padding-right: 12px; }
                                 .ql-formats:last-child { border-right: none; }
                                 
                                 .ql-snow .ql-picker-label { padding-left: 4px !important; }
-                                .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', serif; font-size: 18px; background-color: #0a0a0a; }
+                                .ql-container.ql-snow { border: none !important; font-family: 'Merriweather', Georgia, serif; font-size: 18px; background-color: #ffffff; }
                                 
                                 .ql-editor { 
-                                    min-height: 300px; 
-                                    padding: 15px !important; 
-                                    color: #e5e5e5; 
+                                    min-height: 400px; 
+                                    padding: 20px !important; 
+                                    color: #1f2937; 
                                     line-height: 1.8;
                                 }
-                                .ql-editor.ql-blank::before { color: #555 !important; font-style: italic; }
+                                .ql-editor.ql-blank::before { color: #9ca3af !important; font-style: italic; }
 
                                 @media (min-width: 768px) {
-                                    .ql-toolbar.ql-snow { padding: 16px !important; justify-content: flex-start; gap: 5px; }
-                                    .ql-editor { min-height: 600px; padding: 40px !important; max-width: 900px; margin: 0 auto; }
+                                    .ql-toolbar.ql-snow { padding: 14px 20px !important; }
+                                    .ql-editor { min-height: 600px; padding: 35px !important; max-width: 900px; margin: 0 auto; }
                                 }
                             `}</style>
                             <ReactQuill ref={quillRef}
@@ -1870,45 +1872,46 @@ export const AdminDashboard = () => {
                                 onChange={(content) => setCurrentArticle(prev => ({ ...prev, content }))}
                                 modules={modules}
                                 className="flex-1 flex flex-col"
-                                placeholder="Commencez à écrire..."
+                                placeholder="Commencez à écrire votre article..."
                             /> 
                         </div>
                     </div>
                 </div>
 
                 {/* Mobile Bottom Action Bar */}
-                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#121212] border-t border-gray-800 p-3 z-40 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
-                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-700 bg-transparent rounded-xl font-black text-[10px] uppercase text-gray-300">Brouillon</button>
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-40 flex gap-3 shadow-lg">
+                    <button onClick={() => handleSaveArticleActual(ArticleStatus.DRAFT)} className="flex-1 py-3 border border-gray-300 bg-white rounded-xl font-black text-[10px] uppercase text-gray-700">Brouillon</button>
                     
                     {PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-[#fbbf24] text-black rounded-xl font-black text-xs uppercase shadow-lg">ENREGISTRER</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.PUBLISHED)} className="flex-[2] py-3 bg-amber-500 text-white rounded-xl font-black text-xs uppercase shadow-md">ENREGISTRER</button>
                     )}
                     
                     {PERMISSIONS.canSubmitForReview(user?.role!) && !PERMISSIONS.canPublishArticle(user?.role!) && (
-                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="flex-[2] py-3 bg-brand-yellow text-brand-dark rounded-xl font-black text-xs uppercase shadow-lg">SOUMETTRE</button>
+                        <button onClick={() => handleSaveArticleActual(ArticleStatus.SUBMITTED)} className="flex-[2] py-3 bg-brand-yellow text-brand-dark rounded-xl font-black text-xs uppercase shadow-md">SOUMETTRE</button>
                     )}
                 </div>
 
-                {/* Sidebar - Responsive Overlay on Mobile */}
+                {/* Sidebar - Clean Light Theme */}
                 <aside className={`
-                    fixed inset-0 z-50 bg-[#0a0a0a] overflow-y-auto p-6 transition-transform duration-300 ease-in-out
-                    md:static md:translate-x-0 md:w-[450px] md:border-l md:border-gray-800 md:p-12 md:space-y-12 md:shadow-2xl md:z-10
+                    fixed inset-0 z-50 bg-white overflow-y-auto p-6 transition-transform duration-300 ease-in-out
+                    md:static md:translate-x-0 md:w-[420px] md:border-l md:border-gray-200 md:p-8 md:space-y-8 md:shadow-xs md:z-10
                     ${isMobileEditorSettingsOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
                 `}>
                     <div className="flex justify-between items-center mb-8 md:hidden">
-                        <h3 className="text-2xl font-serif font-black text-white uppercase">Paramètres</h3>
-                        <button onClick={() => setIsMobileEditorSettingsOpen(false)} className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl text-white">✕</button>
+                        <h3 className="text-2xl font-serif font-black text-gray-900 uppercase">Paramètres</h3>
+                        <button onClick={() => setIsMobileEditorSettingsOpen(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl text-gray-700">✕</button>
                     </div>
 
-                    <div className="space-y-4 mb-8 md:mb-0">
-                        <label className="block text-[11px] font-black uppercase text-gray-400 tracking-widest">Rubrique</label>
-                        <select className="w-full p-6 bg-[#141414] text-white rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-brand-yellow/30 transition-all" value={currentArticle.category || ''} onChange={e => setCurrentArticle({...currentArticle, category: e.target.value})}>
-                            <option value="">Sélectionner...</option>
+                    <div className="space-y-2 mb-6 md:mb-0">
+                        <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider">Rubrique</label>
+                        <select className="w-full p-4 bg-gray-50 text-gray-900 rounded-xl font-bold outline-none border border-gray-200 focus:border-amber-500 focus:bg-white transition-all text-sm" value={currentArticle.category || ''} onChange={e => setCurrentArticle({...currentArticle, category: e.target.value})}>
+                            <option value="">Sélectionner une rubrique...</option>
                             {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                         </select>
                     </div>
-                    <div className="space-y-4 mb-8 md:mb-0">
-                        <label className="block text-[11px] font-black uppercase text-gray-400 tracking-widest">Image de Une (URL)</label>
+
+                    <div className="space-y-2 mb-6 md:mb-0">
+                        <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider">Image de Une</label>
                         <input 
                             type="file" 
                             ref={featuredImageRef} 
@@ -1917,27 +1920,29 @@ export const AdminDashboard = () => {
                             onChange={handleFeaturedImage} 
                         />
                         <div className="flex gap-2">
-                            <input type="text" className="flex-1 p-6 bg-[#141414] text-white rounded-[25px] text-xs font-mono outline-none" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} placeholder="https://..." />
+                            <input type="text" className="flex-1 p-3.5 bg-gray-50 text-gray-900 rounded-xl text-xs font-mono outline-none border border-gray-200 focus:border-amber-500 focus:bg-white" value={currentArticle.imageUrl || ''} onChange={e => setCurrentArticle({...currentArticle, imageUrl: e.target.value})} placeholder="https://..." />
                             <button 
                                 onClick={() => featuredImageRef.current?.click()}
-                                className="w-16 bg-[#141414] text-white hover:bg-brand-blue hover:text-white rounded-[25px] flex items-center justify-center transition-all border border-gray-800"
+                                className="w-14 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center justify-center transition-all border border-gray-200"
                                 title="Uploader une image locale"
                             >
                                 📷
                             </button>
                         </div>
-                        {currentArticle.imageUrl && <img src={currentArticle.imageUrl} className="w-full h-48 object-cover rounded-[35px] shadow-xl" alt="Aperçu" />}
+                        {currentArticle.imageUrl && <img src={currentArticle.imageUrl} className="w-full h-44 object-cover rounded-2xl shadow-sm border border-gray-200 mt-2" alt="Aperçu" />}
                     </div>
-                    <div className="bg-[#141414] p-10 rounded-[45px] space-y-6 mb-8 md:mb-0 border border-gray-800">
+
+                    <div className="bg-gray-50 p-6 rounded-2xl space-y-4 mb-6 md:mb-0 border border-gray-200">
                         <div className="flex justify-between items-center">
-                            <label className="text-[11px] font-black uppercase text-gray-400 tracking-widest">Chapeau (IA)</label>
-                            <button onClick={handleAISummary} className="text-[9px] font-black bg-brand-yellow text-black px-6 py-2 rounded-full hover:bg-white transition-all">GÉNÉRER RÉSUMÉ</button>
+                            <label className="text-[11px] font-black uppercase text-gray-500 tracking-wider">Chapeau (IA)</label>
+                            <button onClick={handleAISummary} className="text-[10px] font-black bg-amber-500 text-white px-4 py-1.5 rounded-full hover:bg-amber-600 transition-all shadow-xs">GÉNÉRER RÉSUMÉ</button>
                         </div>
-                        <textarea className="w-full p-6 bg-[#0a0a0a] text-gray-300 rounded-[35px] text-base italic font-serif border-none outline-none h-40 resize-none shadow-sm" value={currentArticle.excerpt || ''} onChange={e => setCurrentArticle({...currentArticle, excerpt: e.target.value})} placeholder="Court résumé de l'article..." />
+                        <textarea className="w-full p-4 bg-white text-gray-800 rounded-xl text-sm italic font-serif border border-gray-200 outline-none focus:border-amber-500 h-32 resize-none shadow-xs" value={currentArticle.excerpt || ''} onChange={e => setCurrentArticle({...currentArticle, excerpt: e.target.value})} placeholder="Court résumé de l'article..." />
                     </div>
-                    <div className="space-y-4">
-                        <label className="block text-[11px] font-black uppercase text-gray-400 tracking-widest">Vidéo (URL)</label>
-                        <input type="text" className="w-full p-6 bg-[#141414] text-white rounded-[25px] text-xs font-mono outline-none" placeholder="Lien vidéo..." value={currentArticle.videoUrl || ''} onChange={e => setCurrentArticle({...currentArticle, videoUrl: e.target.value})} />
+
+                    <div className="space-y-2">
+                        <label className="block text-[11px] font-black uppercase text-gray-500 tracking-wider">Vidéo (URL optionnelle)</label>
+                        <input type="text" className="w-full p-3.5 bg-gray-50 text-gray-900 rounded-xl text-xs font-mono outline-none border border-gray-200 focus:border-amber-500 focus:bg-white" placeholder="Lien vidéo YouTube..." value={currentArticle.videoUrl || ''} onChange={e => setCurrentArticle({...currentArticle, videoUrl: e.target.value})} />
                     </div>
                 </aside>
             </div>

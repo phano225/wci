@@ -690,10 +690,10 @@ const compressImage = (file: File, maxWidth: number = 1200, quality: number = 0.
                     canvas.toBlob(
                         (blob) => {
                             if (blob) {
-                                // Force .jpg extension since we converted to jpeg
-                                const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                                // Convert and compress to WebP format
+                                const newName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
                                 const compressedFile = new File([blob], newName, {
-                                    type: 'image/jpeg',
+                                    type: 'image/webp',
                                     lastModified: Date.now(),
                                 });
                                 resolve(compressedFile);
@@ -701,7 +701,7 @@ const compressImage = (file: File, maxWidth: number = 1200, quality: number = 0.
                                 resolve(file); // fallback
                             }
                         },
-                        'image/jpeg',
+                        'image/webp',
                         quality
                     );
                 } else {
@@ -759,3 +759,43 @@ export const uploadImage = async (file: File): Promise<string> => {
         .getPublicUrl(filePath);
     return publicUrlData.publicUrl;
 };
+
+export const uploadAvatar = async (file: File): Promise<string> => {
+    if (IS_OFFLINE_MODE) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    let fileToUpload = file;
+    if (file.type.startsWith('image/')) {
+        try {
+            fileToUpload = await compressImage(file, 400, 0.8);
+        } catch (e) {
+            console.error("Erreur compression avatar:", e);
+        }
+    }
+
+    const fileExt = fileToUpload.name.split('.').pop() || 'webp';
+    const fileName = `avatar_${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, fileToUpload, {
+            contentType: fileToUpload.type || 'image/webp',
+            upsert: true
+        });
+
+    if (uploadError) {
+        console.error('Error uploading avatar to avatars bucket:', uploadError);
+        throw uploadError;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+    return publicUrlData.publicUrl;
+};
+

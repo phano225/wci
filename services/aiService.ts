@@ -1,27 +1,19 @@
 import OpenAI from 'openai';
 
 const getClient = () => {
-    // Utiliser import.meta.env pour Vite au lieu de process.env
-    const apiKey = import.meta.env.VITE_GROK_API_KEY; 
-    
-    // Détection basique pour savoir si c'est une clé Groq (commence souvent par gsk_)
-    const isGroq = apiKey?.startsWith('gsk_');
-
-    // Si c'est Groq, on utilise leur endpoint compatible OpenAI
-    // Sinon on suppose que c'est xAI (Grok)
-    const baseURL = isGroq ? "https://api.groq.com/openai/v1" : "https://api.x.ai/v1";
+    // Clé Agnes AI configurée dans .env / Vercel
+    const apiKey = import.meta.env.VITE_AGNES_API_KEY;
+    const baseURL = "https://apihub.agnes-ai.com/v1";
 
     return new OpenAI({
-        apiKey: apiKey || 'dummy-key', // Évite que le SDK plante si la clé est vide (l'appel échouera proprement plus tard)
+        apiKey: apiKey,
         baseURL: baseURL,
-        dangerouslyAllowBrowser: true // Nécessaire car on appelle depuis le front (pas idéal en prod mais ok pour démo)
+        dangerouslyAllowBrowser: true
     });
 };
 
 const getModel = () => {
-    const apiKey = import.meta.env.VITE_GROK_API_KEY;
-    const isGroq = apiKey?.startsWith('gsk_');
-    return isGroq ? "llama-3.3-70b-versatile" : "grok-beta";
+    return "agnes-3.0-flash";
 };
 
 export const generateSEOMeta = async (title: string, content: string): Promise<string> => {

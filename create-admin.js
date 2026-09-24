@@ -11,9 +11,9 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-const ADMIN_EMAIL = 'admin@wci.com';
-const ADMIN_PASSWORD = 'password123';
-const ADMIN_NAME = 'Admin WCI';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@worldcanalinfo.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'AdminPassword2026!';
+const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin WCI';
 
 async function createAdmin() {
   console.log(`Création de l'administrateur ${ADMIN_EMAIL}...`);
@@ -62,7 +62,6 @@ async function createAdmin() {
   } else {
       console.log('✅ Compte administrateur prêt !');
       console.log(`Email: ${ADMIN_EMAIL}`);
-      console.log(`Password: ${ADMIN_PASSWORD}`);
   }
 }
 
