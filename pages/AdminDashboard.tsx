@@ -77,6 +77,7 @@ export const AdminDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [ads, setAds] = useState<Ad[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
+  const [userSearch, setUserSearch] = useState<string>('');
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -175,6 +176,16 @@ export const AdminDashboard = () => {
   const indexOfFirstArticle = indexOfLastArticle - articlesPerPage;
   const currentArticles = articles.slice(indexOfFirstArticle, indexOfLastArticle);
   const totalPages = Math.ceil(articles.length / articlesPerPage);
+
+  const filteredStaff = React.useMemo(() => {
+    if (!userSearch.trim()) return staff;
+    const query = userSearch.toLowerCase().trim();
+    return staff.filter(m => 
+        (m.name || '').toLowerCase().includes(query) ||
+        (m.email || '').toLowerCase().includes(query) ||
+        (m.role || '').toLowerCase().includes(query)
+    );
+  }, [staff, userSearch]);
 
   if (!user) {
       return <LoginPage />;
@@ -1344,57 +1355,119 @@ export const AdminDashboard = () => {
 
         {/* --- ÉQUIPE --- */}
         {activeTab === 'users' && (
-            <div className="bg-white rounded-[50px] shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50/50 border-b">
-                        <tr><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">Collaborateur</th><th className="px-12 py-8 text-[11px] font-black uppercase text-gray-400 tracking-widest">Rôle</th><th className="px-12 py-8 text-right">Actions</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                        {staff.map(m => (
-                            <tr key={m.id} className="hover:bg-blue-50/20 transition-all">
-                                <td className="px-12 py-8 flex items-center gap-6">
-                                    <img src={m.avatar} className="w-12 h-12 rounded-full border-2 border-white shadow-md" alt="" />
-                                    <div>
-                                        <p className="font-bold text-lg text-gray-900">{m.name}</p>
-                                        <p className="text-xs text-gray-400 font-medium">{m.email}</p>
-                                    </div>
-                                </td>
-                                <td className="px-12 py-8"><span className="bg-brand-blue/10 text-brand-blue px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">{m.role}</span></td>
-                                <td className="px-12 py-8 text-right">
-                                    {/* Admin can edit anyone; others can only see or edit themselves if implemented (but requirement says no self edit for profile) */}
-                                    {PERMISSIONS.canManageUsers(user?.role!) && (
-                                        <button onClick={() => { setCurrentEditUser(m); setIsUserModalOpen(true); }} className="text-brand-blue font-black text-[11px] uppercase tracking-widest mr-8 hover:underline">Modifier</button>
-                                    )}
-                                    {/* Only Admin can delete users, and not themselves */}
-                                    {PERMISSIONS.canManageUsers(user?.role!) && m.id !== user?.id && (
-                                        <button onClick={() => { if(confirm('Supprimer ce membre ?')) deleteUser(m.id).then(loadData); }} className="text-brand-red font-black text-[11px] uppercase tracking-widest">Supprimer</button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-6 gap-2">
-                        <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Précédent
-                        </button>
-                        <span className="text-sm font-bold text-gray-500">
-                            Page {currentPage} sur {totalPages}
+            <div className="space-y-4">
+                {/* Search Bar & Refresh Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs">
+                    <div className="relative flex-1">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                            🔍
+                        </span>
+                        <input
+                            type="text"
+                            placeholder="Rechercher un collaborateur par nom, email ou rôle..."
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                            className="w-full pl-10 pr-10 py-2.5 bg-gray-50 hover:bg-gray-100/80 focus:bg-white text-gray-900 placeholder:text-gray-400 text-sm font-medium rounded-xl border border-gray-200 outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 transition-all"
+                        />
+                        {userSearch && (
+                            <button
+                                onClick={() => setUserSearch('')}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 text-sm"
+                                title="Effacer la recherche"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                        <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-2 rounded-xl whitespace-nowrap border border-gray-200">
+                            {filteredStaff.length} membre{filteredStaff.length > 1 ? 's' : ''}
                         </span>
                         <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
+                            onClick={loadData}
+                            disabled={isProcessing}
+                            className="flex items-center gap-1.5 px-4 py-2.5 bg-brand-blue hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-50 shadow-2xs whitespace-nowrap"
+                            title="Actualiser la liste depuis la base de données"
                         >
-                            Suivant
+                            <span className={isProcessing ? 'animate-spin inline-block' : ''}>🔄</span>
+                            <span>Rafraîchir</span>
                         </button>
                     </div>
-                )}
-                    </tbody>
-                </table>
+                </div>
+
+                {/* Table or Empty State */}
+                <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xs border border-gray-200 overflow-hidden">
+                    {filteredStaff.length === 0 ? (
+                        <div className="p-12 text-center text-gray-400">
+                            <div className="text-4xl mb-3">👥</div>
+                            <p className="font-bold text-base text-gray-700">Aucun collaborateur trouvé</p>
+                            {userSearch ? (
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Aucun résultat ne correspond à votre recherche « {userSearch} »
+                                </p>
+                            ) : (
+                                <p className="text-xs text-gray-400 mt-1">La liste des utilisateurs est vide.</p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-gray-50/80 border-b border-gray-200">
+                                    <tr>
+                                        <th className="px-6 md:px-8 py-4 text-[11px] font-black uppercase text-gray-400 tracking-wider">Collaborateur</th>
+                                        <th className="px-6 md:px-8 py-4 text-[11px] font-black uppercase text-gray-400 tracking-wider">Rôle</th>
+                                        <th className="px-6 md:px-8 py-4 text-right text-[11px] font-black uppercase text-gray-400 tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredStaff.map(m => (
+                                        <tr key={m.id} className="hover:bg-blue-50/30 transition-colors">
+                                            <td className="px-6 md:px-8 py-4 flex items-center gap-3 sm:gap-4">
+                                                <img 
+                                                    src={m.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || 'User')}&background=random`} 
+                                                    className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-gray-200 shadow-2xs object-cover shrink-0" 
+                                                    alt="" 
+                                                />
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-sm md:text-base text-gray-900 truncate">{m.name}</p>
+                                                    <p className="text-xs text-gray-400 truncate">{m.email}</p>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 md:px-8 py-4">
+                                                <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                    m.role === UserRole.ADMIN ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                                                    m.role === UserRole.EDITOR ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                                    'bg-gray-100 text-gray-700 border border-gray-200'
+                                                }`}>
+                                                    {m.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 md:px-8 py-4 text-right whitespace-nowrap">
+                                                {PERMISSIONS.canManageUsers(user?.role!) && (
+                                                    <button 
+                                                        onClick={() => { setCurrentEditUser(m); setIsUserModalOpen(true); }} 
+                                                        className="text-brand-blue font-bold text-xs uppercase tracking-wider mr-4 hover:underline active:scale-95"
+                                                    >
+                                                        Modifier
+                                                    </button>
+                                                )}
+                                                {PERMISSIONS.canManageUsers(user?.role!) && m.id !== user?.id && (
+                                                    <button 
+                                                        onClick={() => { if(confirm('Supprimer ce membre ?')) deleteUser(m.id).then(loadData); }} 
+                                                        className="text-red-600 font-bold text-xs uppercase tracking-wider hover:underline active:scale-95"
+                                                    >
+                                                        Supprimer
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         )}
 
