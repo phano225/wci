@@ -251,8 +251,7 @@ export const ArticlePage = () => {
   };
 
   const shareBaseUrl = `${window.location.origin}/article/${article.id}`;
-  const shareOgUrl = `${window.location.origin}/api/og/${article.id}?title=${encodeURIComponent(article.title)}&desc=${encodeURIComponent(article.excerpt || '')}&image=${encodeURIComponent(getAbsoluteUrl(article.imageUrl))}`;
-  const shareText = article.title;
+  const shareTitle = decode(article.title);
 
   return (
     <PublicLayout>
@@ -437,15 +436,34 @@ export const ArticlePage = () => {
             <div className="border-t border-b border-gray-100 py-6 mb-8">
                 <h4 className="font-bold text-gray-600 mb-3 uppercase text-sm">Partager cet article</h4>
                 <div className="flex flex-wrap gap-3">
-                    <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareOgUrl)}`} target="_blank" rel="noreferrer" className="bg-[#1877F2] text-white px-4 py-2 rounded flex items-center gap-2 font-bold text-sm hover:opacity-90 transition-opacity">
+                    <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareBaseUrl)}`} target="_blank" rel="noreferrer" className="bg-[#1877F2] text-white px-4 py-2 rounded flex items-center gap-2 font-bold text-sm hover:opacity-90 transition-opacity">
+                        <i className="fab fa-facebook-f"></i>
                         Facebook
                     </a>
-                    <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareOgUrl)}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white px-4 py-2 rounded flex items-center gap-2 font-bold text-sm hover:opacity-90 transition-opacity">
+                    <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + '\n\n' + shareBaseUrl)}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white px-4 py-2 rounded flex items-center gap-2 font-bold text-sm hover:opacity-90 transition-opacity">
+                        <i className="fab fa-whatsapp text-lg"></i>
                         WhatsApp
                     </a>
-                    <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareBaseUrl)}&text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer" className="bg-black text-white px-4 py-2 rounded flex items-center gap-2 font-bold text-sm hover:opacity-80 transition-opacity">
+                    <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareBaseUrl)}&text=${encodeURIComponent(shareTitle)}`} target="_blank" rel="noreferrer" className="bg-black text-white px-4 py-2 rounded flex items-center gap-2 font-bold text-sm hover:opacity-80 transition-opacity">
+                        <i className="fab fa-x-twitter"></i>
                         X
                     </a>
+                    {typeof navigator !== 'undefined' && 'share' in navigator && (
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                navigator.share({
+                                    title: shareTitle,
+                                    text: shareTitle,
+                                    url: shareBaseUrl,
+                                }).catch(() => {});
+                            }}
+                            className="bg-gray-700 text-white px-4 py-2 rounded flex items-center gap-2 font-bold text-sm hover:opacity-90 transition-opacity"
+                        >
+                            <i className="fas fa-share-nodes"></i>
+                            Partager
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

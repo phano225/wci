@@ -26,10 +26,10 @@
         {
           "type": "header",
           "key": "User-Agent",
-          "value": ".*(facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Discordbot|Slackbot|Applebot|TelegramBot|Pinterest|Google-Structured-Data-Testing-Tool|Bingbot|DuckDuckBot).*"
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Discordbot|Slackbot|Applebot|TelegramBot|Pinterest|Google-Structured-Data-Testing-Tool|Bingbot|DuckDuckBot).*"
         }
       ],
-      "destination": "/api/og/:id"
+      "destination": "/api/og-article?id=:id"
     },
     {
       "source": "/article/:id/",
@@ -37,10 +37,14 @@
         {
           "type": "header",
           "key": "User-Agent",
-          "value": ".*(facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Discordbot|Slackbot|Applebot|TelegramBot|Pinterest|Google-Structured-Data-Testing-Tool|Bingbot|DuckDuckBot).*"
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Discordbot|Slackbot|Applebot|TelegramBot|Pinterest|Google-Structured-Data-Testing-Tool|Bingbot|DuckDuckBot).*"
         }
       ],
-      "destination": "/api/og/:id"
+      "destination": "/api/og-article?id=:id"
+    },
+    {
+      "source": "/api/og/:id",
+      "destination": "/api/og-article?id=:id"
     },
     {
       "source": "/(.*)",
