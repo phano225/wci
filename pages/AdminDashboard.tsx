@@ -35,6 +35,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LoginPage } from './LoginPage';
 import ReactQuill, { Quill } from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import { SystemDiagnostics } from '../components/SystemDiagnostics';
 
 const formatPermissionName = (key: string) => {
     const map: Record<string, string> = {
@@ -67,7 +68,7 @@ export const AdminDashboard = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social' | 'settings' | 'permissions'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'submissions' | 'categories' | 'ads' | 'users' | 'messages' | 'videos' | 'social' | 'settings' | 'permissions' | 'logs'>('articles');
   const [currentPage, setCurrentPage] = useState(1);
   const articlesPerPage = 10;
 
@@ -1036,6 +1037,10 @@ export const AdminDashboard = () => {
             {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('permissions'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'permissions' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                 <i className="fas fa-shield-alt w-5 text-center"></i> Permissions
             </button>}
+
+            {PERMISSIONS.canManageUsers(user?.role!) && <button onClick={() => { setActiveTab('logs'); setIsMobileMenuOpen(false); }} className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-sm font-bold transition-all ${activeTab === 'logs' ? 'bg-brand-blue shadow-md text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                <i className="fas fa-heart-pulse w-5 text-center text-red-400"></i> Logs & Santé
+            </button>}
         </nav>
         
         <div className="p-6 border-t border-white/5">
@@ -1053,7 +1058,7 @@ export const AdminDashboard = () => {
       <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto w-full">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4 md:gap-0">
             <h1 className="text-2xl md:text-4xl font-serif font-black text-brand-dark uppercase tracking-tighter">
-                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : activeTab === 'videos' ? 'Vidéos' : activeTab === 'social' ? 'Réseaux Sociaux' : activeTab === 'permissions' ? 'Permissions' : activeTab === 'settings' ? 'Paramètres' : 'Équipe'}
+                {activeTab === 'articles' ? 'Mes Articles' : activeTab === 'submissions' ? 'Attente de Validation' : activeTab === 'categories' ? 'Rubriques' : activeTab === 'ads' ? 'Régie Pub' : activeTab === 'messages' ? 'Messagerie' : activeTab === 'videos' ? 'Vidéos' : activeTab === 'social' ? 'Réseaux Sociaux' : activeTab === 'permissions' ? 'Permissions' : activeTab === 'settings' ? 'Paramètres' : activeTab === 'logs' ? 'Diagnostics & Santé Système' : 'Équipe'}
             </h1>
             
             <button onClick={() => { 
@@ -1070,7 +1075,8 @@ export const AdminDashboard = () => {
                 (activeTab === 'submissions') ||
                 (activeTab === 'messages') ||
                 (activeTab === 'permissions') ||
-                (activeTab === 'settings')
+                (activeTab === 'settings') ||
+                (activeTab === 'logs')
             ) ? '!hidden' : ''}`}>
                 <i className="fas fa-plus"></i> Ajouter
             </button>
@@ -1940,6 +1946,11 @@ export const AdminDashboard = () => {
                     </table>
                 </div>
             </div>
+        )}
+
+        {/* --- DIAGNOSTICS & LOGS --- */}
+        {activeTab === 'logs' && (
+            <SystemDiagnostics />
         )}
 
       </main>
