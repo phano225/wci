@@ -1,5 +1,6 @@
 import { Article, ArticleStatus, Category, User, UserRole, Ad, AdLocation, AdType, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
 import { supabase } from '../supabase-config';
+import { logger } from '../src/logger';
 
 // --- CONFIGURATION DU MODE HORS LIGNE ---
 // Mettez cette valeur à 'false' pour que le site se connecte à la vraie base de données.
@@ -189,10 +190,32 @@ export const saveVideo = async (video: Video): Promise<void> => {
     saveToStorage('wci_videos', MOCK_VIDEOS);
     return;
   }
+  const start = performance.now();
   try {
-      const { error } = await supabase.from('videos').upsert(video);
+      logger.info('Supabase Save', `Sauvegarde vidéo: "${video.title}"...`);
+
+      // Rafraîchir la session si elle expire bientôt (< 2 min)
+      try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.expires_at) {
+              const now = Math.floor(Date.now() / 1000);
+              if (session.expires_at - now < 120) {
+                  await supabase.auth.refreshSession();
+              }
+          }
+      } catch {}
+
+      const savePromise = supabase.from('videos').upsert(video);
+      const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
+          setTimeout(() => reject(new Error('Délai d\'attente de sauvegarde vidéo dépassé (15s).')), 15000)
+      );
+      const { error } = await Promise.race([savePromise, timeoutPromise]) as any;
       if (error) throw error;
-  } catch (e) {
+      const duration = Math.round(performance.now() - start);
+      logger.success('Supabase Save', `Vidéo enregistrée avec succès (${duration}ms): "${video.title}"`);
+  } catch (e: any) {
+      const duration = Math.round(performance.now() - start);
+      logger.error('Supabase Save', `Erreur sauvegarde vidéo (${duration}ms): ${e?.message || e}`, e);
       console.error('Error saving video:', e);
       throw e;
   }
@@ -608,11 +631,33 @@ export const saveArticle = async (article: Article): Promise<void> => {
         clearCache('articles');
         return;
     }
+    const start = performance.now();
     try {
-        const { error } = await supabase.from('articles').upsert(article);
+        logger.info('Supabase Save', `Sauvegarde article: "${article.title}"...`);
+
+        // Rafraîchir la session si elle expire bientôt (< 2 min) après une longue session d'écriture
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.expires_at) {
+                const now = Math.floor(Date.now() / 1000);
+                if (session.expires_at - now < 120) {
+                    await supabase.auth.refreshSession();
+                }
+            }
+        } catch {}
+
+        const savePromise = supabase.from('articles').upsert(article);
+        const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
+            setTimeout(() => reject(new Error('Délai d\'attente de sauvegarde dépassé (15s). Vérifiez votre connexion ou la taille des images.')), 15000)
+        );
+        const { error } = await Promise.race([savePromise, timeoutPromise]) as any;
         if (error) throw error;
+        const duration = Math.round(performance.now() - start);
+        logger.success('Supabase Save', `Article enregistré avec succès (${duration}ms): "${article.title}"`);
         clearCache('articles');
-    } catch (e) {
+    } catch (e: any) {
+        const duration = Math.round(performance.now() - start);
+        logger.error('Supabase Save', `Échec sauvegarde article (${duration}ms): ${e?.message || e}`, e);
         console.error('Error saving article:', e);
         throw e;
     }

@@ -276,8 +276,10 @@ export const AdminDashboard = () => {
         console.error('Erreur lors du chargement des données:', e);
         const errorMessage = (e as any)?.message || (e as any)?.error_description || JSON.stringify(e);
         alert(`Erreur de chargement des données: ${errorMessage}`);
+    } finally {
+        clearTimeout(timeoutId);
+        setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   const handleSaveSocialLink = async (e: React.FormEvent) => {
@@ -332,12 +334,6 @@ export const AdminDashboard = () => {
     }
 
     setIsProcessing(true);
-    // Safety timeout
-    const timeoutId = setTimeout(() => {
-        setIsProcessing(false);
-        /* no-op */
-        alert('L\'opération prend trop de temps. Vérifiez votre connexion.');
-    }, 15000);
 
     try {
         // Extract YouTube ID from URL if full URL is pasted
@@ -363,11 +359,9 @@ export const AdminDashboard = () => {
         const updatedVideos = await getVideos();
         setVideos(updatedVideos);
         
-        clearTimeout(timeoutId);
         setIsVideoModalOpen(false);
         setCurrentVideo({});
     } catch (error) {
-        clearTimeout(timeoutId);
         console.error('Erreur sauvegarde vidéo:', error);
         const errorMessage = (error as any)?.message || JSON.stringify(error);
         alert(`Erreur lors de la sauvegarde de la vidéo: ${errorMessage}`);
@@ -430,18 +424,12 @@ export const AdminDashboard = () => {
     if (!currentArticle.title || !user) { alert("Le titre est requis."); return; }
     
     setIsProcessing(true);
-    // Safety timeout
-    const timeoutId = setTimeout(() => {
-        setIsProcessing(false);
-        alert('L\'opération prend trop de temps. Vérifiez votre connexion.');
-    }, 30000);
 
     try {
       // Permission check
       if (targetStatus === ArticleStatus.PUBLISHED && !PERMISSIONS.canPublishArticle(user.role)) {
         alert("Vous n'avez pas la permission de publier directement.");
         setIsProcessing(false);
-        clearTimeout(timeoutId);
         return;
       }
 
@@ -479,7 +467,6 @@ export const AdminDashboard = () => {
         return [articleToSave, ...prev];
       });
       
-      clearTimeout(timeoutId);
       setIsProcessing(false);
       setIsEditorOpen(false);
 
@@ -502,7 +489,6 @@ export const AdminDashboard = () => {
       }).catch(err => console.warn('Background sync error:', err));
 
     } catch (error) {
-      clearTimeout(timeoutId);
       console.error('Erreur lors de la sauvegarde:', error);
       const errorMessage = (error as any)?.message || JSON.stringify(error);
       alert(`Erreur lors de la sauvegarde: ${errorMessage}`);
