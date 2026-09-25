@@ -4,14 +4,68 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL |
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY;
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
+// Validation stricte du schéma d'entrée à la frontière de l'API
+const VALID_ROLES = ['ADMIN', 'EDITOR', 'CONTRIBUTOR'];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateRequestBody(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return { valid: false, error: 'Corps de requête invalide.' };
+  }
+
+  const { action, user } = body;
+  if (action !== 'save_user' && action !== 'delete_user') {
+    return { valid: false, error: 'Action non reconnue.' };
+  }
+
+  if (!user || typeof user !== 'object' || Array.isArray(user)) {
+    return { valid: false, error: 'Données utilisateur invalides.' };
+  }
+
+  if (action === 'delete_user') {
+    if (!user.id || typeof user.id !== 'string' || user.id.trim().length === 0) {
+      return { valid: false, error: 'ID utilisateur requis.' };
+    }
+  }
+
+  if (action === 'save_user') {
+    if (!user.email || typeof user.email !== 'string') {
+      return { valid: false, error: 'Adresse email requise.' };
+    }
+    const cleanEmail = user.email.trim();
+    if (!EMAIL_REGEX.test(cleanEmail) || cleanEmail.length > 255) {
+      return { valid: false, error: 'Format d\'adresse email invalide.' };
+    }
+    if (user.role && !VALID_ROLES.includes(user.role)) {
+      return { valid: false, error: 'Rôle utilisateur invalide.' };
+    }
+    if (user.name && (typeof user.name !== 'string' || user.name.length > 200)) {
+      return { valid: false, error: 'Nom invalide ou trop long.' };
+    }
+    if (user.password !== undefined && user.password !== null) {
+      if (typeof user.password !== 'string' || (user.password.trim().length > 0 && user.password.trim().length < 6)) {
+        return { valid: false, error: 'Le mot de passe doit comporter au moins 6 caractères.' };
+      }
+    }
+  }
+
+  return { valid: true };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Méthode non autorisée.' });
   }
 
   // Vérifier la présence de la clé Service Role
   if (!SERVICE_KEY) {
-    return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY non configurée sur le serveur Vercel.' });
+    return res.status(500).json({ error: 'Configuration serveur incomplète.' });
+  }
+
+  // Vérification de schéma stricte avant tout traitement
+  const validation = validateRequestBody(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ error: validation.error });
   }
 
   // Vérifier le jeton de l'appelant
@@ -42,18 +96,18 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Action réservée exclusivement aux administrateurs.' });
   }
 
-  const { action, user } = req.body || {};
+  const { action, user } = req.body;
 
   try {
     if (action === 'save_user') {
-      const { id, email, name, role, password, avatar } = user || {};
-      if (!email) return res.status(400).json({ error: 'Email requis.' });
+      const { id, email, name, role, password, avatar } = user;
+      const cleanEmail = email.trim().toLowerCase();
 
       // 1. Lister les utilisateurs auth pour vérifier si le compte existe déjà
       const { data: { users: authUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
       if (listError) throw listError;
 
-      const existingAuth = authUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const existingAuth = authUsers.find(u => u.email.toLowerCase() === cleanEmail);
 
       let authUserId = id;
 
@@ -71,7 +125,7 @@ export default async function handler(req, res) {
       } else {
         const { data: newAuth, error: createError } = await supabaseAdmin.auth.admin.createUser({
           id: id && /^[0-9a-f-]{36}$/i.test(id) ? id : undefined,
-          email,
+          email: cleanEmail,
           password: password && password.trim().length >= 6 ? password.trim() : '12345678',
           email_confirm: true,
           user_metadata: { role, name }
@@ -83,10 +137,10 @@ export default async function handler(req, res) {
       // 2. Synchroniser dans la table publique users
       const userToSave = {
         id: authUserId,
-        email,
-        name: name || email.split('@')[0],
+        email: cleanEmail,
+        name: name || cleanEmail.split('@')[0],
         role: role || 'CONTRIBUTOR',
-        avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email)}`,
+        avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || cleanEmail)}`,
         active: true
       };
 
@@ -96,8 +150,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, user: userToSave });
 
     } else if (action === 'delete_user') {
-      const { id } = user || {};
-      if (!id) return res.status(400).json({ error: 'ID utilisateur requis.' });
+      const { id } = user;
 
       try {
         await supabaseAdmin.auth.admin.deleteUser(id);
@@ -111,7 +164,8 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ error: 'Action non reconnue.' });
   } catch (err) {
+    // Ne jamais renvoyer de détails techniques ou stack traces au client
     console.error('Erreur API admin-user:', err);
-    return res.status(500).json({ error: err.message || 'Erreur interne du serveur.' });
+    return res.status(500).json({ error: 'Une erreur interne est survenue lors du traitement.' });
   }
 }
