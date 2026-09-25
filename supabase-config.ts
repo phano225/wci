@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { logger } from './src/logger';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const RAW_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://vdbnsfoagmdshylonbyo.supabase.co';
+// Supprimer tout slash final pour éviter la formation de double slash //rest/v1
+const SUPABASE_URL = RAW_SUPABASE_URL.trim().replace(/\/+$/, '');
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 // Safe sequential in-memory lock: évite le deadlock de l'API Web Locks tout en empêchant la collision des refresh tokens
 let currentLock: Promise<any> = Promise.resolve();
@@ -27,29 +29,32 @@ const memoryLock = async <T>(_name: string, _timeout: number, acquire: () => Pro
   }
 };
 
-// Wrapper fetch personnalisé avec timeout de 15s et capture de télémétrie dans logger
+// Wrapper fetch personnalisé avec normalisation d'URL et télémétrie logger
 const customFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const start = performance.now();
-  const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
   
-  // Extraire l'endpoint pour un affichage lisible
+  // Normaliser l'URL pour supprimer d'éventuels doubles slashes parasites
+  let cleanInput = input;
+  if (typeof input === 'string') {
+    cleanInput = input.replace(/([^:])\/\/+/g, '$1/');
+  }
+
+  const urlStr = typeof cleanInput === 'string' 
+    ? cleanInput 
+    : cleanInput instanceof URL 
+      ? cleanInput.toString() 
+      : (cleanInput as Request).url;
+  
   let endpoint = urlStr;
   try {
     const u = new URL(urlStr);
     endpoint = `${u.pathname}${u.search ? u.search.slice(0, 80) : ''}`;
   } catch {}
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-    logger.error('Supabase Network', `Timeout requête (>15s): ${endpoint}`);
-  }, 15000);
-
   try {
-    const response = await fetch(input, {
-      ...init,
-      signal: init?.signal || controller.signal,
-    });
+    // Utiliser window.fetch ou fetch global avec les options originales
+    const fetchFn = (typeof window !== 'undefined' && window.fetch) ? window.fetch.bind(window) : fetch;
+    const response = await fetchFn(cleanInput, init);
     const duration = Math.round(performance.now() - start);
 
     if (!response.ok && response.status >= 400) {
@@ -63,14 +68,8 @@ const customFetch = async (input: RequestInfo | URL, init?: RequestInit): Promis
     return response;
   } catch (err: any) {
     const duration = Math.round(performance.now() - start);
-    if (err.name === 'AbortError') {
-      logger.error('Supabase Timeout', `Requête interrompue après ${duration}ms: ${endpoint}`, { endpoint, duration });
-    } else {
-      logger.error('Supabase Network', `Erreur réseau (${duration}ms): ${err.message || endpoint}`, { endpoint, error: err.message, duration });
-    }
+    logger.error('Supabase Network', `Échec requête réseau (${duration}ms): ${endpoint}`);
     throw err;
-  } finally {
-    clearTimeout(timeoutId);
   }
 };
 
