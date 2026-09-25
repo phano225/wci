@@ -100,10 +100,14 @@ export const ArticlePage = () => {
   const canTTS = typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 
   const extractTextFromHtml = (html: string) => {
-    const el = document.createElement('div');
-    el.innerHTML = html;
-    const t = el.textContent || '';
-    return t.replace(/\s+/g, ' ').trim();
+    if (!html) return '';
+    try {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const t = doc.body?.textContent || '';
+      return t.replace(/\s+/g, ' ').trim();
+    } catch {
+      return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
   };
 
   const chunkText = (text: string) => {
@@ -363,7 +367,7 @@ export const ArticlePage = () => {
                 )}
             </div>
 
-            <div className="prose prose-p:my-2 prose-headings:mb-3 prose-headings:mt-6 prose-img:my-4 max-w-none text-gray-800 text-lg leading-relaxed mb-10">
+            <div className="prose article-body article-content prose-p:my-2 prose-headings:mb-3 prose-headings:mt-6 prose-img:my-4 max-w-none text-gray-800 text-lg leading-relaxed mb-10">
                 <div dangerouslySetInnerHTML={{ __html: article.content }} />
             </div>
 

@@ -2009,6 +2009,17 @@ export const AdminDashboard = () => {
                                     color: #1f2937; 
                                     line-height: 1.8;
                                 }
+                                .ql-editor a {
+                                    color: #0055a4 !important;
+                                    text-decoration: underline !important;
+                                    text-decoration-color: rgba(0, 85, 164, 0.45) !important;
+                                    text-underline-offset: 3px !important;
+                                    font-weight: 600 !important;
+                                }
+                                .ql-editor a:hover {
+                                    color: #1d4ed8 !important;
+                                    text-decoration-color: #1d4ed8 !important;
+                                }
                                 .ql-editor.ql-blank::before { color: #9ca3af !important; font-style: italic; }
 
                                 @media (min-width: 640px) {

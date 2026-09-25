@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 :root {
   /* Colors inspired by Ivorian flags and modern news (Linfodrome style) */
@@ -119,4 +119,40 @@ h1, h2, h3, .brand-font {
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-100%); }
+}
+
+/* --- Liens dans les articles (ArticlePage) & dans l'éditeur (AdminDashboard) --- */
+.article-body a,
+.article-content a,
+.prose a,
+.ql-editor a {
+  color: #0055a4 !important; /* Bleu WCI */
+  text-decoration: underline !important;
+  text-decoration-color: rgba(0, 85, 164, 0.45) !important;
+  text-underline-offset: 3px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.article-body a:visited,
+.article-content a:visited,
+.prose a:visited,
+.ql-editor a:visited {
+  color: #0055a4 !important; /* Empêche le violet natif du navigateur */
+}
+
+.article-body a:hover,
+.article-content a:hover,
+.prose a:hover,
+.ql-editor a:hover {
+  color: #1d4ed8 !important; /* Bleu vif au survol */
+  text-decoration-color: #1d4ed8 !important;
+}
+
+.article-body a:has(img),
+.article-content a:has(img),
+.prose a:has(img),
+.ql-editor a:has(img) {
+  text-decoration: none !important;
 }
