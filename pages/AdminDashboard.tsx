@@ -169,7 +169,7 @@ export const AdminDashboard = () => {
 
   useEffect(() => {
     if (user) {
-      loadData();
+      loadData(articles.length === 0);
     }
   }, [user, activeTab]);
 
@@ -209,8 +209,9 @@ export const AdminDashboard = () => {
       return <LoginPage />;
   }
 
-  const loadData = async () => {
-    setIsProcessing(true);
+  const loadData = async (arg?: unknown) => {
+    const showOverlay = typeof arg === 'boolean' ? arg : true;
+    if (showOverlay) setIsProcessing(true);
     
     // Safety timeout to prevent infinite spinner
     const timeoutId = setTimeout(() => {
@@ -466,12 +467,19 @@ export const AdminDashboard = () => {
 
       await saveArticle(articleToSave);
       
-      // OPTIMIZATION: Only reload articles, not everything
-      // And we use the lightweight getArticles() which excludes content
-      const updatedArticles = await getArticles(user?.role === UserRole.CONTRIBUTOR ? { authorId: user.id, limit: 500 } : { limit: 500 });
-      setArticles(updatedArticles);
+      // Mise à jour immédiate du state local pour un affichage instantané sans blocage
+      setArticles(prev => {
+        const idx = prev.findIndex(a => a.id === articleToSave.id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = articleToSave;
+          return next;
+        }
+        return [articleToSave, ...prev];
+      });
       
       clearTimeout(timeoutId);
+      setIsProcessing(false);
       setIsEditorOpen(false);
 
       if (targetStatus === ArticleStatus.SUBMITTED) {
@@ -481,6 +489,16 @@ export const AdminDashboard = () => {
       } else {
         alert('Brouillon sauvegardé.');
       }
+
+      // Synchronisation en tâche de fond avec limite explicite et includeDisabledCategories
+      getArticles(user?.role === UserRole.CONTRIBUTOR 
+        ? { authorId: user.id, limit: 500, includeDisabledCategories: true } 
+        : { limit: 500, includeDisabledCategories: true }
+      ).then(updatedArticles => {
+        if (updatedArticles && updatedArticles.length > 0) {
+          setArticles(updatedArticles);
+        }
+      }).catch(err => console.warn('Background sync error:', err));
 
     } catch (error) {
       clearTimeout(timeoutId);
@@ -1176,7 +1194,7 @@ export const AdminDashboard = () => {
                                 <i className="fas fa-pen sm:hidden"></i>
                                 <span className="hidden sm:inline">Éditer</span>
                             </button>
-                            <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(loadData); }} className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                            <button onClick={() => { if(confirm('Supprimer cet article ?')) deleteArticle(art.id).then(() => loadData()); }} className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
                                 <i className="fas fa-trash"></i>
                             </button>
                         </div>
@@ -1495,7 +1513,7 @@ export const AdminDashboard = () => {
                         </div>
                         <div className="flex gap-4">
                             <button onClick={() => { setCurrentAd(ad); setIsAdModalOpen(true); }} className="flex-1 py-4 bg-gray-50 text-brand-dark rounded-2xl font-black text-[10px] uppercase hover:bg-brand-blue hover:text-white transition-all">Paramètres</button>
-                            <button onClick={() => { if(confirm('Supprimer cette publicité ?')) deleteAd(ad.id).then(loadData); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
+                            <button onClick={() => { if(confirm('Supprimer cette publicité ?')) deleteAd(ad.id).then(() => loadData()); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
                         </div>
                     </div>
                 ))}
@@ -1555,7 +1573,7 @@ export const AdminDashboard = () => {
                             {filteredStaff.length} membre{filteredStaff.length > 1 ? 's' : ''}
                         </span>
                         <button
-                            onClick={loadData}
+                            onClick={() => loadData()}
                             disabled={isProcessing}
                             className="flex items-center gap-1.5 px-4 py-2.5 bg-brand-blue hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-50 shadow-2xs whitespace-nowrap"
                             title="Actualiser la liste depuis la base de données"

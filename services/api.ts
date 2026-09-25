@@ -330,11 +330,15 @@ export const saveCategoryOrder = async (ids: string[]): Promise<void> => {
 };
 
 const DISABLED_CATEGORIES_STORAGE_KEY = 'wci_disabled_category_ids';
+let disabledCategoriesCache: { ids: string[]; expiresAt: number } | null = null;
 
 export const getDisabledCategoryIds = async (): Promise<string[]> => {
   if (IS_OFFLINE_MODE) {
     const raw = localStorage.getItem(DISABLED_CATEGORIES_STORAGE_KEY);
     return parseCategoryOrder(raw);
+  }
+  if (disabledCategoriesCache && Date.now() < disabledCategoriesCache.expiresAt) {
+    return disabledCategoriesCache.ids;
   }
   try {
     const { data, error } = await supabase
@@ -344,17 +348,20 @@ export const getDisabledCategoryIds = async (): Promise<string[]> => {
       .maybeSingle();
     if (error) {
       if (!isNetworkError(error)) console.error('Supabase error in getDisabledCategoryIds:', error);
-      return [];
+      return disabledCategoriesCache?.ids || [];
     }
-    return parseCategoryOrder(data?.content);
+    const ids = parseCategoryOrder(data?.content);
+    disabledCategoriesCache = { ids, expiresAt: Date.now() + 60000 };
+    return ids;
   } catch (e) {
-    if (isNetworkError(e)) return [];
+    if (isNetworkError(e)) return disabledCategoriesCache?.ids || [];
     console.error('Network error in getDisabledCategoryIds:', e);
-    return [];
+    return disabledCategoriesCache?.ids || [];
   }
 };
 
 export const saveDisabledCategoryIds = async (ids: string[]): Promise<void> => {
+  disabledCategoriesCache = { ids, expiresAt: Date.now() + 60000 };
   if (IS_OFFLINE_MODE) {
     saveToStorage(DISABLED_CATEGORIES_STORAGE_KEY, ids);
     return;
@@ -523,7 +530,11 @@ export const getArticles = async (options: GetArticlesOptions = {}): Promise<Art
       if (options.status) query = query.eq('status', options.status);
       if (options.category) query = query.eq('category', options.category);
       if (options.authorId) query = query.eq('authorid', options.authorId);
-      if (options.limit && options.includeDisabledCategories) query = query.limit(options.limit);
+
+      // TOUJOURS appliquer une limite SQL pour éviter de télécharger les 27 000 articles de la base
+      const requestedLimit = options.limit || 500;
+      const fetchLimit = options.includeDisabledCategories ? requestedLimit : Math.min(requestedLimit + 50, 500);
+      query = query.limit(fetchLimit);
 
       const { data, error } = await query;
       if (error) {
@@ -553,7 +564,7 @@ export const getArticles = async (options: GetArticlesOptions = {}): Promise<Art
           console.warn('Could not filter disabled category articles:', catErr);
         }
 
-        if (options.limit) {
+        if (options.limit && articles.length > options.limit) {
           articles = articles.slice(0, options.limit);
         }
       }
