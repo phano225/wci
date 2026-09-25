@@ -262,7 +262,35 @@ export const saveUser = async (user: User): Promise<void> => {
         return;
     }
     try {
-        // Ne pas envoyer le mot de passe dans la table publique 'users'
+        // 1. Tenter la synchronisation complète (Auth + public.users) via l'API serveur sécurisée
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+                const response = await fetch('/api/admin-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ action: 'save_user', user })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result?.success) {
+                        logger.success('User Management', `Utilisateur "${user.email}" synchronisé avec succès dans Supabase Auth.`);
+                        return;
+                    }
+                } else {
+                    const errJson = await response.json().catch(() => ({}));
+                    console.warn('Sync auth user API returned non-ok:', errJson);
+                }
+            }
+        } catch (apiErr) {
+            console.warn('API /api/admin-user indisponible, repli sur la table locale users:', apiErr);
+        }
+
+        // 2. Repli direct sur la table public.users (ne stocke pas le mot de passe en clair)
         const { password, ...userToSave } = user;
         const { error } = await supabase.from('users').upsert(userToSave);
         if (error) throw error;
@@ -280,6 +308,20 @@ export const deleteUser = async (id: string): Promise<void> => {
         return;
     }
     try {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+                await fetch('/api/admin-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ action: 'delete_user', user: { id } })
+                });
+            }
+        } catch {}
+
         const { error } = await supabase.from('users').delete().eq('id', id);
         if (error) throw error;
     } catch (e) {
