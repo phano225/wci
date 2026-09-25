@@ -4,8 +4,9 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { decode } from 'html-entities';
 import { PublicLayout } from '../components/PublicLayout';
-import { getArticleById, getArticles, getVideos, getSocialLinks, getUsers, incrementArticleViews } from '../services/api';
-import { Article, ArticleStatus, AdLocation, SocialLink, Video, User } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { getArticleById, getArticles, getVideos, getSocialLinks, getUsers, incrementArticleViews, getDisabledCategoryIds, getCategories } from '../services/api';
+import { Article, ArticleStatus, AdLocation, SocialLink, Video, User, UserRole } from '../types';
 import { AdDisplay } from '../components/AdDisplay';
 
 // Proxy WordPress images to avoid ORB
@@ -29,7 +30,9 @@ const resolveImage = (url?: string, opts?: { w?: number; h?: number }) => {
 
 export const ArticlePage = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [article, setArticle] = useState<Article | undefined>();
+  const [isCategoryDisabled, setIsCategoryDisabled] = useState(false);
   const [related, setRelated] = useState<Article[]>([]);
   const [also, setAlso] = useState<Article[]>([]);
   const [carouselItems, setCarouselItems] = useState<Article[]>([]);
@@ -54,6 +57,19 @@ export const ArticlePage = () => {
             setArticle(found);
             
             if (found) {
+                // Vérification si la rubrique de l'article est actuellement suspendue
+                try {
+                  const [disIds, allCats] = await Promise.all([
+                    getDisabledCategoryIds(),
+                    getCategories({ includeDisabled: true })
+                  ]);
+                  const catObj = allCats.find(c => (c.name || '').trim().toLowerCase() === (found.category || '').trim().toLowerCase());
+                  if (catObj && (disIds.includes(catObj.id) || catObj.active === false)) {
+                    setIsCategoryDisabled(true);
+                  }
+                } catch (catErr) {
+                  console.warn('Check disabled category error:', catErr);
+                }
                 const all = await getArticles({ status: ArticleStatus.PUBLISHED, limit: 100 });
                 const rel = all.filter(a => 
                     a.category === found.category && 
@@ -208,6 +224,26 @@ export const ArticlePage = () => {
     );
   }
 
+  // Si la rubrique est désactivée / masquée, bloquer l'accès aux visiteurs non-administrateurs
+  if (isCategoryDisabled && (!user || (user.role !== UserRole.ADMIN && user.role !== UserRole.EDITOR))) {
+    return (
+      <PublicLayout>
+        <div className="container mx-auto px-4 py-24 text-center max-w-lg">
+          <div className="w-20 h-20 mx-auto mb-6 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-3xl shadow-inner">
+            <i className="fas fa-lock"></i>
+          </div>
+          <h1 className="text-2xl font-black text-gray-800 mb-3 uppercase tracking-tight">Contenu momentanément indisponible</h1>
+          <p className="text-gray-500 mb-8 leading-relaxed text-sm">
+            Cette rubrique et ses articles font actuellement l'objet d'une suspension temporaire.
+          </p>
+          <Link to="/" className="inline-block px-8 py-4 bg-brand-blue text-white rounded-full font-black text-xs tracking-widest uppercase shadow-lg hover:bg-blue-700 transition-all">
+            Retour à l'accueil
+          </Link>
+        </div>
+      </PublicLayout>
+    );
+  }
+
   const getAbsoluteUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -268,6 +304,12 @@ export const ArticlePage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         <div className="lg:col-span-8">
+            {isCategoryDisabled && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl flex items-center gap-3 text-xs font-bold">
+                <i className="fas fa-eye-slash text-amber-600 text-base flex-shrink-0"></i>
+                <span>Mode Prévisualisation Rédaction : Cette rubrique (« {article.category} ») et ses articles sont actuellement masqués du site public.</span>
+              </div>
+            )}
             <div className="mb-6 flex justify-between items-center border-b border-[var(--glass-border)] pb-4">
                 <span className="badge-category">{decode(article.category)}</span>
             </div>

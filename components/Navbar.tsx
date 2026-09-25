@@ -19,12 +19,12 @@ export const Navbar = () => {
   useEffect(() => {
     const loadData = async () => {
         const [cats, publishedArticles, socials, orderIds] = await Promise.all([
-            getCategories(),
+            getCategories({ includeDisabled: false }),
             getArticles({ status: ArticleStatus.PUBLISHED, limit: 30 }),
             getSocialLinks(),
             getCategoryOrder()
         ]);
-        let sortedCats = [...cats];
+        let sortedCats = cats.filter(c => c.active !== false);
         if (orderIds && orderIds.length > 0) {
           sortedCats = [...cats].sort((a, b) => {
             const ia = orderIds.indexOf(a.id);

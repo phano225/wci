@@ -25,7 +25,9 @@ import {
     uploadAvatar,
     getArticleById,
     getCategoryOrder,
-    saveCategoryOrder
+    saveCategoryOrder,
+    getDisabledCategoryIds,
+    saveDisabledCategoryIds
 } from '../services/api';
 import { generateSEOMeta, generateArticleDraft } from '../services/aiService';
 import { Article, ArticleStatus, Category, Ad, AdType, AdLocation, UserRole, User, PERMISSIONS, SubmissionStatus, ContactMessage, Video, SocialLink } from '../types';
@@ -75,6 +77,9 @@ export const AdminDashboard = () => {
   
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [disabledCategoryIds, setDisabledCategoryIds] = useState<string[]>([]);
+  const [categoryFilterTab, setCategoryFilterTab] = useState<'all' | 'active' | 'disabled'>('all');
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [ads, setAds] = useState<Ad[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
   const [userSearch, setUserSearch] = useState<string>('');
@@ -187,6 +192,19 @@ export const AdminDashboard = () => {
     );
   }, [staff, userSearch]);
 
+  const filteredCategories = React.useMemo(() => {
+    return categories.filter(c => {
+      const isDis = disabledCategoryIds.includes(c.id) || c.active === false;
+      if (categoryFilterTab === 'active' && isDis) return false;
+      if (categoryFilterTab === 'disabled' && !isDis) return false;
+      if (categorySearchQuery.trim()) {
+        const q = categorySearchQuery.trim().toLowerCase();
+        return (c.name || '').toLowerCase().includes(q) || (c.slug || '').toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [categories, disabledCategoryIds, categoryFilterTab, categorySearchQuery]);
+
   if (!user) {
       return <LoginPage />;
   }
@@ -200,16 +218,18 @@ export const AdminDashboard = () => {
     }, 15000);
 
     try {
-        const [arts, cats, adsList, userList, msgList, videoList, socialList, orderIds] = await Promise.all([
-            getArticles(user?.role === UserRole.CONTRIBUTOR ? { authorId: user.id, limit: 500 } : { limit: 500 }),
-            getCategories(),
+        const [arts, cats, adsList, userList, msgList, videoList, socialList, orderIds, disabledCatIds] = await Promise.all([
+            getArticles(user?.role === UserRole.CONTRIBUTOR ? { authorId: user.id, limit: 500, includeDisabledCategories: true } : { limit: 500, includeDisabledCategories: true }),
+            getCategories({ includeDisabled: true }),
             getAds(),
             getUsers(),
             getMessages(),
             getVideos(),
             getSocialLinks(),
-            getCategoryOrder()
+            getCategoryOrder(),
+            getDisabledCategoryIds()
         ]);
+        setDisabledCategoryIds(disabledCatIds);
 
         // Check for visitor counter config
         const visitorConfig = adsList.find(a => a.id === 'visitor_counter_config');
@@ -655,6 +675,34 @@ export const AdminDashboard = () => {
     setCategories(list);
     await persistCategoryOrder(list);
     alert('Ordre des rubriques mis à jour.');
+  };
+
+  const handleToggleCategoryActive = async (cat: Category, makeActive: boolean) => {
+    const actionLabel = makeActive ? "réactiver" : "masquer";
+    const confirmMsg = makeActive 
+      ? `Réactiver la rubrique « ${cat.name} » ?\n\nElle et l'ensemble de ses articles redeviendront immédiatement visibles pour les lecteurs sur le site public.`
+      : `Masquer la rubrique « ${cat.name} » ?\n\nCette rubrique et tous ses articles seront immédiatement retirés du site public (sans être supprimés). Vous pourrez la réactiver à tout moment dès que le partenariat est régularisé.`;
+    
+    if (!confirm(confirmMsg)) return;
+
+    setIsProcessing(true);
+    try {
+      let updatedDisabled: string[];
+      if (makeActive) {
+        updatedDisabled = disabledCategoryIds.filter(id => id !== cat.id);
+      } else {
+        updatedDisabled = Array.from(new Set([...disabledCategoryIds, cat.id]));
+      }
+      await saveDisabledCategoryIds(updatedDisabled);
+      setDisabledCategoryIds(updatedDisabled);
+      
+      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, active: makeActive, isActive: makeActive } : c));
+    } catch (err: any) {
+      console.error(`Erreur ${actionLabel} catégorie:`, err);
+      alert(`Erreur lors de l'opération : ` + (err?.message || "Échec"));
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSaveUser = async () => {
@@ -1206,10 +1254,60 @@ export const AdminDashboard = () => {
         {/* --- RUBRIQUES --- */}
         {activeTab === 'categories' && (
             <div className="space-y-8">
+                {/* Barre de recherche et filtres de statut */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white p-4 md:p-6 rounded-[30px] border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+                        <button
+                            onClick={() => setCategoryFilterTab('all')}
+                            className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                                categoryFilterTab === 'all'
+                                    ? 'bg-brand-dark text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                        >
+                            Toutes ({categories.length})
+                        </button>
+                        <button
+                            onClick={() => setCategoryFilterTab('active')}
+                            className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-2 ${
+                                categoryFilterTab === 'active'
+                                    ? 'bg-green-600 text-white shadow-md shadow-green-600/20'
+                                    : 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200/60'
+                            }`}
+                        >
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                            En ligne ({categories.filter(c => !disabledCategoryIds.includes(c.id) && c.active !== false).length})
+                        </button>
+                        <button
+                            onClick={() => setCategoryFilterTab('disabled')}
+                            className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-2 ${
+                                categoryFilterTab === 'disabled'
+                                    ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20'
+                                    : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/60'
+                            }`}
+                        >
+                            <i className="fas fa-eye-slash text-xs"></i>
+                            Masquées ({categories.filter(c => disabledCategoryIds.includes(c.id) || c.active === false).length})
+                        </button>
+                    </div>
+
+                    <div className="relative flex-1 max-w-md">
+                        <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input
+                            type="text"
+                            placeholder="Rechercher une rubrique..."
+                            value={categorySearchQuery}
+                            onChange={(e) => setCategorySearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-brand-blue"
+                        />
+                    </div>
+                </div>
+
+                {/* Ordre des rubriques */}
                 <div className="bg-white rounded-[30px] border border-gray-100 p-6 md:p-8 shadow-sm">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                         <div>
-                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-500">Ordre des rubriques</h3>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-500">Ordre d'affichage des rubriques</h3>
                             <p className="text-xs text-gray-400 mt-1">Choisissez la position (1, 2, 3, ...) de chaque rubrique puis validez.</p>
                         </div>
                         <button
@@ -1221,104 +1319,151 @@ export const AdminDashboard = () => {
                         </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {categories.map((cat, idx) => (
-                            <div key={cat.id} className="flex items-center justify-between gap-3 bg-gray-50/60 rounded-2xl px-3 py-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-white border border-gray-200 text-[11px] font-black flex items-center justify-center">
-                                        {categoryOrderEdits[cat.id] ?? (idx + 1)}
-                                    </span>
-                                    <span className="text-xs font-semibold text-gray-800 uppercase tracking-widest truncate max-w-[140px]">{cat.name}</span>
+                        {categories.map((cat, idx) => {
+                            const isDis = disabledCategoryIds.includes(cat.id) || cat.active === false;
+                            return (
+                                <div key={cat.id} className={`flex items-center justify-between gap-3 rounded-2xl px-3 py-2 border ${
+                                    isDis ? 'bg-amber-50/50 border-amber-200/60' : 'bg-gray-50/60 border-transparent'
+                                }`}>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="w-6 h-6 rounded-full bg-white border border-gray-200 text-[11px] font-black flex items-center justify-center flex-shrink-0">
+                                            {categoryOrderEdits[cat.id] ?? (idx + 1)}
+                                        </span>
+                                        <span className="text-xs font-semibold text-gray-800 uppercase tracking-widest truncate max-w-[140px]" title={cat.name}>
+                                            {cat.name}
+                                        </span>
+                                        {isDis && (
+                                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 flex-shrink-0">
+                                                Masquée
+                                            </span>
+                                        )}
+                                    </div>
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      max={categories.length}
+                                      value={categoryOrderEdits[cat.id] ?? (idx + 1)}
+                                      onChange={(e) => handleCategoryOrderChange(cat.id, parseInt(e.target.value, 10))}
+                                      className="w-16 px-2 py-1 text-xs text-center border border-gray-200 rounded-xl font-semibold bg-white"
+                                    />
                                 </div>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  max={categories.length}
-                                  value={categoryOrderEdits[cat.id] ?? (idx + 1)}
-                                  onChange={(e) => handleCategoryOrderChange(cat.id, parseInt(e.target.value, 10))}
-                                  className="w-16 px-2 py-1 text-xs text-center border border-gray-200 rounded-xl font-semibold"
-                                />
-                            </div>
-                        ))}
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-6 gap-2">
-                        <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Précédent
-                        </button>
-                        <span className="text-sm font-bold text-gray-500">
-                            Page {currentPage} sur {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Suivant
-                        </button>
-                    </div>
-                )}
+                            );
+                        })}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {categories.map((cat, index) => (
-                        <div
-                          key={cat.id}
-                          className="bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <h3 className="text-3xl font-black text-brand-dark uppercase tracking-tighter leading-none">{cat.name}</h3>
-                                    <p className="text-xs font-mono text-gray-400 mt-2">/{cat.slug}</p>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <button
-                                      onClick={() => moveCategory(cat.id, 'up')}
-                                      disabled={index === 0}
-                                      className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === 0 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
-                                    >
-                                      ↑
-                                    </button>
-                                    <button
-                                      onClick={() => moveCategory(cat.id, 'down')}
-                                      disabled={index === categories.length - 1}
-                                      className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold ${index === categories.length - 1 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
-                                    >
-                                      ↓
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="mt-8 flex gap-4">
-                                <button onClick={() => { setCurrentCategory(cat); setIsCategoryModalOpen(true); }} className="flex-1 py-4 bg-gray-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all">Modifier</button>
-                                <button onClick={() => { setCurrentCategory(cat); setTargetCategoryForReassign(''); setIsDeleteCategoryModalOpen(true); }} className="px-6 py-4 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all">✕</button>
-                            </div>
+                {/* Grille des cartes rubriques */}
+                {filteredCategories.length === 0 ? (
+                    <div className="bg-white p-12 rounded-[40px] text-center border border-gray-100 shadow-sm">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400 text-2xl">
+                            <i className="fas fa-folder-open"></i>
                         </div>
-                    ))}
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-6 gap-2">
-                        <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Précédent
-                        </button>
-                        <span className="text-sm font-bold text-gray-500">
-                            Page {currentPage} sur {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white border border-gray-200 rounded-lg disabled:opacity-50 hover:bg-gray-50 text-sm font-bold"
-                        >
-                            Suivant
-                        </button>
+                        <h4 className="text-lg font-bold text-gray-700 mb-1">Aucune rubrique trouvée</h4>
+                        <p className="text-xs text-gray-400">Modifiez vos critères de recherche ou ajoutez une nouvelle rubrique.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredCategories.map((cat, index) => {
+                            const isCatDisabled = disabledCategoryIds.includes(cat.id) || cat.active === false;
+                            const articleCount = articles.filter(a => (a.category || '').trim().toLowerCase() === (cat.name || '').trim().toLowerCase()).length;
+                            return (
+                                <div
+                                  key={cat.id}
+                                  className={`bg-white p-6 md:p-8 rounded-[40px] border flex flex-col justify-between shadow-sm hover:shadow-xl transition-all group ${
+                                    isCatDisabled ? 'border-amber-200 bg-amber-50/20' : 'border-gray-100'
+                                  }`}
+                                >
+                                    <div>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                  {isCatDisabled ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                                                      <i className="fas fa-eye-slash text-[10px]"></i>
+                                                      Masquée
+                                                    </span>
+                                                  ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-green-50 text-green-700 border border-green-200">
+                                                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                                      En ligne
+                                                    </span>
+                                                  )}
+                                                  <span className="text-[11px] font-bold text-gray-400">
+                                                    {articleCount} article{articleCount > 1 ? 's' : ''}
+                                                  </span>
+                                                </div>
+                                                <h3 className="text-2xl font-black text-brand-dark uppercase tracking-tight leading-snug truncate" title={cat.name}>
+                                                  {cat.name}
+                                                </h3>
+                                                <p className="text-xs font-mono text-gray-400 mt-1">/{cat.slug}</p>
+                                            </div>
+                                            <div className="flex flex-col gap-1.5 flex-shrink-0">
+                                                <button
+                                                  onClick={() => moveCategory(cat.id, 'up')}
+                                                  disabled={index === 0}
+                                                  className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold ${index === 0 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
+                                                  title="Monter"
+                                                >
+                                                  ↑
+                                                </button>
+                                                <button
+                                                  onClick={() => moveCategory(cat.id, 'down')}
+                                                  disabled={index === categories.length - 1}
+                                                  className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold ${index === categories.length - 1 ? 'opacity-30 cursor-default' : 'hover:bg-gray-100'}`}
+                                                  title="Descendre"
+                                                >
+                                                  ↓
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {isCatDisabled && (
+                                          <div className="mt-4 p-3 bg-amber-50/80 rounded-2xl border border-amber-200/60 text-[11px] text-amber-800 leading-snug flex items-center gap-2">
+                                            <i className="fas fa-info-circle text-amber-600 flex-shrink-0"></i>
+                                            <span>Rubrique et <strong>{articleCount}</strong> article(s) masqués du site public.</span>
+                                          </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                                        {isCatDisabled ? (
+                                          <button 
+                                            onClick={() => handleToggleCategoryActive(cat, true)} 
+                                            className="flex-1 py-3 px-3 bg-green-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-wider hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-sm shadow-green-600/20 active:scale-95"
+                                            title="Remettre cette rubrique en ligne"
+                                          >
+                                            <i className="fas fa-eye text-xs"></i>
+                                            <span>Réactiver</span>
+                                          </button>
+                                        ) : (
+                                          <button 
+                                            onClick={() => handleToggleCategoryActive(cat, false)} 
+                                            className="flex-1 py-3 px-3 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-2xl font-black text-[10px] uppercase tracking-wider hover:bg-amber-100 transition-all flex items-center justify-center gap-2 active:scale-95"
+                                            title="Masquer cette rubrique et ses articles"
+                                          >
+                                            <i className="fas fa-eye-slash text-xs"></i>
+                                            <span>Masquer</span>
+                                          </button>
+                                        )}
+                                        <button 
+                                          onClick={() => { setCurrentCategory(cat); setIsCategoryModalOpen(true); }} 
+                                          className="px-4 py-3 bg-gray-50 text-brand-blue rounded-2xl font-black text-[10px] uppercase tracking-wider hover:bg-brand-blue hover:text-white transition-all active:scale-95"
+                                        >
+                                          Modifier
+                                        </button>
+                                        <button 
+                                          onClick={() => { setCurrentCategory(cat); setTargetCategoryForReassign(''); setIsDeleteCategoryModalOpen(true); }} 
+                                          className="px-4 py-3 bg-red-50 text-brand-red rounded-2xl font-black hover:bg-brand-red hover:text-white transition-all active:scale-95"
+                                          title="Supprimer définitivement"
+                                        >
+                                          ✕
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
-                </div>
             </div>
         )}
 

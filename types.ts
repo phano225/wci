@@ -96,6 +96,8 @@ export interface Category {
   name: string;
   slug: string;
   position?: number;
+  active?: boolean;
+  isActive?: boolean;
 }
 
 // Article Model

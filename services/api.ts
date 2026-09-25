@@ -329,7 +329,55 @@ export const saveCategoryOrder = async (ids: string[]): Promise<void> => {
   }
 };
 
-export const getCategories = async (): Promise<Category[]> => {
+const DISABLED_CATEGORIES_STORAGE_KEY = 'wci_disabled_category_ids';
+
+export const getDisabledCategoryIds = async (): Promise<string[]> => {
+  if (IS_OFFLINE_MODE) {
+    const raw = localStorage.getItem(DISABLED_CATEGORIES_STORAGE_KEY);
+    return parseCategoryOrder(raw);
+  }
+  try {
+    const { data, error } = await supabase
+      .from('ads')
+      .select('content')
+      .eq('id', 'disabled_categories_config')
+      .maybeSingle();
+    if (error) {
+      if (!isNetworkError(error)) console.error('Supabase error in getDisabledCategoryIds:', error);
+      return [];
+    }
+    return parseCategoryOrder(data?.content);
+  } catch (e) {
+    if (isNetworkError(e)) return [];
+    console.error('Network error in getDisabledCategoryIds:', e);
+    return [];
+  }
+};
+
+export const saveDisabledCategoryIds = async (ids: string[]): Promise<void> => {
+  if (IS_OFFLINE_MODE) {
+    saveToStorage(DISABLED_CATEGORIES_STORAGE_KEY, ids);
+    return;
+  }
+  try {
+    const payload: Ad = {
+      id: 'disabled_categories_config',
+      title: 'disabled_categories_config',
+      location: AdLocation.HEADER_LEADERBOARD,
+      type: AdType.SCRIPT,
+      content: JSON.stringify({ ids }),
+      isActive: false,
+      active: false,
+    };
+    const { error } = await supabase.from('ads').upsert(payload);
+    if (error) throw error;
+  } catch (e) {
+    console.error('Error saving disabled categories:', e);
+    throw e;
+  }
+};
+
+export const getCategories = async (options: { includeDisabled?: boolean } = { includeDisabled: true }): Promise<Category[]> => {
   if (IS_OFFLINE_MODE) return MOCK_CATEGORIES;
 
   try {
@@ -356,7 +404,21 @@ export const getCategories = async (): Promise<Category[]> => {
       }
       let categories = Array.from(map.values());
 
-      const orderIds = await getCategoryOrder();
+      const [orderIds, disabledIds] = await Promise.all([
+        getCategoryOrder(),
+        getDisabledCategoryIds()
+      ]);
+
+      // Tag each category with active / isActive state
+      categories = categories.map(c => {
+        const isAct = !disabledIds.includes(c.id);
+        return {
+          ...c,
+          active: isAct,
+          isActive: isAct
+        };
+      });
+
       if (orderIds.length > 0) {
         categories = [...categories].sort((a, b) => {
           const ia = orderIds.indexOf(a.id);
@@ -366,6 +428,10 @@ export const getCategories = async (): Promise<Category[]> => {
           if (ib === -1) return -1;
           return ia - ib;
         });
+      }
+
+      if (options.includeDisabled === false) {
+        categories = categories.filter(c => c.active !== false);
       }
 
       return categories;
@@ -427,6 +493,7 @@ export interface GetArticlesOptions {
   status?: ArticleStatus;
   category?: string;
   authorId?: string;
+  includeDisabledCategories?: boolean;
 }
 
 export const getArticles = async (options: GetArticlesOptions = {}): Promise<Article[]> => {
@@ -435,6 +502,14 @@ export const getArticles = async (options: GetArticlesOptions = {}): Promise<Art
       if (options.status) filtered = filtered.filter(a => a.status === options.status);
       if (options.category) filtered = filtered.filter(a => a.category === options.category);
       if (options.authorId) filtered = filtered.filter(a => a.authorId === options.authorId);
+      if (!options.includeDisabledCategories) {
+        const rawDis = localStorage.getItem(DISABLED_CATEGORIES_STORAGE_KEY);
+        const disIds: string[] = rawDis ? JSON.parse(rawDis) : [];
+        if (disIds.length > 0) {
+          const disCats = MOCK_CATEGORIES.filter(c => disIds.includes(c.id)).map(c => c.name.toLowerCase());
+          filtered = filtered.filter(a => !disCats.includes((a.category || '').toLowerCase()));
+        }
+      }
       if (options.limit) filtered = filtered.slice(0, options.limit);
       return filtered;
   }
@@ -448,14 +523,41 @@ export const getArticles = async (options: GetArticlesOptions = {}): Promise<Art
       if (options.status) query = query.eq('status', options.status);
       if (options.category) query = query.eq('category', options.category);
       if (options.authorId) query = query.eq('authorid', options.authorId);
-      if (options.limit) query = query.limit(options.limit);
+      if (options.limit && options.includeDisabledCategories) query = query.limit(options.limit);
 
       const { data, error } = await query;
       if (error) {
         if (!isNetworkError(error)) console.error('Supabase error in getArticles:', error);
         throw error;
       }
-      const articles = (data || []).map(item => ({ ...item, content: '' })) as Article[];
+      let articles = (data || []).map(item => ({ ...item, content: '' })) as Article[];
+
+      // Masquer les articles des rubriques désactivées pour les visiteurs publics
+      if (!options.includeDisabledCategories) {
+        try {
+          const disabledIds = await getDisabledCategoryIds();
+          if (disabledIds.length > 0) {
+            const { data: catRows } = await supabase.from('categories').select('id, name');
+            if (catRows && catRows.length > 0) {
+              const disabledNames = new Set(
+                catRows
+                  .filter(c => disabledIds.includes(c.id))
+                  .map(c => (c.name || '').trim().toLowerCase())
+              );
+              if (disabledNames.size > 0) {
+                articles = articles.filter(a => !disabledNames.has((a.category || '').trim().toLowerCase()));
+              }
+            }
+          }
+        } catch (catErr) {
+          console.warn('Could not filter disabled category articles:', catErr);
+        }
+
+        if (options.limit) {
+          articles = articles.slice(0, options.limit);
+        }
+      }
+
       return articles;
   } catch (e: any) {
       if (isNetworkError(e)) return [];
